@@ -25,8 +25,7 @@ import scala.reflect.ClassTag
 private[lucenerdd] class ElasticLuceneRDDPartition[K, V]
     (protected val map: Map[K, V])
     (override implicit val kTag: ClassTag[K],
-     override implicit val vTag: ClassTag[V],
-     implicit val kSer: KeySerializer[K])
+     override implicit val vTag: ClassTag[V])
   extends LuceneRDDPartition[K, V] with Logging {
 
   override def size: Long = map.size.toLong
@@ -89,12 +88,11 @@ private[lucenerdd] class ElasticLuceneRDDPartition[K, V]
 
 private[lucenerdd] object ElasticLuceneRDDPartition {
   def apply[K: ClassTag, V: ClassTag]
-      (iter: Iterator[(K, V)])(implicit kSer: KeySerializer[K]) =
+      (iter: Iterator[(K, V)]) =
     apply[K, V, V](iter, (id, a) => a, (id, a, b) => b)
 
   def apply[K: ClassTag, U: ClassTag, V: ClassTag]
-      (iter: Iterator[(K, U)], z: (K, U) => V, f: (K, V, U) => V)
-      (implicit kSer: KeySerializer[K]): ElasticLuceneRDDPartition[K, V] = {
+      (iter: Iterator[(K, U)], z: (K, U) => V, f: (K, V, U) => V): ElasticLuceneRDDPartition[K, V] = {
     val map = iter.map { case (key, value) =>
      key -> z(key, value)
     }.toMap[K, V]

@@ -273,18 +273,18 @@ object LuceneRDD {
   /**
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
    */
-  def apply[K: ClassTag : KeySerializer, V: ClassTag]
+  def apply[K: ClassTag, V: ClassTag]
       (elems: RDD[(K, V)]): LuceneRDD[K, V] = updatable(elems)
 
   /**
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
    */
-  def updatable[K: ClassTag : KeySerializer, V: ClassTag]
+  def updatable[K: ClassTag, V: ClassTag]
       (elems: RDD[(K, V)])
     : LuceneRDD[K, V] = updatable[K, V, V](elems, (id, a) => a, (id, a, b) => b)
 
   /** Constructs an Lucene from an RDD of pairs. */
-  def updatable[K: ClassTag : KeySerializer, U: ClassTag, V: ClassTag]
+  def updatable[K: ClassTag, U: ClassTag, V: ClassTag]
       (elems: RDD[(K, U)], z: (K, U) => V, f: (K, V, U) => V)
     : LuceneRDD[K, V] = {
     val elemsPartitioned =
@@ -296,9 +296,4 @@ object LuceneRDD {
     new LuceneRDD(partitions)
   }
 
-  implicit val longSer = new LongSerializer
-  implicit val stringSer = new StringSerializer
-  implicit def tuple2Ser[A, B](
-      implicit aSer: KeySerializer[A], bSer: KeySerializer[B]): Tuple2Serializer[A, B] =
-    new Tuple2Serializer()(aSer, bSer)
 }

@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  * @tparam V the value associated with each entry in the set.
  */
 class LuceneRDD[K: ClassTag, V: ClassTag](
-    /** The underlying representation of the IndexedRDD as an RDD of partitions. */
+    /** The underlying representation of the LuceneRDD as an RDD of partitions. */
     private val partitionsRDD: RDD[LuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD))) {
 
@@ -70,14 +70,14 @@ class LuceneRDD[K: ClassTag, V: ClassTag](
     firstParent[LuceneRDDPartition[K, V]].iterator(part, context).next.iterator
   }
 
-  /** Applies a function to each partition of this IndexedRDD. */
+  /** Applies a function to each partition of this LuceneRDD. */
   private def mapIndexedRDDPartitions[K2: ClassTag, V2: ClassTag](
       f: LuceneRDDPartition[K, V] => LuceneRDDPartition[K2, V2]): LuceneRDD[K2, V2] = {
     val newPartitionsRDD = partitionsRDD.mapPartitions(_.map(f), preservesPartitioning = true)
     new LuceneRDD(newPartitionsRDD)
   }
 
-  /** Applies a function to corresponding partitions of `this` and another IndexedRDD. */
+  /** Applies a function to corresponding partitions of `this` and another LuceneRDD. */
   private def zipIndexedRDDPartitions[V2: ClassTag, V3: ClassTag](other: LuceneRDD[K, V2])
       (f: ZipPartitionsFunction[V2, V3]): LuceneRDD[K, V3] = {
     assert(partitioner == other.partitioner)
@@ -95,7 +95,7 @@ class LuceneRDD[K: ClassTag, V: ClassTag](
 
   /**
    * Restricts the entries to those satisfying the given predicate. This operation preserves the
-   * index for efficient joins with the original IndexedRDD and is implemented using soft deletions.
+   * index for efficient joins with the original LuceneRDD and is implemented using soft deletions.
    *
    * @param pred the user defined predicate, which takes a tuple to conform to the `RDD[(K, V)]`
    * interface
@@ -125,7 +125,7 @@ class LuceneRDD[K: ClassTag, V: ClassTag](
   /**
    * Joins `this` with `other`, running `f` on the values of all keys in both sets. Note that for
    * efficiency `other` must be an IndexedRDD, not just a pair RDD. Use [[???]] to
-   * construct an IndexedRDD co-partitioned with `this`.
+   * construct an LuceneRDD co-partitioned with `this`.
    */
   def fullOuterJoin[V2: ClassTag, W: ClassTag]
       (other: RDD[(K, V2)])
@@ -295,5 +295,4 @@ object LuceneRDD {
       preservesPartitioning = true)
     new LuceneRDD(partitions)
   }
-
 }

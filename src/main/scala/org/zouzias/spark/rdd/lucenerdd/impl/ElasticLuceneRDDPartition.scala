@@ -18,7 +18,7 @@
 package org.zouzias.spark.rdd.lucenerdd.impl
 
 import org.apache.spark.Logging
-import org.zouzias.spark.rdd.lucenerdd.{ KeySerializer, LuceneRDDPartition }
+import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 
 import scala.reflect.ClassTag
 

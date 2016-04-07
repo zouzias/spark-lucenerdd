@@ -22,80 +22,29 @@ import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 
 import scala.reflect.ClassTag
 
-private[lucenerdd] class ElasticLuceneRDDPartition[K, V]
-    (protected val map: Map[K, V])
-    (override implicit val kTag: ClassTag[K],
-     override implicit val vTag: ClassTag[V])
-  extends LuceneRDDPartition[K, V] with Logging {
+private[lucenerdd] class ElasticLuceneRDDPartition[T]
+(private val iter: Iterator[T])
+    (override implicit val kTag: ClassTag[T])
+  extends LuceneRDDPartition[T] with Logging {
 
-  override def size: Long = map.size.toLong
+  override def size: Long = iter.size
 
-  override def apply(k: K): V = ???
+  override def isDefined(elem: T): Boolean = iter.contains(elem)
 
-  override def isDefined(k: K): Boolean = ???
+  override def iterator: Iterator[T] = iter
 
-  override def iterator: Iterator[(K, V)] = ???
+  override def filter(pred: T => Boolean): LuceneRDDPartition[T] = new ElasticLuceneRDDPartition(iter.filter(pred))
 
-  private def rawIterator: Iterator[(Array[Byte], V)] = ???
+  override def diff(other: LuceneRDDPartition[T]): LuceneRDDPartition[T] = ???
 
-  override def multiget(ks: Iterator[K]): Iterator[(K, V)] =
-    ks.flatMap { k => Option(this(k)).map(v => (k, v)) }
-
-  override def mapValues[V2: ClassTag](f: (K, V) => V2): LuceneRDDPartition[K, V2] = ???
-
-  override def filter(pred: (K, V) => Boolean): LuceneRDDPartition[K, V] = ???
-
-  override def diff(other: LuceneRDDPartition[K, V]): LuceneRDDPartition[K, V] = ???
-
-  override def diff(other: Iterator[(K, V)]): LuceneRDDPartition[K, V] =
+  override def diff(other: Iterator[T]): LuceneRDDPartition[T] =
     diff(ElasticLuceneRDDPartition(other))
-
-  override def fullOuterJoin[V2: ClassTag, W: ClassTag]
-      (other: LuceneRDDPartition[K, V2])
-      (f: (K, Option[V], Option[V2]) => W): LuceneRDDPartition[K, W] = ???
-
-  override def fullOuterJoin[V2: ClassTag, W: ClassTag]
-      (other: Iterator[(K, V2)])
-      (f: (K, Option[V], Option[V2]) => W): LuceneRDDPartition[K, W] =
-    fullOuterJoin(ElasticLuceneRDDPartition(other))(f)
-
-  override def join[U: ClassTag]
-      (other: LuceneRDDPartition[K, U])
-      (f: (K, V, U) => V): LuceneRDDPartition[K, V] = join(other.iterator)(f)
-
-  override def join[U: ClassTag]
-      (other: Iterator[(K, U)])
-      (f: (K, V, U) => V): LuceneRDDPartition[K, V] = ???
-
-  override def leftJoin[V2: ClassTag, V3: ClassTag]
-      (other: LuceneRDDPartition[K, V2])
-      (f: (K, V, Option[V2]) => V3): LuceneRDDPartition[K, V3] = ???
-
-  override def leftJoin[V2: ClassTag, V3: ClassTag]
-      (other: Iterator[(K, V2)])
-      (f: (K, V, Option[V2]) => V3): LuceneRDDPartition[K, V3] =
-    leftJoin(ElasticLuceneRDDPartition(other))(f)
-
-  override def innerJoin[U: ClassTag, V2: ClassTag]
-      (other: LuceneRDDPartition[K, U])
-      (f: (K, V, U) => V2): LuceneRDDPartition[K, V2] = ???
-
-  override def innerJoin[U: ClassTag, V2: ClassTag]
-      (other: Iterator[(K, U)])
-      (f: (K, V, U) => V2): LuceneRDDPartition[K, V2] =
-    innerJoin(ElasticLuceneRDDPartition(other))(f)
 }
 
 private[lucenerdd] object ElasticLuceneRDDPartition {
-  def apply[K: ClassTag, V: ClassTag]
-      (iter: Iterator[(K, V)]) =
-    apply[K, V, V](iter, (id, a) => a, (id, a, b) => b)
 
-  def apply[K: ClassTag, U: ClassTag, V: ClassTag]
-      (iter: Iterator[(K, U)], z: (K, U) => V, f: (K, V, U) => V): ElasticLuceneRDDPartition[K, V] = {
-    val map = iter.map { case (key, value) =>
-     key -> z(key, value)
-    }.toMap[K, V]
-    new ElasticLuceneRDDPartition[K, V](map)
+  def apply[T: ClassTag]
+      (iter: Iterator[T]): ElasticLuceneRDDPartition[T] = {
+    new ElasticLuceneRDDPartition[T](iter)
   }
 }

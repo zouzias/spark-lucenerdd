@@ -17,10 +17,12 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
+import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.rdd.lucenerdd.impl.ElasticLuceneRDDPartition
+import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition
+import org.zouzias.spark.rdd.lucenerdd.utils.{MyLuceneDocumentLike, SerializedDocument}
 
 import scala.reflect.ClassTag
 
@@ -28,10 +30,11 @@ import scala.reflect.ClassTag
  *
  * @tparam T
  */
-class LuceneRDD[T: ClassTag](
-    /** The underlying representation of the LuceneRDD as an RDD of partitions. */
-    private val partitionsRDD: RDD[LuceneRDDPartition[T]])
-  extends RDD[(T)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD))) {
+class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T]])
+  extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD))) {
+
+  /** Top K Documents */
+  private val TopK = 10
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -53,6 +56,40 @@ class LuceneRDD[T: ClassTag](
     this
   }
 
+  def query(q: Query, topK: Int = TopK): Iterable[SerializedDocument] = {
+    partitionsRDD.flatMap(part =>
+      part.query(q, topK)
+    ).toLocalIterator.toIterable
+  }
+
+  def termQuery(fieldName: String, query: String,
+                topK: Int = TopK): Iterable[SerializedDocument] = {
+    partitionsRDD.flatMap(part =>
+      part.termQuery(fieldName, query, topK)
+    ).toLocalIterator.toIterable
+  }
+
+  def prefixQuery(fieldName: String, query: String,
+                  topK: Int = TopK): Iterable[SerializedDocument] = {
+    partitionsRDD.flatMap(part =>
+      part.prefixQuery(fieldName, query, topK)
+    ).toLocalIterator.toIterable
+  }
+
+  def fuzzyQuery(fieldName: String, query: String,
+                 maxEdits: Int, topK: Int = TopK): Iterable[SerializedDocument] = {
+    partitionsRDD.flatMap(part =>
+      part.fuzzyQuery(fieldName, query, maxEdits, topK)
+    ).toLocalIterator.toIterable
+  }
+
+  def phraseQuery(fieldName: String, query: String,
+                  topK: Int = TopK): Iterable[SerializedDocument] = {
+    partitionsRDD.flatMap(part =>
+      part.phraseQuery(fieldName, query, topK)
+    ).toLocalIterator.toIterable
+  }
+
   override def count(): Long = {
     partitionsRDD.map(_.size).reduce(_ + _)
   }
@@ -60,13 +97,6 @@ class LuceneRDD[T: ClassTag](
   /** Provides the `RDD[(K, V)]` equivalent output. */
   override def compute(part: Partition, context: TaskContext): Iterator[T] = {
     firstParent[LuceneRDDPartition[T]].iterator(part, context).next.iterator
-  }
-
-  /** Applies a function to each partition of this LuceneRDD. */
-  private def mapIndexedRDDPartitions[T2: ClassTag](
-      f: LuceneRDDPartition[T] => LuceneRDDPartition[T2]): LuceneRDD[T2] = {
-    val newPartitionsRDD = partitionsRDD.mapPartitions(_.map(f), preservesPartitioning = true)
-    new LuceneRDD(newPartitionsRDD)
   }
 
   /**
@@ -84,7 +114,8 @@ class LuceneRDD[T: ClassTag](
   }
 
   /**
-   * Intersects `this` and `other` and keeps only elements with differing values. For these
+   * Intersects `this` and `other` and keeps only
+   * elements with differing values. For these
    * elements, keeps the values from `this`.
    */
   def diff(other: RDD[T]): LuceneRDD[T] = ???
@@ -95,17 +126,17 @@ object LuceneRDD {
   /**
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
    */
-  def apply[T: ClassTag]
-      (elems: RDD[T]): LuceneRDD[T] = {
+  def apply[T: ClassTag](elems: RDD[T], conversion: MyLuceneDocumentLike[T]): LuceneRDD[T] = {
 
     val partitions = elems.mapPartitions[LuceneRDDPartition[T]](
-      iter => Iterator(ElasticLuceneRDDPartition(iter)),
+      iter => Iterator(RamLuceneRDDPartition(iter, conversion)),
       preservesPartitioning = true)
     new LuceneRDD(partitions)
   }
 
   def apply[T: ClassTag]
-  (elems: Iterable[T])(implicit sc: SparkContext): LuceneRDD[T] = {
-    apply(sc.parallelize[T](elems.toSeq))
+  (elems: Iterable[T], conversion: MyLuceneDocumentLike[T])
+  (implicit sc: SparkContext): LuceneRDD[T] = {
+    apply(sc.parallelize[T](elems.toSeq), conversion)
   }
 }

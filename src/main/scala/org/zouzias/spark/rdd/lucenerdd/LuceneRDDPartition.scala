@@ -17,14 +17,16 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
+import org.apache.lucene.document.Document
+import org.apache.lucene.search.Query
+import org.zouzias.spark.rdd.lucenerdd.utils.SerializedDocument
+
 import scala.reflect.ClassTag
 
+
 /**
- * A map of key-value `(K, V)` pairs that enforces key uniqueness and pre-indexes the entries for
- * fast lookups, joins, and optionally updates. To construct an `IndexedRDDPartition`, use one of
- * the constructors in the [[org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition object]].
  *
- * @tparam T the key associated with each entry in the set.
+ * @tparam T the type associated with each entry in the set.
  */
 private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
@@ -35,6 +37,18 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
   def iterator: Iterator[T]
 
   def isDefined(key: T): Boolean
+
+  def query(q: Query, topK: Int): Iterable[SerializedDocument]
+
+  def termQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+
+  def prefixQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+
+  def fuzzyQuery(fieldName: String, query: String,
+                 maxEdits: Int, topK: Int): Iterable[SerializedDocument]
+
+  def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+
 
   /**
    * Restricts the entries to those satisfying the given predicate.

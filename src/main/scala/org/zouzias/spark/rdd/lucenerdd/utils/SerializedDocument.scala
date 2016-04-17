@@ -18,4 +18,17 @@ package org.zouzias.spark.rdd.lucenerdd.utils
 
 import org.apache.lucene.document.Document
 
-case class SerializedDocument(@transient doc: Document)
+import scala.collection.JavaConverters._
+
+case class SerializedDocument(doc: Map[String, String])
+
+
+object SerializedDocument extends Serializable {
+  def apply(doc: Document): SerializedDocument = {
+    val map = doc.getFields.asScala.map( field =>
+    field.name() -> field.stringValue()
+    ).toMap[String, String]
+
+    new SerializedDocument(map)
+  }
+}

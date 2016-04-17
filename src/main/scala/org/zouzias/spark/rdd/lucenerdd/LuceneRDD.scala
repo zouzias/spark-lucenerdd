@@ -59,6 +59,11 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
     this
   }
 
+  /**
+   * Document results aggregator
+   * @param f
+   * @return
+   */
   private def docResultsAggregator(f: LuceneRDDPartition[T] => Iterable[SerializedDocument])
   : Iterable[SerializedDocument] = {
     partitionsRDD.flatMap(f(_)).toLocalIterator.toIterable

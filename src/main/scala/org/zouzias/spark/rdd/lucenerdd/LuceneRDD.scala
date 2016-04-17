@@ -59,6 +59,11 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
     this
   }
 
+  private def docResultsAggregator(f: LuceneRDDPartition[T] => Iterable[SerializedDocument])
+  : Iterable[SerializedDocument] = {
+    partitionsRDD.flatMap(f(_)).toLocalIterator.toIterable
+  }
+
   /**
    * Lucene generic query
    * @param q
@@ -66,9 +71,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def query(q: Query, topK: Int = TopK): Iterable[SerializedDocument] = {
-    partitionsRDD.flatMap(part =>
-      part.query(q, topK)
-    ).toLocalIterator.toIterable
+    docResultsAggregator(_.query(q, topK))
   }
 
   /**
@@ -80,9 +83,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    */
   def termQuery(fieldName: String, query: String,
                 topK: Int = TopK): Iterable[SerializedDocument] = {
-    partitionsRDD.flatMap(part =>
-      part.termQuery(fieldName, query, topK)
-    ).toLocalIterator.toIterable
+    docResultsAggregator(_.termQuery(fieldName, query, topK))
   }
 
   /**
@@ -94,9 +95,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    */
   def prefixQuery(fieldName: String, query: String,
                   topK: Int = TopK): Iterable[SerializedDocument] = {
-    partitionsRDD.flatMap(part =>
-      part.prefixQuery(fieldName, query, topK)
-    ).toLocalIterator.toIterable
+    docResultsAggregator(_.prefixQuery(fieldName, query, topK))
   }
 
   /**
@@ -109,9 +108,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int = TopK): Iterable[SerializedDocument] = {
-    partitionsRDD.flatMap(part =>
-      part.fuzzyQuery(fieldName, query, maxEdits, topK)
-    ).toLocalIterator.toIterable
+    docResultsAggregator(_.fuzzyQuery(fieldName, query, maxEdits, topK))
   }
 
   /**
@@ -123,9 +120,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    */
   def phraseQuery(fieldName: String, query: String,
                   topK: Int = TopK): Iterable[SerializedDocument] = {
-    partitionsRDD.flatMap(part =>
-      part.phraseQuery(fieldName, query, topK)
-    ).toLocalIterator.toIterable
+    docResultsAggregator(_.phraseQuery(fieldName, query, topK))
   }
 
   def facetedQuery(fieldName: String, topK: Int = TopK): Map[String, Long] = ???

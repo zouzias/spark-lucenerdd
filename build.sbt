@@ -32,11 +32,21 @@ val scala_check               = "org.scalacheck"                 %% "scalacheck"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6"  % "test"
 val spark_testing_base        = "com.holdenkarau"                %% "spark-testing-base"       % s"${sparkVersion}_0.3.1" % "test" intransitive()
 
+val lucene_sugar              = "com.gilt"                       %% "lib-lucene-sugar"         % "0.2.3"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.0"
+
+val lucene_facet              = "org.apache.lucene" % "lucene-facet" % "4.10.3"
+val lucene_expressions        = "org.apache.lucene" % "lucene-expressions" % "4.10.3"
+
+
 
 libraryDependencies ++= Seq(
   spark_core % "provided",
   spark_sql % "provided",
-  "com.gilt" %% "lib-lucene-sugar" % "0.2.3",
+  algebird,
+  lucene_sugar,
+  lucene_facet,
+  lucene_expressions,
   specs2_core,
   scalatest,
   spark_testing_base

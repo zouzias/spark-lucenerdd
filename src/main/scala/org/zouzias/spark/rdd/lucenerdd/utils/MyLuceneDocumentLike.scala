@@ -19,7 +19,7 @@ package org.zouzias.spark.rdd.lucenerdd.utils
 
 import org.apache.lucene.document.Document
 
-trait MyLuceneDocumentLike[T] extends Serializable{
+trait MyLuceneDocumentLike[T] extends Serializable {
 
   def defaultField: String
 

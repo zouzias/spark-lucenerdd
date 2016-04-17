@@ -20,10 +20,13 @@ package org.zouzias.spark.rdd.lucenerdd.impl
 import org.apache.spark.Logging
 import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 import org.apache.lucene.search._
-import com.gilt.lucene.{ LuceneStandardAnalyzer, RamLuceneDirectory, ReadableLuceneIndex, WritableLuceneIndex }
-import org.apache.lucene.document.{Document, Field, StringField}
+import com.gilt.lucene.{LuceneStandardAnalyzer, RamLuceneDirectory, ReadableLuceneIndex, WritableLuceneIndex}
+import org.apache.lucene.document.{Document, Field, SortedSetDocValuesField, StringField}
 import com.gilt.lucene.LuceneDocumentAdder._
+import org.apache.lucene.facet.{Facets, FacetsCollector}
+import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts, SortedSetDocValuesReaderState}
 import org.apache.lucene.index.Term
+import org.apache.lucene.util.BytesRef
 import org.zouzias.spark.rdd.lucenerdd.utils.{MyLuceneDocumentLike, SerializedDocument}
 
 import scala.reflect.ClassTag
@@ -39,7 +42,7 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
     with RamLuceneDirectory
 
 
-  iter.foreach{ case elem =>
+  iter.foreach { case elem =>
     // Convert it to lucene document
     index.addDocuments(conversion.toDocuments(elem))
   }
@@ -91,6 +94,33 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
     qr.add(term)
     index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
   }
+
+  override def facetedQuery(query: Query,
+                            fieldName: String,
+                            topK: Int): Option[Map[String, Long]] = ???
+  /* {
+
+    index.withIndexSearcher[Option[Map[String, Long]]]{indexSearcherOption =>
+      indexSearcherOption.map { case indexSearcher =>
+        val indexReader = indexSearcher.getIndexReader
+        val state = new DefaultSortedSetDocValuesReaderState(indexReader, s"${fieldName}_facet")
+        val fc = new FacetsCollector()
+
+        FacetsCollector.search(indexSearcher, query, topK, fc)
+
+        val facets: Facets = new SortedSetDocValuesFacetCounts(state, fc)
+        facets.getTopChildren(topK, "0", s"${fieldName}_facet")
+          .labelValues
+          .map { case facetResult =>
+          facetResult.label -> facetResult.value.longValue()
+        }.toMap[String, Long]
+      }
+    }
+  } */
+
+  override def facetedQuery(fieldName: String, topK: Int): Option[Map[String, Long]] = {
+    facetedQuery(new MatchAllDocsQuery, fieldName, topK)
+  }
 }
 
 object RamLuceneRDDPartition {
@@ -107,6 +137,9 @@ object RamLuceneRDDPartition {
     override def toDocuments(value: String): Iterable[Document] = {
       val doc = new Document
       doc.add(new StringField(defaultField, value.toString, Field.Store.YES))
+      // required for facet search
+      // doc.add(new SortedSetDocValuesField(s"${defaultField}_facet",
+      // new BytesRef(value.toString)))
       Seq(doc)
     }
   }

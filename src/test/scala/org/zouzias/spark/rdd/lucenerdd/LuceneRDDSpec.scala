@@ -66,4 +66,15 @@ class LuceneRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
     luceneRDD.fuzzyQuery(StringConv.defaultField, "werty", 1).size should be (1)
   }
 
+  /*
+  "LuceneRDD" should "correctly compute faceted counts" in {
+
+    val docs = Array("tassos", "tassos", "costas", "maria")
+    val rdd = sc.parallelize(docs)
+    val StringConv = RamLuceneRDDPartition.stringConversion
+    val luceneRDD = LuceneRDD(rdd, StringConv)
+
+    luceneRDD.facetedQuery(StringConv.defaultField, 10).size should be (3)
+  } */
+
 }

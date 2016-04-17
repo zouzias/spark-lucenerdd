@@ -17,7 +17,6 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
-import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
 import org.zouzias.spark.rdd.lucenerdd.utils.SerializedDocument
 
@@ -48,6 +47,10 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
                  maxEdits: Int, topK: Int): Iterable[SerializedDocument]
 
   def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+
+  def facetedQuery(query: Query, fieldName: String, topK: Int): Option[Map[String, Long]]
+
+  def facetedQuery(fieldName: String, topK: Int): Option[Map[String, Long]]
 
 
   /**

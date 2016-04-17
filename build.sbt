@@ -52,8 +52,8 @@ val spark_testing_base        = "com.holdenkarau"                %% "spark-testi
 val lucene_sugar              = "com.gilt"                       %% "lib-lucene-sugar"         % "0.2.3"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.0"
 
-val lucene_facet              = "org.apache.lucene" % "lucene-facet" % "4.10.3"
-val lucene_expressions        = "org.apache.lucene" % "lucene-expressions" % "4.10.3"
+val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % "4.10.3"
+val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % "4.10.3"
 
 
 

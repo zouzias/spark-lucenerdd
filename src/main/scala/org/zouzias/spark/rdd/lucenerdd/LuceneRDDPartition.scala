@@ -48,11 +48,6 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
 
-  def facetedQuery(query: Query, fieldName: String, topK: Int): Option[Map[String, Long]]
-
-  def facetedQuery(fieldName: String, topK: Int): Option[Map[String, Long]]
-
-
   /**
    * Restricts the entries to those satisfying the given predicate.
    */

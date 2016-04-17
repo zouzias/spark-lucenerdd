@@ -91,33 +91,6 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
     qr.add(term)
     index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
   }
-
-  override def facetedQuery(query: Query,
-                            fieldName: String,
-                            topK: Int): Option[Map[String, Long]] = ???
-  /* {
-
-    index.withIndexSearcher[Option[Map[String, Long]]]{indexSearcherOption =>
-      indexSearcherOption.map { case indexSearcher =>
-        val indexReader = indexSearcher.getIndexReader
-        val state = new DefaultSortedSetDocValuesReaderState(indexReader, s"${fieldName}_facet")
-        val fc = new FacetsCollector()
-
-        FacetsCollector.search(indexSearcher, query, topK, fc)
-
-        val facets: Facets = new SortedSetDocValuesFacetCounts(state, fc)
-        facets.getTopChildren(topK, "0", s"${fieldName}_facet")
-          .labelValues
-          .map { case facetResult =>
-          facetResult.label -> facetResult.value.longValue()
-        }.toMap[String, Long]
-      }
-    }
-  } */
-
-  override def facetedQuery(fieldName: String, topK: Int): Option[Map[String, Long]] = {
-    facetedQuery(new MatchAllDocsQuery, fieldName, topK)
-  }
 }
 
 object RamLuceneRDDPartition {
@@ -134,9 +107,6 @@ object RamLuceneRDDPartition {
     override def toDocuments(value: String): Iterable[Document] = {
       val doc = new Document
       doc.add(new StringField(defaultField, value.toString, Field.Store.YES))
-      // required for facet search
-      // doc.add(new SortedSetDocValuesField(s"${defaultField}_facet",
-      // new BytesRef(value.toString)))
       Seq(doc)
     }
   }

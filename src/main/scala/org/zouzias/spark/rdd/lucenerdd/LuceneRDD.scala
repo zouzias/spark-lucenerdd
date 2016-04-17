@@ -17,7 +17,6 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
-import com.twitter.algebird.MapMonoid
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -36,8 +35,6 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /** Top K Documents */
   private val TopK = 10
-
-  private val FacetMonoid = new MapMonoid[String, Long]()
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -128,13 +125,6 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
     docResultsAggregator(_.phraseQuery(fieldName, query, topK))
   }
 
-  def facetedQuery(fieldName: String, topK: Int = TopK): Map[String, Long] = ???
-  /* {
-    partitionsRDD.flatMap(part =>
-      part.facetedQuery(fieldName, topK)
-    ).reduce(FacetMonoid.plus(_, _))
-  } */
-
   override def count(): Long = {
     partitionsRDD.map(_.size).reduce(_ + _)
   }
@@ -157,14 +147,6 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
     )
     new LuceneRDD(newPartitionRDD)
   }
-
-  /**
-   * Intersects `this` and `other` and keeps only
-   * elements with differing values. For these
-   * elements, keeps the values from `this`.
-   */
-  def diff(other: RDD[T]): LuceneRDD[T] = ???
-
 }
 
 object LuceneRDD {

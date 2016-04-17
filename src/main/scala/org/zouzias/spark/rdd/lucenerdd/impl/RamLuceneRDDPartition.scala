@@ -21,12 +21,9 @@ import org.apache.spark.Logging
 import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 import org.apache.lucene.search._
 import com.gilt.lucene.{LuceneStandardAnalyzer, RamLuceneDirectory, ReadableLuceneIndex, WritableLuceneIndex}
-import org.apache.lucene.document.{Document, Field, SortedSetDocValuesField, StringField}
+import org.apache.lucene.document.{Document, Field, StringField}
 import com.gilt.lucene.LuceneDocumentAdder._
-import org.apache.lucene.facet.{Facets, FacetsCollector}
-import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts, SortedSetDocValuesReaderState}
 import org.apache.lucene.index.Term
-import org.apache.lucene.util.BytesRef
 import org.zouzias.spark.rdd.lucenerdd.utils.{MyLuceneDocumentLike, SerializedDocument}
 
 import scala.reflect.ClassTag

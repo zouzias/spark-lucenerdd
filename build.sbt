@@ -39,6 +39,7 @@ pomExtra := (
 )
 
 val sparkVersion = "1.5.2"
+val luceneV = "5.5.0"
 
 val spark_core                = "org.apache.spark"               %% "spark-core"               % sparkVersion
 val spark_sql                 = "org.apache.spark"               %% "spark-sql"                % sparkVersion
@@ -49,11 +50,11 @@ val scala_check               = "org.scalacheck"                 %% "scalacheck"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6"  % "test"
 val spark_testing_base        = "com.holdenkarau"                %% "spark-testing-base"       % s"${sparkVersion}_0.3.1" % "test" intransitive()
 
-val lucene_sugar              = "com.gilt"                       %% "lib-lucene-sugar"         % "0.2.3"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.0"
 
-val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % "4.10.3"
-val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % "4.10.3"
+val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
+val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
+val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
 
 
 
@@ -61,8 +62,8 @@ libraryDependencies ++= Seq(
   spark_core % "provided",
   spark_sql % "provided",
   algebird,
-  lucene_sugar,
   lucene_facet,
+  lucene_analyzers,
   lucene_expressions,
   specs2_core,
   scalatest,

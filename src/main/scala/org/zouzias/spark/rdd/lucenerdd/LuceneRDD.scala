@@ -70,7 +70,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
   /**
    * Lucene generic query
    *
-   * @param
+   * @param doc
    * @return
    */
   def exists(doc: Map[String, String]): Boolean = {

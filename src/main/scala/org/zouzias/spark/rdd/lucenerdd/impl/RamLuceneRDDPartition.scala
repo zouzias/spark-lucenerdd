@@ -20,14 +20,14 @@ package org.zouzias.spark.rdd.lucenerdd.impl
 import org.apache.spark.Logging
 import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 import org.apache.lucene.search._
-import com.gilt.lucene.{LuceneStandardAnalyzer, RamLuceneDirectory, ReadableLuceneIndex, WritableLuceneIndex}
 import org.apache.lucene.document.{Document, Field, StringField}
-import com.gilt.lucene.LuceneDocumentAdder._
-import org.apache.lucene.index.Term
-import org.zouzias.spark.rdd.lucenerdd.utils.{MyLuceneDocumentLike, SerializedDocument}
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer
+import org.apache.lucene.index.IndexWriterConfig.OpenMode
+import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig, Term}
+import org.apache.lucene.store.RAMDirectory
+import org.zouzias.spark.rdd.lucenerdd.utils.{LuceneHelpers, MyLuceneDocumentLike, SerializedDocument}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 private[lucenerdd] class RamLuceneRDDPartition[T]
@@ -35,18 +35,24 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 (override implicit val kTag: ClassTag[T])
   extends LuceneRDDPartition[T] with Logging {
 
-  private lazy val index = new ReadableLuceneIndex
-    with WritableLuceneIndex
-    with LuceneStandardAnalyzer
-    with RamLuceneDirectory
-
+  private val indexDir = new RAMDirectory()
+  private lazy val indexWriter = new IndexWriter(indexDir, new IndexWriterConfig(
+    new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE_OR_APPEND))
 
   iter.foreach { case elem =>
     // Convert it to lucene document
-    index.addDocument(conversion.toDocument(elem))
+    indexWriter.addDocument(conversion.toDocument(elem))
   }
 
-  override def size: Long = index.allDocuments.size
+  indexWriter.commit()
+  indexWriter.close()
+
+  private val indexReader = DirectoryReader.open(indexDir)
+  private val indexSearcher = new IndexSearcher(indexReader)
+
+  override def size: Long = {
+    LuceneHelpers.totalDocs(indexSearcher)
+  }
 
   override def isDefined(elem: T): Boolean = {
     val doc: Document = conversion.toDocument(elem)
@@ -58,17 +64,15 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
       new TermQuery(new Term(field, fieldValue))
     }
 
-    val query = new BooleanQuery()
+    val builder = new BooleanQuery.Builder()
     terms.foreach{ case termQuery =>
-      query.add(termQuery, BooleanClause.Occur.MUST)
+      builder.add(termQuery, BooleanClause.Occur.MUST)
     }
 
-    index.searchTopDocuments(query, 1).size > 0
+    indexSearcher.search(builder.build(), 1).totalHits > 0
   }
 
-  override def iterator: Iterator[T] = {
-    index.allDocuments.map(_.toString.asInstanceOf[T]).toIterator
-  }
+  override def iterator: Iterator[T] = ???
 
   override def filter(pred: T => Boolean): LuceneRDDPartition[T] =
     new RamLuceneRDDPartition(iter.filter(pred), conversion)
@@ -77,33 +81,33 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
                          topK: Int = 1): Iterable[SerializedDocument] = {
     val term = new Term(fieldName, fieldText)
     val qr = new TermQuery(term)
-    index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
+    LuceneHelpers.searchTopKDocs(indexSearcher, qr, topK).map(SerializedDocument(_))
   }
 
   override def query(q: Query, topK: Int): Iterable[SerializedDocument] = {
-    index.searchTopDocuments(q, topK).map(SerializedDocument(_))
+    LuceneHelpers.searchTopKDocs(indexSearcher, q, topK).map(SerializedDocument(_))
   }
 
   override def prefixQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SerializedDocument] = {
     val term = new Term(fieldName, fieldText)
     val qr = new PrefixQuery(term)
-    index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
+    LuceneHelpers.searchTopKDocs(indexSearcher, qr, topK).map(SerializedDocument(_))
   }
 
   override def fuzzyQuery(fieldName: String, fieldText: String,
                           maxEdits: Int, topK: Int): Iterable[SerializedDocument] = {
     val term = new Term(fieldName, fieldText)
     val qr = new FuzzyQuery(term, maxEdits)
-    index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
+    LuceneHelpers.searchTopKDocs(indexSearcher, qr, topK).map(SerializedDocument(_))
   }
 
   override def phraseQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SerializedDocument] = {
     val term = new Term(fieldName, fieldText)
-    val qr = new PhraseQuery()
-    qr.add(term)
-    index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
+    val builder = new PhraseQuery.Builder()
+    builder.add(term)
+    LuceneHelpers.searchTopKDocs(indexSearcher, builder.build(), topK).map(SerializedDocument(_))
   }
 }
 

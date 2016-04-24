@@ -19,9 +19,13 @@ package org.zouzias.spark.rdd.lucenerdd.utils
 
 import org.apache.lucene.document.Document
 
+/**
+ * Convertion of type T to Lucene Document
+ * @tparam T
+ */
 trait MyLuceneDocumentLike[T] extends Serializable {
 
   def defaultField: String
 
-  def toDocuments(v: T): Iterable[Document]
+  def toDocument(v: T): Document
 }

@@ -26,6 +26,8 @@ import com.gilt.lucene.LuceneDocumentAdder._
 import org.apache.lucene.index.Term
 import org.zouzias.spark.rdd.lucenerdd.utils.{MyLuceneDocumentLike, SerializedDocument}
 
+import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 private[lucenerdd] class RamLuceneRDDPartition[T]
@@ -41,12 +43,28 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 
   iter.foreach { case elem =>
     // Convert it to lucene document
-    index.addDocuments(conversion.toDocuments(elem))
+    index.addDocument(conversion.toDocument(elem))
   }
 
   override def size: Long = index.allDocuments.size
 
-  override def isDefined(elem: T): Boolean = iter.contains(elem)
+  override def isDefined(elem: T): Boolean = {
+    val doc: Document = conversion.toDocument(elem)
+    this.query(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap)
+  }
+
+  override def query(docMap: Map[String, String]): Boolean = {
+    val terms = docMap.map{ case (field, fieldValue) =>
+      new TermQuery(new Term(field, fieldValue))
+    }
+
+    val query = new BooleanQuery()
+    terms.foreach{ case termQuery =>
+      query.add(termQuery, BooleanClause.Occur.MUST)
+    }
+
+    index.searchTopDocuments(query, 1).size > 0
+  }
 
   override def iterator: Iterator[T] = {
     index.allDocuments.map(_.toString.asInstanceOf[T]).toIterator
@@ -61,10 +79,6 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
     val qr = new TermQuery(term)
     index.searchTopDocuments(qr, topK).map(SerializedDocument(_))
   }
-
-  override def diff(other: LuceneRDDPartition[T]): LuceneRDDPartition[T] = ???
-
-  override def diff(other: Iterator[T]): LuceneRDDPartition[T] = ???
 
   override def query(q: Query, topK: Int): Iterable[SerializedDocument] = {
     index.searchTopDocuments(q, topK).map(SerializedDocument(_))
@@ -104,10 +118,10 @@ object RamLuceneRDDPartition {
 
     def defaultField: String = "value"
 
-    override def toDocuments(value: String): Iterable[Document] = {
+    override def toDocument(value: String): Document = {
       val doc = new Document
       doc.add(new StringField(defaultField, value.toString, Field.Store.YES))
-      Seq(doc)
+      doc
     }
   }
 }

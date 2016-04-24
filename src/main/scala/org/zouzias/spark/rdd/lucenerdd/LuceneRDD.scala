@@ -58,6 +58,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /**
    * Document results aggregator
+   *
    * @param f
    * @return
    */
@@ -68,6 +69,19 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /**
    * Lucene generic query
+   *
+   * @param
+   * @return
+   */
+  def exists(doc: Map[String, String]): Boolean = {
+    partitionsRDD.map { case part =>
+      part.query(doc)
+    }.toLocalIterator.forall(x => x)
+  }
+
+  /**
+   * Lucene generic query
+   *
    * @param q
    * @param topK
    * @return
@@ -78,6 +92,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /**
    * Lucene term query
+   *
    * @param fieldName
    * @param query
    * @param topK
@@ -90,6 +105,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /**
    * Lucene prefix query
+   *
    * @param fieldName
    * @param query
    * @param topK
@@ -102,6 +118,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /**
    * Lucene fuzzy query
+   *
    * @param fieldName
    * @param query
    * @param maxEdits
@@ -115,6 +132,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /**
    * Lucene phrase Query
+   *
    * @param fieldName
    * @param query
    * @param topK

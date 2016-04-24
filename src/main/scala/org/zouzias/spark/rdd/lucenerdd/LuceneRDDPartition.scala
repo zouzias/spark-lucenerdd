@@ -17,6 +17,7 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
+import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
 import org.zouzias.spark.rdd.lucenerdd.utils.SerializedDocument
 
@@ -37,31 +38,58 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   def isDefined(key: T): Boolean
 
+  def query(docMap: Map[String, String]): Boolean
+
+  /**
+   * Generic Lucene Query
+   * @param q
+   * @param topK
+   * @return
+   */
   def query(q: Query, topK: Int): Iterable[SerializedDocument]
 
+  /**
+   * Term Query
+   * @param fieldName
+   * @param query
+   * @param topK
+   * @return
+   */
   def termQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
 
+  /**
+   * Prefix Query
+   * @param fieldName
+   * @param query
+   * @param topK
+   * @return
+   */
   def prefixQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
 
+  /**
+   * Fuzzy Query
+   * @param fieldName
+   * @param query
+   * @param maxEdits
+   * @param topK
+   * @return
+   */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int): Iterable[SerializedDocument]
 
+  /**
+   * PhraseQuery
+   * @param fieldName
+   * @param query
+   * @param topK
+   * @return
+   */
   def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
 
   /**
-   * Restricts the entries to those satisfying the given predicate.
+   * Restricts the entries to those satisfying a predicate
+   * @param pred
+   * @return
    */
   def filter(pred: T => Boolean): LuceneRDDPartition[T]
-
-  /**
-   * Intersects `this` and `other` and keeps only elements with differing values. For these
-   * elements, keeps the values from `this`.
-   */
-  def diff(other: LuceneRDDPartition[T]): LuceneRDDPartition[T]
-
-  /**
-   * Intersects `this` and `other` and keeps only elements with differing values. For these
-   * elements, keeps the values from `this`.
-   */
-  def diff(other: Iterator[T]): LuceneRDDPartition[T]
 }

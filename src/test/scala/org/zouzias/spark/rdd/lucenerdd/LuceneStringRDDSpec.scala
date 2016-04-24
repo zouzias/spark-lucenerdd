@@ -18,25 +18,26 @@ package org.zouzias.spark.rdd.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{ FlatSpec, Matchers }
-import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition
+import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition._
 
 
-class LuceneRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
+class LuceneStringRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
+
+  val First = "_1"
 
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
   val array = (1 to 24).map(randomString(_))
 
   "LuceneRDD" should "return correct number of elements" in {
     val rdd = sc.parallelize(array)
-    val luceneRDD = LuceneRDD(rdd, RamLuceneRDDPartition.stringConversion)
+    val luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should be (array.size)
   }
 
   "LuceneRDD" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(array)
-    val StringConv = RamLuceneRDDPartition.stringConversion
-    val luceneRDD = LuceneRDD(rdd, StringConv)
-    val results = luceneRDD.termQuery(StringConv.defaultField,
+    val luceneRDD = LuceneRDD(rdd)
+    val results = luceneRDD.termQuery(First,
       array(scala.util.Random.nextInt(array.size)))
     results.size should be (1)
   }
@@ -45,25 +46,23 @@ class LuceneRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
 
     val prefices = Array("aaaabcd", "aaadcb", "aaz", "az", "qwerty")
     val rdd = sc.parallelize(prefices)
-    val StringConv = RamLuceneRDDPartition.stringConversion
-    val luceneRDD = LuceneRDD(rdd, StringConv)
+    val luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.prefixQuery(StringConv.defaultField, "a").size should be (4)
-    luceneRDD.prefixQuery(StringConv.defaultField, "aa").size should be (3)
-    luceneRDD.prefixQuery(StringConv.defaultField, "aaa").size should be (2)
-    luceneRDD.prefixQuery(StringConv.defaultField, "aaaa").size should be (1)
+    luceneRDD.prefixQuery(First, "a").size should be (4)
+    luceneRDD.prefixQuery(First, "aa").size should be (3)
+    luceneRDD.prefixQuery(First, "aaa").size should be (2)
+    luceneRDD.prefixQuery(First, "aaaa").size should be (1)
   }
 
   "LuceneRDD" should "correctly search with FuzzyQuery" in {
 
     val prefices = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(prefices)
-    val StringConv = RamLuceneRDDPartition.stringConversion
-    val luceneRDD = LuceneRDD(rdd, StringConv)
+    val luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.fuzzyQuery(StringConv.defaultField, "aaaaa", 1).size should be (4)
-    luceneRDD.fuzzyQuery(StringConv.defaultField, "qwert", 1).size should be (1)
-    luceneRDD.fuzzyQuery(StringConv.defaultField, "werty", 1).size should be (1)
+    luceneRDD.fuzzyQuery(First, "aaaaa", 1).size should be (4)
+    luceneRDD.fuzzyQuery(First, "qwert", 1).size should be (1)
+    luceneRDD.fuzzyQuery(First, "werty", 1).size should be (1)
   }
 
   /*
@@ -74,7 +73,7 @@ class LuceneRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
     val StringConv = RamLuceneRDDPartition.stringConversion
     val luceneRDD = LuceneRDD(rdd, StringConv)
 
-    luceneRDD.facetedQuery(StringConv.defaultField, 10).size should be (3)
+    luceneRDD.facetedQuery(First, 10).size should be (3)
   } */
 
 }

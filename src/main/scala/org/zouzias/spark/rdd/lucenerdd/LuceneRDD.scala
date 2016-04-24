@@ -17,6 +17,7 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
+import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -171,17 +172,15 @@ object LuceneRDD {
   /**
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
    */
-  def apply[T: ClassTag](elems: RDD[T], conversion: MyLuceneDocumentLike[T]): LuceneRDD[T] = {
-
+  def apply[T: ClassTag](elems: RDD[T])(implicit docConversion: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitions[LuceneRDDPartition[T]](
-      iter => Iterator(RamLuceneRDDPartition(iter, conversion)),
+      iter => Iterator(RamLuceneRDDPartition(iter)),
       preservesPartitioning = true)
     new LuceneRDD(partitions)
   }
 
   def apply[T: ClassTag]
-  (elems: Iterable[T], conversion: MyLuceneDocumentLike[T])
-  (implicit sc: SparkContext): LuceneRDD[T] = {
-    apply(sc.parallelize[T](elems.toSeq), conversion)
+  (elems: Iterable[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
+    apply(sc.parallelize[T](elems.toSeq))
   }
 }

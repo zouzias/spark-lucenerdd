@@ -20,19 +20,20 @@ package org.zouzias.spark.rdd.lucenerdd.impl
 import org.apache.spark.Logging
 import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 import org.apache.lucene.search._
-import org.apache.lucene.document.{Document, Field, StringField}
+import org.apache.lucene.document._
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig, Term}
 import org.apache.lucene.store.RAMDirectory
-import org.zouzias.spark.rdd.lucenerdd.utils.{LuceneHelpers, MyLuceneDocumentLike, SerializedDocument}
+import org.zouzias.spark.rdd.lucenerdd.utils.{LuceneHelpers, SerializedDocument}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
+import scala.reflect._
 
 private[lucenerdd] class RamLuceneRDDPartition[T]
-(private val iter: Iterator[T], val conversion: MyLuceneDocumentLike[T])
-(override implicit val kTag: ClassTag[T])
+(private val iter: Iterator[T])
+(implicit docConversion: T => Document, override implicit val kTag: ClassTag[T])
   extends LuceneRDDPartition[T] with Logging {
 
   private val indexDir = new RAMDirectory()
@@ -41,7 +42,7 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 
   iter.foreach { case elem =>
     // Convert it to lucene document
-    indexWriter.addDocument(conversion.toDocument(elem))
+    indexWriter.addDocument(docConversion(elem))
   }
 
   indexWriter.commit()
@@ -55,7 +56,7 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
   }
 
   override def isDefined(elem: T): Boolean = {
-    val doc: Document = conversion.toDocument(elem)
+    val doc: Document = docConversion(elem)
     this.query(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap)
   }
 
@@ -75,7 +76,7 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
   override def iterator: Iterator[T] = ???
 
   override def filter(pred: T => Boolean): LuceneRDDPartition[T] =
-    new RamLuceneRDDPartition(iter.filter(pred), conversion)
+    new RamLuceneRDDPartition(iter.filter(pred))(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): Iterable[SerializedDocument] = {
@@ -114,18 +115,72 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 object RamLuceneRDDPartition {
 
   def apply[T: ClassTag]
-      (iter: Iterator[T], conversion: MyLuceneDocumentLike[T]): RamLuceneRDDPartition[T] = {
-    new RamLuceneRDDPartition[T](iter, conversion)
+      (iter: Iterator[T])(implicit docConversion: T => Document): RamLuceneRDDPartition[T] = {
+    new RamLuceneRDDPartition[T](iter)(docConversion, classTag[T])
   }
 
-  val stringConversion = new MyLuceneDocumentLike[String] {
+  implicit def intToDocument(v: Int): Document = {
+    val doc = new Document
+    doc.add(new IntField("_1", v, Field.Store.YES))
+    doc
+  }
 
-    def defaultField: String = "value"
+  implicit def longToDocument(v: Long): Document = {
+    val doc = new Document
+    doc.add(new LongField("_1", v, Field.Store.YES))
+    doc
+  }
 
-    override def toDocument(value: String): Document = {
-      val doc = new Document
-      doc.add(new StringField(defaultField, value.toString, Field.Store.YES))
-      doc
+  implicit def doubleToDocument(v: Double): Document = {
+    val doc = new Document
+    doc.add(new DoubleField("_1", v, Field.Store.YES))
+    doc
+  }
+
+  implicit def floatToDocument(v: Float): Document = {
+    val doc = new Document
+    doc.add(new FloatField("_1", v, Field.Store.YES))
+    doc
+  }
+
+  implicit def stringToDocument(s: String): Document = {
+    val doc = new Document
+    doc.add(new StringField("_1", s, Field.Store.YES))
+    doc
+  }
+
+  private def typeToDocument[T: ClassTag](doc: Document, index: Int, s: T): Document = {
+    s match {
+      case x: String =>
+        doc.add(new StringField(s"_${index}", x, Field.Store.YES))
+      case x: Int =>
+        doc.add(new IntField(s"_${index}", x, Field.Store.YES))
+      case x: Double =>
+        doc.add(new DoubleField(s"_${index}", x, Field.Store.YES))
+      case x: Float =>
+        doc.add(new FloatField(s"_${index}", x, Field.Store.YES))
+      case x: Long =>
+        doc.add(new LongField(s"_${index}", x, Field.Store.YES))
     }
+
+    doc
   }
+
+  implicit def tuple2ToDocument[T1: ClassTag, T2: ClassTag](s: (T1, T2)): Document = {
+    val doc = new Document
+    typeToDocument[T1](doc, 1, s._1)
+    typeToDocument[T2](doc, 2, s._2)
+    doc
+  }
+
+  implicit def tuple3ToDocument[T1: ClassTag,
+                                T2: ClassTag,
+                                T3: ClassTag](s: (T1, T2, T3)): Document = {
+    val doc = new Document
+    typeToDocument[T1](doc, 1, s._1)
+    typeToDocument[T2](doc, 2, s._2)
+    typeToDocument[T3](doc, 3, s._3)
+    doc
+  }
+
 }

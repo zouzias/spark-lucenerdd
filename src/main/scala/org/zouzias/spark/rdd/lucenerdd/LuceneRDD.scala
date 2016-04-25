@@ -23,7 +23,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition
-import org.zouzias.spark.rdd.lucenerdd.utils.{MyLuceneDocumentLike, SerializedDocument}
+import org.zouzias.spark.rdd.lucenerdd.utils.SerializedDocument
 
 import scala.reflect.ClassTag
 
@@ -169,6 +169,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 }
 
 object LuceneRDD {
+
   /**
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
    */

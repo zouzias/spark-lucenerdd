@@ -17,7 +17,9 @@
 package org.zouzias.spark.rdd.lucenerdd.utils
 
 import org.apache.lucene.document.Document
-import org.apache.lucene.search.{IndexSearcher, MatchAllDocsQuery, Query, ScoreDoc}
+import org.apache.lucene.index.Term
+import org.apache.lucene.search._
+import org.zouzias.spark.rdd.lucenerdd.utils.SparkScoreDoc
 
 
 object LuceneHelpers {
@@ -33,8 +35,44 @@ object LuceneHelpers {
     topDocs.scoreDocs.map(_.doc).map(indexSearcher.doc(_))
   }
 
-  def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[ScoreDoc] = {
-   indexSearcher.search(query, k).scoreDocs
+  def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[SparkScoreDoc] = {
+   indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(_))
   }
 
+  def termQuery(indexSearcher: IndexSearcher,
+                fieldName: String,
+                fieldText: String,
+                topK: Int): Seq[SparkScoreDoc] = {
+    val term = new Term(fieldName, fieldText)
+    val qr = new TermQuery(term)
+    LuceneHelpers.searchTopK(indexSearcher, qr, topK)
+  }
+
+  def prefixQuery(indexSearcher: IndexSearcher,
+                  fieldName: String,
+                  fieldText: String,
+                  topK: Int): Seq[SparkScoreDoc] = {
+    val term = new Term(fieldName, fieldText)
+    val qr = new PrefixQuery(term)
+    LuceneHelpers.searchTopK(indexSearcher, qr, topK)
+  }
+
+  def fuzzyQuery(indexSearcher: IndexSearcher,
+                 fieldName: String,
+                 fieldText: String,
+                 maxEdits: Int,
+                 topK: Int): Seq[SparkScoreDoc] = {
+    val term = new Term(fieldName, fieldText)
+    val qr = new FuzzyQuery(term, maxEdits)
+    LuceneHelpers.searchTopK(indexSearcher, qr, topK)
+  }
+
+  def phraseQuery(indexSearcher: IndexSearcher,
+                  fieldName: String,
+                  fieldText: String,
+                  topK: Int): Seq[SparkScoreDoc] = {
+    val builder = new PhraseQuery.Builder()
+    fieldText.split(" ").foreach( token => builder.add(new Term(fieldName, token)))
+    LuceneHelpers.searchTopK(indexSearcher, builder.build(), topK)
+  }
 }

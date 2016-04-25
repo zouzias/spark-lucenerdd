@@ -16,21 +16,14 @@
  */
 package org.zouzias.spark.rdd.lucenerdd.utils
 
-import org.apache.lucene.document.Document
 import org.apache.lucene.search.ScoreDoc
 
-import scala.collection.JavaConverters._
 
-case class SerializedDocument(doc: Map[String, String])
+case class SparkScoreDoc(score: Float, doc: Int, shardIndex: Int)
 
-
-object SerializedDocument extends Serializable {
-  def apply(doc: Document): SerializedDocument = {
-    val map = doc.getFields.asScala.map( field =>
-    field.name() -> field.stringValue()
-    ).toMap[String, String]
-
-    new SerializedDocument(map)
+object SparkScoreDoc extends Serializable {
+  def apply(scoreDoc: ScoreDoc): SparkScoreDoc = {
+    SparkScoreDoc(scoreDoc.score, scoreDoc.doc, scoreDoc.shardIndex)
   }
-
 }
+

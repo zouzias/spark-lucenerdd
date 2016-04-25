@@ -80,9 +80,9 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): Iterable[SerializedDocument] = {
-    val term = new Term(fieldName, fieldText)
-    val qr = new TermQuery(term)
-    LuceneHelpers.searchTopKDocs(indexSearcher, qr, topK).map(SerializedDocument(_))
+    LuceneHelpers.termQuery(indexSearcher, fieldName, fieldText, topK)
+        .map(x => indexSearcher.doc(x.doc))
+      .map(SerializedDocument(_))
   }
 
   override def query(q: Query, topK: Int): Iterable[SerializedDocument] = {
@@ -91,24 +91,23 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 
   override def prefixQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SerializedDocument] = {
-    val term = new Term(fieldName, fieldText)
-    val qr = new PrefixQuery(term)
-    LuceneHelpers.searchTopKDocs(indexSearcher, qr, topK).map(SerializedDocument(_))
-  }
+    LuceneHelpers.prefixQuery(indexSearcher, fieldName, fieldText, topK)
+      .map(x => indexSearcher.doc(x.doc))
+      .map(SerializedDocument(_))
+   }
 
   override def fuzzyQuery(fieldName: String, fieldText: String,
                           maxEdits: Int, topK: Int): Iterable[SerializedDocument] = {
-    val term = new Term(fieldName, fieldText)
-    val qr = new FuzzyQuery(term, maxEdits)
-    LuceneHelpers.searchTopKDocs(indexSearcher, qr, topK).map(SerializedDocument(_))
+    LuceneHelpers.fuzzyQuery(indexSearcher, fieldName, fieldText, maxEdits, topK)
+      .map(x => indexSearcher.doc(x.doc))
+      .map(SerializedDocument(_))
   }
 
   override def phraseQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SerializedDocument] = {
-    val term = new Term(fieldName, fieldText)
-    val builder = new PhraseQuery.Builder()
-    builder.add(term)
-    LuceneHelpers.searchTopKDocs(indexSearcher, builder.build(), topK).map(SerializedDocument(_))
+    LuceneHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)
+      .map(x => indexSearcher.doc(x.doc))
+      .map(SerializedDocument(_))
   }
 }
 
@@ -118,69 +117,4 @@ object RamLuceneRDDPartition {
       (iter: Iterator[T])(implicit docConversion: T => Document): RamLuceneRDDPartition[T] = {
     new RamLuceneRDDPartition[T](iter)(docConversion, classTag[T])
   }
-
-  implicit def intToDocument(v: Int): Document = {
-    val doc = new Document
-    doc.add(new IntField("_1", v, Field.Store.YES))
-    doc
-  }
-
-  implicit def longToDocument(v: Long): Document = {
-    val doc = new Document
-    doc.add(new LongField("_1", v, Field.Store.YES))
-    doc
-  }
-
-  implicit def doubleToDocument(v: Double): Document = {
-    val doc = new Document
-    doc.add(new DoubleField("_1", v, Field.Store.YES))
-    doc
-  }
-
-  implicit def floatToDocument(v: Float): Document = {
-    val doc = new Document
-    doc.add(new FloatField("_1", v, Field.Store.YES))
-    doc
-  }
-
-  implicit def stringToDocument(s: String): Document = {
-    val doc = new Document
-    doc.add(new StringField("_1", s, Field.Store.YES))
-    doc
-  }
-
-  private def typeToDocument[T: ClassTag](doc: Document, index: Int, s: T): Document = {
-    s match {
-      case x: String =>
-        doc.add(new StringField(s"_${index}", x, Field.Store.YES))
-      case x: Int =>
-        doc.add(new IntField(s"_${index}", x, Field.Store.YES))
-      case x: Double =>
-        doc.add(new DoubleField(s"_${index}", x, Field.Store.YES))
-      case x: Float =>
-        doc.add(new FloatField(s"_${index}", x, Field.Store.YES))
-      case x: Long =>
-        doc.add(new LongField(s"_${index}", x, Field.Store.YES))
-    }
-
-    doc
-  }
-
-  implicit def tuple2ToDocument[T1: ClassTag, T2: ClassTag](s: (T1, T2)): Document = {
-    val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    doc
-  }
-
-  implicit def tuple3ToDocument[T1: ClassTag,
-                                T2: ClassTag,
-                                T3: ClassTag](s: (T1, T2, T3)): Document = {
-    val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    typeToDocument[T3](doc, 3, s._3)
-    doc
-  }
-
 }

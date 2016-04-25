@@ -17,15 +17,10 @@
 
 package org.zouzias.spark.rdd.lucenerdd.utils
 
-import org.apache.lucene.document.Document
-
 /**
- * Convertion of type T to Lucene Document
- * @tparam T
+ * Wrapper for Lucene text field
+ *
+ * The purpose of this class is solely to make phrase query work. It is used in implicit conversions
+ * and pattern matched in [[org.zouzias.spark.rdd.lucenerdd.implicits.LuceneRDDImplicits]]
  */
-trait MyLuceneDocumentLike[T] extends Serializable {
-
-  def defaultField: String
-
-  def toDocument(v: T): Document
-}
+case class LuceneText(content: String)

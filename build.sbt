@@ -16,7 +16,6 @@
  */
 
 name := "spark-lucenerdd"
-version := "0.0.2-SNAPSHOT"
 organization := "org.zouzias"
 scalaVersion := "2.11.7"
 licenses += "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")

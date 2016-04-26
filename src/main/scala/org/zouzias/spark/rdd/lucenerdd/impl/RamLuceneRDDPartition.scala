@@ -25,7 +25,8 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig, Term}
 import org.apache.lucene.store.RAMDirectory
-import org.zouzias.spark.rdd.lucenerdd.utils.{LuceneHelpers, SerializedDocument}
+import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.rdd.lucenerdd.query.LuceneQueryHelpers
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -33,14 +34,17 @@ import scala.reflect._
 
 private[lucenerdd] class RamLuceneRDDPartition[T]
 (private val iter: Iterator[T])
-(implicit docConversion: T => Document, override implicit val kTag: ClassTag[T])
+(implicit docConversion: T => Document,
+ override implicit val kTag: ClassTag[T])
   extends LuceneRDDPartition[T] with Logging {
 
-  private val indexDir = new RAMDirectory()
+  private lazy val indexDir = new RAMDirectory()
   private lazy val indexWriter = new IndexWriter(indexDir, new IndexWriterConfig(
     new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE_OR_APPEND))
 
-  iter.foreach { case elem =>
+  private val (iterOriginal, iterIndex) = iter.duplicate
+
+  iterIndex.foreach { case elem =>
     // Convert it to lucene document
     indexWriter.addDocument(docConversion(elem))
   }
@@ -52,12 +56,12 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
   private val indexSearcher = new IndexSearcher(indexReader)
 
   override def size: Long = {
-    LuceneHelpers.totalDocs(indexSearcher)
+    LuceneQueryHelpers.totalDocs(indexSearcher)
   }
 
   override def isDefined(elem: T): Boolean = {
     val doc: Document = docConversion(elem)
-    this.query(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap)
+    query(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap)
   }
 
   override def query(docMap: Map[String, String]): Boolean = {
@@ -73,41 +77,35 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
     indexSearcher.search(builder.build(), 1).totalHits > 0
   }
 
-  override def iterator: Iterator[T] = ???
+  override def iterator: Iterator[T] = {
+    iterOriginal
+  }
 
   override def filter(pred: T => Boolean): LuceneRDDPartition[T] =
     new RamLuceneRDDPartition(iter.filter(pred))(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
-                         topK: Int = 1): Iterable[SerializedDocument] = {
-    LuceneHelpers.termQuery(indexSearcher, fieldName, fieldText, topK)
-        .map(x => indexSearcher.doc(x.doc))
-      .map(SerializedDocument(_))
+                         topK: Int = 1): Iterable[SparkScoreDoc] = {
+    LuceneQueryHelpers.termQuery(indexSearcher, fieldName, fieldText, topK)
   }
 
-  override def query(q: Query, topK: Int): Iterable[SerializedDocument] = {
-    LuceneHelpers.searchTopKDocs(indexSearcher, q, topK).map(SerializedDocument(_))
+  override def query(q: Query, topK: Int): Iterable[SparkScoreDoc] = {
+    LuceneQueryHelpers.searchTopK(indexSearcher, q, topK)
   }
 
   override def prefixQuery(fieldName: String, fieldText: String,
-                           topK: Int): Iterable[SerializedDocument] = {
-    LuceneHelpers.prefixQuery(indexSearcher, fieldName, fieldText, topK)
-      .map(x => indexSearcher.doc(x.doc))
-      .map(SerializedDocument(_))
+                           topK: Int): Iterable[SparkScoreDoc] = {
+    LuceneQueryHelpers.prefixQuery(indexSearcher, fieldName, fieldText, topK)
    }
 
   override def fuzzyQuery(fieldName: String, fieldText: String,
-                          maxEdits: Int, topK: Int): Iterable[SerializedDocument] = {
-    LuceneHelpers.fuzzyQuery(indexSearcher, fieldName, fieldText, maxEdits, topK)
-      .map(x => indexSearcher.doc(x.doc))
-      .map(SerializedDocument(_))
+                          maxEdits: Int, topK: Int): Iterable[SparkScoreDoc] = {
+    LuceneQueryHelpers.fuzzyQuery(indexSearcher, fieldName, fieldText, maxEdits, topK)
   }
 
   override def phraseQuery(fieldName: String, fieldText: String,
-                           topK: Int): Iterable[SerializedDocument] = {
-    LuceneHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)
-      .map(x => indexSearcher.doc(x.doc))
-      .map(SerializedDocument(_))
+                           topK: Int): Iterable[SparkScoreDoc] = {
+    LuceneQueryHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)
   }
 }
 

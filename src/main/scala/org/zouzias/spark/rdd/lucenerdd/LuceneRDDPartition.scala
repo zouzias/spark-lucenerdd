@@ -17,9 +17,8 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
-import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
-import org.zouzias.spark.rdd.lucenerdd.utils.SerializedDocument
+import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 
 import scala.reflect.ClassTag
 
@@ -46,7 +45,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
    * @param topK
    * @return
    */
-  def query(q: Query, topK: Int): Iterable[SerializedDocument]
+  def query(q: Query, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Term Query
@@ -55,7 +54,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
    * @param topK
    * @return
    */
-  def termQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+  def termQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Prefix Query
@@ -64,7 +63,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
    * @param topK
    * @return
    */
-  def prefixQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+  def prefixQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Fuzzy Query
@@ -75,7 +74,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
    * @return
    */
   def fuzzyQuery(fieldName: String, query: String,
-                 maxEdits: Int, topK: Int): Iterable[SerializedDocument]
+                 maxEdits: Int, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * PhraseQuery
@@ -84,7 +83,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
    * @param topK
    * @return
    */
-  def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SerializedDocument]
+  def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Restricts the entries to those satisfying a predicate

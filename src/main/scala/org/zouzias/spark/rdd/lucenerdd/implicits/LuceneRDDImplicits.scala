@@ -18,12 +18,16 @@
 package org.zouzias.spark.rdd.lucenerdd.implicits
 
 import org.apache.lucene.document.{FloatField, StringField, _}
-import org.zouzias.spark.rdd.lucenerdd.utils.LuceneText
+import org.zouzias.spark.rdd.lucenerdd.model.LuceneText
 
 import scala.reflect.ClassTag
 
 /**
- * Implicit conversions of basic types to Apache Lucene Documents
+ * Implicit conversions of basic types to Apache Lucene documents
+ *
+ * Currently supports:
+ * 1) Primitive types: Int, Long, Float, Double, String
+ * 2)
  */
 object LuceneRDDImplicits {
 
@@ -139,6 +143,24 @@ object LuceneRDDImplicits {
     typeToDocument[T4](doc, 4, s._4)
     typeToDocument[T5](doc, 5, s._5)
     typeToDocument[T6](doc, 6, s._6)
+    doc
+  }
+
+  implicit def tuple7ToDocument[T1: ClassTag,
+  T2: ClassTag,
+  T3: ClassTag,
+  T4: ClassTag,
+  T5: ClassTag,
+  T6: ClassTag,
+  T7: ClassTag](s: (T1, T2, T3, T4, T5, T6, T7)): Document = {
+    val doc = new Document
+    typeToDocument[T1](doc, 1, s._1)
+    typeToDocument[T2](doc, 2, s._2)
+    typeToDocument[T3](doc, 3, s._3)
+    typeToDocument[T4](doc, 4, s._4)
+    typeToDocument[T5](doc, 5, s._5)
+    typeToDocument[T6](doc, 6, s._6)
+    typeToDocument[T7](doc, 7, s._7)
     doc
   }
 

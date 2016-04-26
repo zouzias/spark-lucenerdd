@@ -17,13 +17,14 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
+import com.twitter.algebird.TopKMonoid
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition
-import org.zouzias.spark.rdd.lucenerdd.utils.SerializedDocument
+import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 
 import scala.reflect.ClassTag
 
@@ -36,6 +37,8 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /** Top K Documents */
   private val TopK = 10
+
+  private val monoid = new TopKMonoid[SparkScoreDoc](TopK)
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -63,9 +66,10 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @param f
    * @return
    */
-  private def docResultsAggregator(f: LuceneRDDPartition[T] => Iterable[SerializedDocument])
-  : Iterable[SerializedDocument] = {
-    partitionsRDD.flatMap(f(_)).toLocalIterator.toIterable
+  private def docResultsAggregator(f: LuceneRDDPartition[T] => Iterable[SparkScoreDoc])
+  : Iterable[SparkScoreDoc] = {
+    val parts = partitionsRDD.map(f(_)).map(monoid.build(_))
+    parts.reduce(monoid.plus(_, _)).items
   }
 
   /**
@@ -87,7 +91,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @param topK
    * @return
    */
-  def query(q: Query, topK: Int = TopK): Iterable[SerializedDocument] = {
+  def query(q: Query, topK: Int = TopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.query(q, topK))
   }
 
@@ -100,7 +104,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def termQuery(fieldName: String, query: String,
-                topK: Int = TopK): Iterable[SerializedDocument] = {
+                topK: Int = TopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.termQuery(fieldName, query, topK))
   }
 
@@ -113,7 +117,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def prefixQuery(fieldName: String, query: String,
-                  topK: Int = TopK): Iterable[SerializedDocument] = {
+                  topK: Int = TopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.prefixQuery(fieldName, query, topK))
   }
 
@@ -127,7 +131,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def fuzzyQuery(fieldName: String, query: String,
-                 maxEdits: Int, topK: Int = TopK): Iterable[SerializedDocument] = {
+                 maxEdits: Int, topK: Int = TopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.fuzzyQuery(fieldName, query, maxEdits, topK))
   }
 
@@ -140,7 +144,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def phraseQuery(fieldName: String, query: String,
-                  topK: Int = TopK): Iterable[SerializedDocument] = {
+                  topK: Int = TopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.phraseQuery(fieldName, query, topK))
   }
 
@@ -148,7 +152,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
     partitionsRDD.map(_.size).reduce(_ + _)
   }
 
-  /** Provides the `RDD[(K, V)]` equivalent output. */
+  /** RDD compute method. */
   override def compute(part: Partition, context: TaskContext): Iterator[T] = {
     firstParent[LuceneRDDPartition[T]].iterator(part, context).next.iterator
   }
@@ -181,7 +185,7 @@ object LuceneRDD {
   }
 
   def apply[T: ClassTag]
-  (elems: Iterable[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
+  (elems: Iterator[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
     apply(sc.parallelize[T](elems.toSeq))
   }
 }

@@ -28,10 +28,22 @@ object LuceneQueryHelpers {
 
   private val MatchAllDocs = new MatchAllDocsQuery()
 
+  /**
+   * Count number of lucene documents
+   * @param indexSearcher
+   * @return
+   */
   def totalDocs(indexSearcher: IndexSearcher): Long = {
     indexSearcher.search(MatchAllDocs, 1).totalHits
   }
 
+  /**
+   * Search topK documents
+   * @param indexSearcher
+   * @param query
+   * @param k
+   * @return
+   */
   def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[Document] = {
     val topDocs = indexSearcher.search(query, k)
     topDocs.scoreDocs.map(_.doc).map(indexSearcher.doc(_))
@@ -41,6 +53,14 @@ object LuceneQueryHelpers {
    indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
+  /**
+   * Term query on given field
+   * @param indexSearcher
+   * @param fieldName
+   * @param fieldText
+   * @param topK
+   * @return
+   */
   def termQuery(indexSearcher: IndexSearcher,
                 fieldName: String,
                 fieldText: String,
@@ -50,6 +70,14 @@ object LuceneQueryHelpers {
     LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
   }
 
+  /**
+   * Prefix query
+   * @param indexSearcher
+   * @param fieldName
+   * @param fieldText
+   * @param topK
+   * @return
+   */
   def prefixQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,
@@ -59,6 +87,15 @@ object LuceneQueryHelpers {
     LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
   }
 
+  /**
+   * Fuzzy query
+   * @param indexSearcher
+   * @param fieldName
+   * @param fieldText
+   * @param maxEdits
+   * @param topK
+   * @return
+   */
   def fuzzyQuery(indexSearcher: IndexSearcher,
                  fieldName: String,
                  fieldText: String,
@@ -69,6 +106,14 @@ object LuceneQueryHelpers {
     LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
   }
 
+  /**
+   * Phrase query
+   * @param indexSearcher
+   * @param fieldName
+   * @param fieldText
+   * @param topK
+   * @return
+   */
   def phraseQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,

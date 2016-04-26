@@ -51,6 +51,6 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers with SharedSparkCo
     val array: IndexedSeq[Long] = (1 to 22).map(_.toLong)
     val rdd = sc.parallelize(array)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should be (array.size)
+    luceneRDD.count should equal (array.size)
   }
 }

@@ -28,10 +28,18 @@ class LuceneRDDSearchSpec extends FlatSpec with Matchers with SharedSparkContext
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
   val array = (1 to 24).map(randomString(_))
 
+  "LuceneRDD" should "find elements that exist" in {
+    val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD.exists(Map("_1" -> "aaaa")) should equal (true)
+  }
+
+
   "LuceneRDD" should "return correct number of elements" in {
     val rdd = sc.parallelize(array)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should be (array.size)
+    luceneRDD.count should equal (array.size)
   }
 
   "LuceneRDD" should "correctly search with TermQueries" in {
@@ -39,7 +47,7 @@ class LuceneRDDSearchSpec extends FlatSpec with Matchers with SharedSparkContext
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(First,
       array(scala.util.Random.nextInt(array.size)))
-    results.size should be (1)
+    results.size should equal (1)
   }
 
   "LuceneRDD" should "correctly search with PrefixQueries" in {
@@ -48,10 +56,10 @@ class LuceneRDDSearchSpec extends FlatSpec with Matchers with SharedSparkContext
     val rdd = sc.parallelize(prefices)
     val luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.prefixQuery(First, "a").size should be (4)
-    luceneRDD.prefixQuery(First, "aa").size should be (3)
-    luceneRDD.prefixQuery(First, "aaa").size should be (2)
-    luceneRDD.prefixQuery(First, "aaaa").size should be (1)
+    luceneRDD.prefixQuery(First, "a").size should equal (4)
+    luceneRDD.prefixQuery(First, "aa").size should equal(3)
+    luceneRDD.prefixQuery(First, "aaa").size should equal (2)
+    luceneRDD.prefixQuery(First, "aaaa").size should equal (1)
   }
 
   "LuceneRDD" should "correctly search with FuzzyQuery" in {
@@ -59,9 +67,9 @@ class LuceneRDDSearchSpec extends FlatSpec with Matchers with SharedSparkContext
     val rdd = sc.parallelize(prefices)
     val luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.fuzzyQuery(First, "aaaaa", 1).size should be (4)
-    luceneRDD.fuzzyQuery(First, "qwert", 1).size should be (1)
-    luceneRDD.fuzzyQuery(First, "werty", 1).size should be (1)
+    luceneRDD.fuzzyQuery(First, "aaaaa", 1).size should equal (4)
+    luceneRDD.fuzzyQuery(First, "qwert", 1).size should equal(1)
+    luceneRDD.fuzzyQuery(First, "werty", 1).size should equal (1)
   }
 
   "LuceneRDD" should "correctly search with PhraseQuery" in {
@@ -69,11 +77,10 @@ class LuceneRDDSearchSpec extends FlatSpec with Matchers with SharedSparkContext
     val rdd = sc.parallelize(phrases)
     val luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.phraseQuery(First, "how are", 10).size should be (1)
-    luceneRDD.phraseQuery(First, "name is", 10).size should be (1)
-    luceneRDD.phraseQuery(First, "hello world", 10).size should be (1)
-    luceneRDD.phraseQuery(First, "are", 10).size should be (1)
-    luceneRDD.phraseQuery(First, "not", 10).size should be (0)
+    luceneRDD.phraseQuery(First, "how are", 10).size should equal (1)
+    luceneRDD.phraseQuery(First, "name is", 10).size should equal (1)
+    luceneRDD.phraseQuery(First, "hello world", 10).size should equal (1)
+    luceneRDD.phraseQuery(First, "are", 10).size should equal(1)
+    luceneRDD.phraseQuery(First, "not", 10).size should equal (0)
   }
-
 }

@@ -17,12 +17,12 @@
 
 package org.zouzias.spark.rdd.lucenerdd
 
-import com.twitter.algebird.TopKMonoid
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+import org.zouzias.spark.rdd.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition
 import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 
@@ -32,13 +32,12 @@ import scala.reflect.ClassTag
  *
  * @tparam T
  */
-class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T]])
-  extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD))) {
+class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T]],
+                             private val MaxTopKValue: Int = LuceneRDD.MaxDefaultTopKValue)
+  extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
+  with SparkScoreDocAggregatable {
 
-  /** Top K Documents */
-  private val TopK = 10
-
-  private val monoid = new TopKMonoid[SparkScoreDoc](TopK)
+  private val DefaultTopK: Int = LuceneRDD.DefaultTopK
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -68,8 +67,8 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    */
   private def docResultsAggregator(f: LuceneRDDPartition[T] => Iterable[SparkScoreDoc])
   : Iterable[SparkScoreDoc] = {
-    val parts = partitionsRDD.map(f(_)).map(monoid.build(_))
-    parts.reduce(monoid.plus(_, _)).items
+    val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
+    parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
   }
 
   /**
@@ -80,8 +79,8 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    */
   def exists(doc: Map[String, String]): Boolean = {
     partitionsRDD.map { case part =>
-      part.query(doc)
-    }.toLocalIterator.forall(x => x)
+      part.multiTermQuery(doc, DefaultTopK)
+    }.count() > 0
   }
 
   /**
@@ -91,7 +90,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @param topK
    * @return
    */
-  def query(q: Query, topK: Int = TopK): Iterable[SparkScoreDoc] = {
+  def query(q: Query, topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.query(q, topK))
   }
 
@@ -104,7 +103,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def termQuery(fieldName: String, query: String,
-                topK: Int = TopK): Iterable[SparkScoreDoc] = {
+                topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.termQuery(fieldName, query, topK))
   }
 
@@ -117,7 +116,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def prefixQuery(fieldName: String, query: String,
-                  topK: Int = TopK): Iterable[SparkScoreDoc] = {
+                  topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.prefixQuery(fieldName, query, topK))
   }
 
@@ -131,7 +130,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def fuzzyQuery(fieldName: String, query: String,
-                 maxEdits: Int, topK: Int = TopK): Iterable[SparkScoreDoc] = {
+                 maxEdits: Int, topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.fuzzyQuery(fieldName, query, maxEdits, topK))
   }
 
@@ -144,7 +143,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def phraseQuery(fieldName: String, query: String,
-                  topK: Int = TopK): Iterable[SparkScoreDoc] = {
+                  topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.phraseQuery(fieldName, query, topK))
   }
 
@@ -170,9 +169,16 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
     )
     new LuceneRDD(newPartitionRDD)
   }
+
+  override protected def MaxTopK(): Int = MaxTopKValue
 }
 
 object LuceneRDD {
+
+  val MaxDefaultTopKValue: Int = 1000
+
+  /** Default value for topK queries */
+  val DefaultTopK: Int = 10
 
   /**
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.

@@ -14,17 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.aggregate
+package org.zouzias.spark.rdd.lucenerdd.analyze
 
-import com.twitter.algebird.TopKMonoid
-import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
+import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 
 /**
- * TopK SparkDocTopKMonoid to aggregate [[SparkScoreDoc]]
+ * White space analyzer
  */
-trait SparkScoreDocAggregatable {
-
-  protected def MaxTopK(): Int
-
-  protected val SparkDocTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxTopK)
+trait WSAnalyzer {
+  protected val Analyzer: Analyzer = new WhitespaceAnalyzer()
 }

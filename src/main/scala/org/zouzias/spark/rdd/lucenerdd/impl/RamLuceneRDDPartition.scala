@@ -21,12 +21,12 @@ import org.apache.spark.Logging
 import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
 import org.apache.lucene.search._
 import org.apache.lucene.document._
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig, Term}
-import org.apache.lucene.store.RAMDirectory
+import org.zouzias.spark.rdd.lucenerdd.analyze.WSAnalyzer
 import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 import org.zouzias.spark.rdd.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.rdd.lucenerdd.store.InMemoryIndexStorable
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -36,11 +36,14 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 (private val iter: Iterator[T])
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
-  extends LuceneRDDPartition[T] with Logging {
+  extends LuceneRDDPartition[T]
+  with InMemoryIndexStorable
+  with WSAnalyzer
+  with Logging {
 
-  private lazy val indexDir = new RAMDirectory()
-  private lazy val indexWriter = new IndexWriter(indexDir, new IndexWriterConfig(
-    new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE_OR_APPEND))
+  private lazy val indexWriter = new IndexWriter(IndexDir,
+    new IndexWriterConfig(Analyzer)
+    .setOpenMode(OpenMode.CREATE_OR_APPEND))
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
@@ -52,7 +55,7 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
   indexWriter.commit()
   indexWriter.close()
 
-  private val indexReader = DirectoryReader.open(indexDir)
+  private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
 
   override def size: Long = {
@@ -61,20 +64,11 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 
   override def isDefined(elem: T): Boolean = {
     val doc: Document = docConversion(elem)
-    query(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap)
+    multiTermQuery(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap, 1).nonEmpty
   }
 
-  override def query(docMap: Map[String, String]): Boolean = {
-    val terms = docMap.map{ case (field, fieldValue) =>
-      new TermQuery(new Term(field, fieldValue))
-    }
-
-    val builder = new BooleanQuery.Builder()
-    terms.foreach{ case termQuery =>
-      builder.add(termQuery, BooleanClause.Occur.MUST)
-    }
-
-    indexSearcher.search(builder.build(), 1).totalHits > 0
+  override def multiTermQuery(docMap: Map[String, String], topK: Int): Seq[SparkScoreDoc] = {
+   LuceneQueryHelpers.multiTermQuery(indexSearcher, docMap, topK)
   }
 
   override def iterator: Iterator[T] = {
@@ -110,7 +104,6 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
 }
 
 object RamLuceneRDDPartition {
-
   def apply[T: ClassTag]
       (iter: Iterator[T])(implicit docConversion: T => Document): RamLuceneRDDPartition[T] = {
     new RamLuceneRDDPartition[T](iter)(docConversion, classTag[T])

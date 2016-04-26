@@ -14,17 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.aggregate
+package org.zouzias.spark.rdd.lucenerdd.store
 
-import com.twitter.algebird.TopKMonoid
-import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
+import org.apache.lucene.store.RAMDirectory
 
 /**
- * TopK SparkDocTopKMonoid to aggregate [[SparkScoreDoc]]
+ * In memory lucene index
  */
-trait SparkScoreDocAggregatable {
-
-  protected def MaxTopK(): Int
-
-  protected val SparkDocTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxTopK)
+trait InMemoryIndexStorable {
+  protected lazy val IndexDir = new RAMDirectory()
 }

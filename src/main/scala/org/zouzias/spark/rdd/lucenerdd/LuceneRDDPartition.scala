@@ -37,7 +37,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   def isDefined(key: T): Boolean
 
-  def query(docMap: Map[String, String]): Boolean
+  def multiTermQuery(docMap: Map[String, String], topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Generic Lucene Query

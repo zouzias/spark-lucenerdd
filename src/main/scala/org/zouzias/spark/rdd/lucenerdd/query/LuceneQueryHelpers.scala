@@ -46,7 +46,7 @@ object LuceneQueryHelpers {
    */
   def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[Document] = {
     val topDocs = indexSearcher.search(query, k)
-    topDocs.scoreDocs.map(_.doc).map(indexSearcher.doc(_))
+    topDocs.scoreDocs.map(_.doc).map(x => indexSearcher.doc(x))
   }
 
   def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[SparkScoreDoc] = {
@@ -121,5 +121,27 @@ object LuceneQueryHelpers {
     val builder = new PhraseQuery.Builder()
     fieldText.split(" ").foreach( token => builder.add(new Term(fieldName, token)))
     LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
+  }
+
+  /**
+   * Multi term search
+   * @param indexSearcher
+   * @param docMap
+   * @param topK
+   * @return
+   */
+  def multiTermQuery(indexSearcher: IndexSearcher,
+                     docMap: Map[String, String],
+                     topK : Int): Seq[SparkScoreDoc] = {
+    val terms = docMap.map{ case (field, fieldValue) =>
+      new TermQuery(new Term(field, fieldValue))
+    }
+
+    val builder = new BooleanQuery.Builder()
+    terms.foreach{ case termQuery =>
+      builder.add(termQuery, BooleanClause.Occur.MUST)
+    }
+
+    searchTopK(indexSearcher, builder.build(), topK)
   }
 }

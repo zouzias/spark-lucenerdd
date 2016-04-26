@@ -14,15 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.utils
+package org.zouzias.spark.rdd.lucenerdd.query
 
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.Term
 import org.apache.lucene.search._
-import org.zouzias.spark.rdd.lucenerdd.utils.SparkScoreDoc
+import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 
-
-object LuceneHelpers {
+/**
+ * Helpers for lucene queries
+ */
+object LuceneQueryHelpers {
 
   private val MatchAllDocs = new MatchAllDocsQuery()
 
@@ -36,7 +38,7 @@ object LuceneHelpers {
   }
 
   def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[SparkScoreDoc] = {
-   indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(_))
+   indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   def termQuery(indexSearcher: IndexSearcher,
@@ -45,7 +47,7 @@ object LuceneHelpers {
                 topK: Int): Seq[SparkScoreDoc] = {
     val term = new Term(fieldName, fieldText)
     val qr = new TermQuery(term)
-    LuceneHelpers.searchTopK(indexSearcher, qr, topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
   }
 
   def prefixQuery(indexSearcher: IndexSearcher,
@@ -54,7 +56,7 @@ object LuceneHelpers {
                   topK: Int): Seq[SparkScoreDoc] = {
     val term = new Term(fieldName, fieldText)
     val qr = new PrefixQuery(term)
-    LuceneHelpers.searchTopK(indexSearcher, qr, topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
   }
 
   def fuzzyQuery(indexSearcher: IndexSearcher,
@@ -64,7 +66,7 @@ object LuceneHelpers {
                  topK: Int): Seq[SparkScoreDoc] = {
     val term = new Term(fieldName, fieldText)
     val qr = new FuzzyQuery(term, maxEdits)
-    LuceneHelpers.searchTopK(indexSearcher, qr, topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
   }
 
   def phraseQuery(indexSearcher: IndexSearcher,
@@ -73,6 +75,6 @@ object LuceneHelpers {
                   topK: Int): Seq[SparkScoreDoc] = {
     val builder = new PhraseQuery.Builder()
     fieldText.split(" ").foreach( token => builder.add(new Term(fieldName, token)))
-    LuceneHelpers.searchTopK(indexSearcher, builder.build(), topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
   }
 }

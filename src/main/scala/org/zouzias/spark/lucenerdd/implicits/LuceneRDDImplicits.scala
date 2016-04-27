@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package org.zouzias.spark.rdd.lucenerdd.implicits
+package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
-import org.zouzias.spark.rdd.lucenerdd.model.LuceneText
+import org.zouzias.spark.lucenerdd.model.LuceneText
 
 import scala.reflect.ClassTag
 

@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.query
+package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.Term
 import org.apache.lucene.search._
-import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
 
 /**
  * Helpers for lucene queries

@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.analyze
 
-import org.apache.lucene.analysis.Analyzer
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer
+package org.zouzias.spark.lucenerdd.model
 
 /**
- * White space analyzer
+ * Wrapper for Lucene text field
+ *
+ * The purpose of this class is solely to make phrase query work. It is used in implicit conversions
+ * and pattern matched in [[org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits]]
  */
-trait WSAnalyzer {
-  protected val Analyzer: Analyzer = new WhitespaceAnalyzer()
-}
+case class LuceneText(content: String)

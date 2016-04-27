@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.store
+package org.zouzias.spark.lucenerdd.analyze
 
-import org.apache.lucene.store.RAMDirectory
+import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 
 /**
- * In memory lucene index
+ * White space analyzer
  */
-trait InMemoryIndexStorable {
-  protected lazy val IndexDir = new RAMDirectory()
+trait WSAnalyzer {
+  protected val Analyzer: Analyzer = new WhitespaceAnalyzer()
 }

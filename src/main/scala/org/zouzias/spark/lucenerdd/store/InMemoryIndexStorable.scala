@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark.lucenerdd.store
 
-package org.zouzias.spark.rdd.lucenerdd.model
+import org.apache.lucene.store.RAMDirectory
 
 /**
- * Wrapper for Lucene text field
- *
- * The purpose of this class is solely to make phrase query work. It is used in implicit conversions
- * and pattern matched in [[org.zouzias.spark.rdd.lucenerdd.implicits.LuceneRDDImplicits]]
+ * In memory lucene index
  */
-case class LuceneText(content: String)
+trait InMemoryIndexStorable {
+  protected lazy val IndexDir = new RAMDirectory()
+}

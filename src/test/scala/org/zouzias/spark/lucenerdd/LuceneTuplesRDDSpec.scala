@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd
+package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{ FlatSpec, Matchers }
-import org.zouzias.spark.rdd.lucenerdd.implicits.LuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
 class LuceneTuplesRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
 

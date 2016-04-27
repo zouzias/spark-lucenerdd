@@ -15,21 +15,20 @@
  * limitations under the License.
  */
 
-package org.zouzias.spark.rdd.lucenerdd.impl
+package org.zouzias.spark.lucenerdd.impl
 
-import org.apache.spark.Logging
-import org.zouzias.spark.rdd.lucenerdd.AbstractLuceneRDDPartition
-import org.apache.lucene.search._
 import org.apache.lucene.document._
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
-import org.zouzias.spark.rdd.lucenerdd.analyze.WSAnalyzer
-import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
-import org.zouzias.spark.rdd.lucenerdd.query.LuceneQueryHelpers
-import org.zouzias.spark.rdd.lucenerdd.store.InMemoryIndexStorable
+import org.apache.lucene.search._
+import org.apache.spark.Logging
+import org.zouzias.spark.lucenerdd.AbstractLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.analyze.WSAnalyzer
+import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.store.InMemoryIndexStorable
 
-import scala.reflect.ClassTag
-import scala.reflect._
+import scala.reflect.{ClassTag, _}
 
 private[lucenerdd] class InMemoryLuceneRDDPartition[T]
 (private val iter: Iterator[T])

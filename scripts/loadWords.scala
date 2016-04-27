@@ -16,10 +16,10 @@
  */
 
 import scala.io.Source
-import org.zouzias.spark.rdd.lucenerdd.impl.InMemoryLuceneRDDPartition
-import org.zouzias.spark.rdd.lucenerdd.implicits.LuceneRDDImplicits._
-import org.zouzias.spark.rdd.lucenerdd.LuceneRDD._
-import org.zouzias.spark.rdd.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.LuceneRDD._
+import org.zouzias.spark.lucenerdd.LuceneRDD
 val words = Source.fromFile("src/test/resources/words.txt").getLines().toSeq
 val rdd = sc.parallelize(words)
 val luceneRDD = LuceneRDD(rdd)

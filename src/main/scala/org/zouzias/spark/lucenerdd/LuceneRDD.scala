@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-package org.zouzias.spark.rdd.lucenerdd
+package org.zouzias.spark.lucenerdd
 
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.rdd.lucenerdd.aggregate.SparkScoreDocAggregatable
-import org.zouzias.spark.rdd.lucenerdd.impl.InMemoryLuceneRDDPartition
-import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
+import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
 
 import scala.reflect.ClassTag
 

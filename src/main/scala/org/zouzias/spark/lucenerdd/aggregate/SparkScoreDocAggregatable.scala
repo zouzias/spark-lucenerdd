@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.rdd.lucenerdd.aggregate
+package org.zouzias.spark.lucenerdd.aggregate
 
 import com.twitter.algebird.TopKMonoid
-import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
 
 /**
  * TopK monoid to aggregate [[SparkScoreDoc]]

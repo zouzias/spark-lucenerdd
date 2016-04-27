@@ -17,7 +17,7 @@
 package org.zouzias.spark.rdd.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import org.zouzias.spark.rdd.lucenerdd.implicits.LuceneRDDImplicits._
 

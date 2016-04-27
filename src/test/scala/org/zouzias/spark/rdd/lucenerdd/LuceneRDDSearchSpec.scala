@@ -28,13 +28,6 @@ class LuceneRDDSearchSpec extends FlatSpec with Matchers with SharedSparkContext
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
   val array = (1 to 24).map(randomString(_))
 
-  "LuceneRDD" should "find elements that exist" in {
-    val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
-    val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.exists(Map("_1" -> "aaaa")) should equal (true)
-  }
-
 
   "LuceneRDD" should "return correct number of elements" in {
     val rdd = sc.parallelize(array)

@@ -18,25 +18,24 @@
 package org.zouzias.spark.rdd.lucenerdd.impl
 
 import org.apache.spark.Logging
-import org.zouzias.spark.rdd.lucenerdd.LuceneRDDPartition
+import org.zouzias.spark.rdd.lucenerdd.AbstractLuceneRDDPartition
 import org.apache.lucene.search._
 import org.apache.lucene.document._
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
-import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig, Term}
+import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.zouzias.spark.rdd.lucenerdd.analyze.WSAnalyzer
 import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 import org.zouzias.spark.rdd.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.rdd.lucenerdd.store.InMemoryIndexStorable
 
-import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.reflect._
 
-private[lucenerdd] class RamLuceneRDDPartition[T]
+private[lucenerdd] class InMemoryLuceneRDDPartition[T]
 (private val iter: Iterator[T])
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
-  extends LuceneRDDPartition[T]
+  extends AbstractLuceneRDDPartition[T]
   with InMemoryIndexStorable
   with WSAnalyzer
   with Logging {
@@ -63,8 +62,7 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
   }
 
   override def isDefined(elem: T): Boolean = {
-    val doc: Document = docConversion(elem)
-    multiTermQuery(doc.getFields.asScala.map(x => x.name() -> x.stringValue()).toMap, 1).nonEmpty
+    iterOriginal.contains(elem)
   }
 
   override def multiTermQuery(docMap: Map[String, String], topK: Int): Seq[SparkScoreDoc] = {
@@ -75,8 +73,8 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
     iterOriginal
   }
 
-  override def filter(pred: T => Boolean): LuceneRDDPartition[T] =
-    new RamLuceneRDDPartition(iter.filter(pred))(docConversion, kTag)
+  override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
+    new InMemoryLuceneRDDPartition(iterOriginal.filter(pred))(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): Iterable[SparkScoreDoc] = {
@@ -103,9 +101,9 @@ private[lucenerdd] class RamLuceneRDDPartition[T]
   }
 }
 
-object RamLuceneRDDPartition {
+object InMemoryLuceneRDDPartition {
   def apply[T: ClassTag]
-      (iter: Iterator[T])(implicit docConversion: T => Document): RamLuceneRDDPartition[T] = {
-    new RamLuceneRDDPartition[T](iter)(docConversion, classTag[T])
+      (iter: Iterator[T])(implicit docConversion: T => Document): InMemoryLuceneRDDPartition[T] = {
+    new InMemoryLuceneRDDPartition[T](iter)(docConversion, classTag[T])
   }
 }

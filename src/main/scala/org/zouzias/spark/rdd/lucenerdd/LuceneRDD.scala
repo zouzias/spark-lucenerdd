@@ -23,7 +23,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.rdd.lucenerdd.aggregate.SparkScoreDocAggregatable
-import org.zouzias.spark.rdd.lucenerdd.impl.RamLuceneRDDPartition
+import org.zouzias.spark.rdd.lucenerdd.impl.InMemoryLuceneRDDPartition
 import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 
 import scala.reflect.ClassTag
@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
  *
  * @tparam T
  */
-class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T]],
+class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
                              private val MaxTopKValue: Int = LuceneRDD.MaxDefaultTopKValue)
   extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
   with SparkScoreDocAggregatable {
@@ -60,12 +60,12 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
   }
 
   /**
-   * Document results aggregator
+   * Aggregates lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
    *
    * @param f
    * @return
    */
-  private def docResultsAggregator(f: LuceneRDDPartition[T] => Iterable[SparkScoreDoc])
+  private def docResultsAggregator(f: AbstractLuceneRDDPartition[T] => Iterable[SparkScoreDoc])
   : Iterable[SparkScoreDoc] = {
     val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
@@ -78,9 +78,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
    * @return
    */
   def exists(doc: Map[String, String]): Boolean = {
-    partitionsRDD.map { case part =>
-      part.multiTermQuery(doc, DefaultTopK)
-    }.count() > 0
+    docResultsAggregator(_.multiTermQuery(doc, DefaultTopK)).nonEmpty
   }
 
   /**
@@ -153,21 +151,18 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[LuceneRDDPartition[T
 
   /** RDD compute method. */
   override def compute(part: Partition, context: TaskContext): Iterator[T] = {
-    firstParent[LuceneRDDPartition[T]].iterator(part, context).next.iterator
+    firstParent[AbstractLuceneRDDPartition[T]].iterator(part, context).next.iterator
   }
 
-  /**
-   * Restricts the entries to those satisfying the given predicate. This operation preserves the
-   * index for efficient joins with the original LuceneRDD and is implemented using soft deletions.
-   *
-   * @param pred the user defined predicate, which takes a tuple to conform to the `RDD[(K, V)]`
-   * interface
-   */
   override def filter(pred: T => Boolean): LuceneRDD[T] = {
     val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
       partition.map(_.filter(pred)), preservesPartitioning = true
     )
     new LuceneRDD(newPartitionRDD)
+  }
+
+  def exists(elem: T): Boolean = {
+    partitionsRDD.map(_.isDefined(elem)).collect().exists(x => x)
   }
 
   override protected def MaxTopK(): Int = MaxTopKValue
@@ -184,8 +179,8 @@ object LuceneRDD {
    * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
    */
   def apply[T: ClassTag](elems: RDD[T])(implicit docConversion: T => Document): LuceneRDD[T] = {
-    val partitions = elems.mapPartitions[LuceneRDDPartition[T]](
-      iter => Iterator(RamLuceneRDDPartition(iter)),
+    val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
+      iter => Iterator(InMemoryLuceneRDDPartition(iter)),
       preservesPartitioning = true)
     new LuceneRDD(partitions)
   }

@@ -133,11 +133,13 @@ object LuceneQueryHelpers {
   def multiTermQuery(indexSearcher: IndexSearcher,
                      docMap: Map[String, String],
                      topK : Int): Seq[SparkScoreDoc] = {
+
+    val builder = new BooleanQuery.Builder()
+
     val terms = docMap.map{ case (field, fieldValue) =>
       new TermQuery(new Term(field, fieldValue))
     }
 
-    val builder = new BooleanQuery.Builder()
     terms.foreach{ case termQuery =>
       builder.add(termQuery, BooleanClause.Occur.MUST)
     }

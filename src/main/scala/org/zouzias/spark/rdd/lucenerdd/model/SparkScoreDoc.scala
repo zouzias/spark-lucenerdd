@@ -17,7 +17,7 @@
 package org.zouzias.spark.rdd.lucenerdd.model
 
 import org.apache.lucene.document.Document
-import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
+import org.apache.lucene.search.{ IndexSearcher, ScoreDoc }
 
 import scala.collection.JavaConverters._
 

@@ -20,7 +20,7 @@ import com.twitter.algebird.TopKMonoid
 import org.zouzias.spark.rdd.lucenerdd.model.SparkScoreDoc
 
 /**
- * TopK SparkDocTopKMonoid to aggregate [[SparkScoreDoc]]
+ * TopK monoid to aggregate [[SparkScoreDoc]]
  */
 trait SparkScoreDocAggregatable {
 

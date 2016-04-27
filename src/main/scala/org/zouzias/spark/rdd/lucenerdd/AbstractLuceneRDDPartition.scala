@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
  *
  * @tparam T the type associated with each entry in the set.
  */
-private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
+private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializable {
 
   protected implicit def kTag: ClassTag[T]
 
@@ -41,6 +41,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   /**
    * Generic Lucene Query
+ *
    * @param q
    * @param topK
    * @return
@@ -49,6 +50,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   /**
    * Term Query
+ *
    * @param fieldName
    * @param query
    * @param topK
@@ -58,6 +60,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   /**
    * Prefix Query
+ *
    * @param fieldName
    * @param query
    * @param topK
@@ -67,6 +70,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   /**
    * Fuzzy Query
+ *
    * @param fieldName
    * @param query
    * @param maxEdits
@@ -78,6 +82,7 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   /**
    * PhraseQuery
+ *
    * @param fieldName
    * @param query
    * @param topK
@@ -87,8 +92,9 @@ private[lucenerdd] abstract class LuceneRDDPartition[T] extends Serializable {
 
   /**
    * Restricts the entries to those satisfying a predicate
+ *
    * @param pred
    * @return
    */
-  def filter(pred: T => Boolean): LuceneRDDPartition[T]
+  def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T]
 }

@@ -10,7 +10,7 @@ Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
 ### Development
 
-Install Java, [SBT]() and clone the project the project
+Install Java, [SBT](http://www.scala-sbt.org) and clone the project
 
 ```bash
 git clone https://github.com/zouzias/spark-lucenerdd.git

@@ -18,6 +18,7 @@
 name := "spark-lucenerdd"
 organization := "org.zouzias"
 scalaVersion := "2.11.8"
+crossScalaVersions := Seq("2.10.6", "2.11.8")
 licenses += "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
 
 publishMavenStyle := false

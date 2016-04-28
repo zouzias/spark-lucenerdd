@@ -17,40 +17,47 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.scalatest.{ FlatSpec, Matchers }
-
+import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
-class LucenePrimitiveTypesSpec extends FlatSpec with Matchers with SharedSparkContext {
+class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
+  with BeforeAndAfterEach
+  with SharedSparkContext {
 
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
   val array = (1 to 24).map(randomString(_))
 
+  var luceneRDD: LuceneRDD[_] = _
+
+  override def afterEach() {
+    luceneRDD.close()
+  }
+
   "LuceneRDD" should "work with RDD[Int]" in {
     val array = (1 to 22)
     val rdd = sc.parallelize(array)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should be (array.size)
   }
 
   "LuceneRDD" should "work with RDD[Float]" in {
     val array: IndexedSeq[Float] = (1 to 22).map(_.toFloat)
     val rdd = sc.parallelize(array)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should be (array.size)
   }
 
   "LuceneRDD" should "work with RDD[Double]" in {
     val array: IndexedSeq[Double] = (1 to 22).map(_.toDouble)
     val rdd = sc.parallelize(array)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should be (array.size)
   }
 
   "LuceneRDD" should "work with RDD[Long]" in {
     val array: IndexedSeq[Long] = (1 to 22).map(_.toLong)
     val rdd = sc.parallelize(array)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should equal (array.size)
   }
 }

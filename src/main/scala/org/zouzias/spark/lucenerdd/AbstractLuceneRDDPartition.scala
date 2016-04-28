@@ -39,6 +39,8 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   def multiTermQuery(docMap: Map[String, String], topK: Int): Iterable[SparkScoreDoc]
 
+  def close(): Unit
+
   /**
    * Generic Lucene Query
  *

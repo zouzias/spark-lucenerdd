@@ -17,37 +17,48 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
-class LuceneRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
+class LuceneRDDSpec extends FlatSpec
+  with Matchers
+  with BeforeAndAfterEach
+  with SharedSparkContext {
+
+  var luceneRDD: LuceneRDD[_] = _
+
+  override def afterEach() {
+    luceneRDD.close()
+  }
 
   "LuceneRDD.exists(Map)" should "find elements that exist" in {
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.exists(Map("_1" -> "aaaa")) should equal (true)
   }
 
   "LuceneRDD.exists(Map)" should "not find elements that don't exist" in {
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.exists(Map("_1" -> "doNotExist")) should equal (false)
   }
 
   "LuceneRDD.exists(T)" should "find elements that exist" in {
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.exists("aaaa") should equal (true)
+    val localLuceneRDD = LuceneRDD(rdd)
+    localLuceneRDD.exists("aaaa") should equal (true)
+    localLuceneRDD.close()
   }
 
   "LuceneRDD.exists(T)" should "not find elements that don't exist" in {
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.exists("doNotExist") should equal (false)
+    val localLuceneRDD = LuceneRDD(rdd)
+    localLuceneRDD.exists("doNotExist") should equal (false)
+    localLuceneRDD.close()
   }
 
   "LuceneRDD.count" should "count correctly the results" in {
@@ -60,7 +71,7 @@ class LuceneRDDSpec extends FlatSpec with Matchers with SharedSparkContext {
   "LuceneRDD.count" should "count zero on empty RDD" in {
     val words = Array.empty[String]
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should equal (0)
   }
 

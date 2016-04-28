@@ -29,7 +29,7 @@ import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
 import scala.reflect.ClassTag
 
 /**
- *
+ * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
  * @tparam T
  */
 class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
@@ -166,6 +166,10 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
   }
 
   override protected def MaxTopK(): Int = MaxTopKValue
+
+  def close(): Unit = {
+    partitionsRDD.foreach(_.close())
+  }
 }
 
 object LuceneRDD {

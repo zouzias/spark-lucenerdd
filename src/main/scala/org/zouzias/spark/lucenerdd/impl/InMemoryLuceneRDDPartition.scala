@@ -41,7 +41,7 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
 
   private lazy val indexWriter = new IndexWriter(IndexDir,
     new IndexWriterConfig(Analyzer)
-    .setOpenMode(OpenMode.CREATE_OR_APPEND))
+    .setOpenMode(OpenMode.CREATE))
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
@@ -55,6 +55,10 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
 
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
+
+  override def close(): Unit = {
+    indexReader.close()
+  }
 
   override def size: Long = {
     LuceneQueryHelpers.totalDocs(indexSearcher)

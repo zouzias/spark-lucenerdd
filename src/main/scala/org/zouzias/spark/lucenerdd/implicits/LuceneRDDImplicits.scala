@@ -31,56 +31,58 @@ import scala.reflect.ClassTag
  */
 object LuceneRDDImplicits {
 
+  val Stored = Field.Store.YES
+
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    doc.add(new IntField("_1", v, Field.Store.YES))
+    doc.add(new IntField("_1", v, Stored))
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
-    doc.add(new LongField("_1", v, Field.Store.YES))
+    doc.add(new LongField("_1", v, Stored))
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
-    doc.add(new DoubleField("_1", v, Field.Store.YES))
+    doc.add(new DoubleField("_1", v, Stored))
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
-    doc.add(new FloatField("_1", v, Field.Store.YES))
+    doc.add(new FloatField("_1", v, Stored))
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
-    doc.add(new StringField("_1", s, Field.Store.YES))
+    doc.add(new StringField("_1", s, Stored))
     doc
   }
 
   implicit def textFieldToDocument(s: LuceneText): Document = {
     val doc = new Document
-    doc.add(new TextField("_1", s.content, Field.Store.YES))
+    doc.add(new TextField("_1", s.content, Stored))
     doc
   }
 
   private def typeToDocument[T: ClassTag](doc: Document, index: Int, s: T): Document = {
     s match {
       case x: LuceneText =>
-        doc.add(new TextField(s"_${index}", x.content, Field.Store.YES))
+        doc.add(new TextField(s"_${index}", x.content, Stored))
       case x: String =>
-        doc.add(new StringField(s"_${index}", x, Field.Store.YES))
+        doc.add(new StringField(s"_${index}", x, Stored))
       case x: Int =>
-        doc.add(new IntField(s"_${index}", x, Field.Store.YES))
+        doc.add(new IntField(s"_${index}", x, Stored))
       case x: Double =>
-        doc.add(new DoubleField(s"_${index}", x, Field.Store.YES))
+        doc.add(new DoubleField(s"_${index}", x, Stored))
       case x: Float =>
-        doc.add(new FloatField(s"_${index}", x, Field.Store.YES))
+        doc.add(new FloatField(s"_${index}", x, Stored))
       case x: Long =>
-        doc.add(new LongField(s"_${index}", x, Field.Store.YES))
+        doc.add(new LongField(s"_${index}", x, Stored))
     }
 
     doc

@@ -30,7 +30,6 @@ import scala.collection.JavaConverters._
  */
 case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Map[String, String])
 
-
 object SparkScoreDoc extends Serializable {
 
   def apply(indexSearcher: IndexSearcher, scoreDoc: ScoreDoc): SparkScoreDoc = {

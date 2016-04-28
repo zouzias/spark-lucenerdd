@@ -52,6 +52,8 @@ val spark_testing_base        = "com.holdenkarau"                %% "spark-testi
 
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.0"
 
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
+
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV

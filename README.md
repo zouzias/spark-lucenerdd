@@ -1,5 +1,7 @@
 # spark-lucenerdd
 
+[![Master](https://travis-ci.org/zouzias/spark-lucenerdd.svg?branch=master)](https://travis-ci.org/zouzias/spark-lucenerdd)
+
 Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
 

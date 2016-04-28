@@ -14,9 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
-
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
-
+import scala.io.Source
+import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.LuceneRDD._
+import org.zouzias.spark.lucenerdd.LuceneRDD
+val words = Source.fromFile("src/test/resources/words.txt").getLines().toSeq
+val rdd = sc.parallelize(words)
+val luceneRDD = LuceneRDD(rdd)
+luceneRDD.count

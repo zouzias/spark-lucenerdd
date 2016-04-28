@@ -14,9 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
+package org.zouzias.spark.lucenerdd.model
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
-
+/**
+ * Wrapper for Lucene text field
+ *
+ * The purpose of this class is solely to make phrase query work. It is used in implicit conversions
+ * and pattern matched in [[org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits]]
+ */
+case class LuceneText(content: String)

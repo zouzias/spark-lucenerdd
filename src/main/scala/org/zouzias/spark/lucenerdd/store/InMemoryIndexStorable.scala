@@ -14,9 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
+package org.zouzias.spark.lucenerdd.store
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
+import org.apache.lucene.store.RAMDirectory
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
-
+/**
+ * In memory lucene index
+ */
+trait InMemoryIndexStorable {
+  protected lazy val IndexDir = new RAMDirectory()
+}

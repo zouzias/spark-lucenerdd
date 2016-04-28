@@ -14,9 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.3")
+package org.zouzias.spark.lucenerdd.aggregate
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
+import com.twitter.algebird.TopKMonoid
+import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
+/**
+ * TopK monoid to aggregate [[SparkScoreDoc]]
+ */
+trait SparkScoreDocAggregatable {
 
+  protected def MaxTopK(): Int
+
+  protected val SparkDocTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxTopK)
+}

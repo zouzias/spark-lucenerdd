@@ -2,6 +2,9 @@
 
 [![Master](https://travis-ci.org/zouzias/spark-lucenerdd.svg?branch=master)](https://travis-ci.org/zouzias/spark-lucenerdd)
 
+[![Coverage Status](https://coveralls.io/repos/github/zouzias/spark-lucenerdd/badge.svg?branch=master)](https://coveralls.io/github/zouzias/spark-lucenerdd?branch=master)
+
+
 Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
 

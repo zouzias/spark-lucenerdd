@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
-import org.zouzias.spark.lucenerdd.model.LuceneText
+import org.zouzias.spark.lucenerdd.models.LuceneText
 
 class LuceneRDDSearchSpec extends FlatSpec
   with Matchers

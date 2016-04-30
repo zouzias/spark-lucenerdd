@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.zouzias.spark.lucenerdd.model
+package org.zouzias.spark.lucenerdd.models
 
 /**
  * Wrapper for Lucene text field

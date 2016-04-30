@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.model
+package org.zouzias.spark.lucenerdd.models
 
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
@@ -28,13 +28,13 @@ import scala.collection.JavaConverters._
  * @param shardIndex
  * @param doc
  */
-case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Map[String, String])
+case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: SparkDoc)
 
 object SparkScoreDoc extends Serializable {
 
   def apply(indexSearcher: IndexSearcher, scoreDoc: ScoreDoc): SparkScoreDoc = {
     SparkScoreDoc(scoreDoc.score, scoreDoc.doc, scoreDoc.shardIndex,
-      convert(indexSearcher.doc(scoreDoc.doc)))
+      SparkDoc(indexSearcher.doc(scoreDoc.doc)))
   }
 
   /**

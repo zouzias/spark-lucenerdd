@@ -18,7 +18,7 @@
 package org.zouzias.spark.lucenerdd
 
 import org.apache.lucene.search.Query
-import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag
 

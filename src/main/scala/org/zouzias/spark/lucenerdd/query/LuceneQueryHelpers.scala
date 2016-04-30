@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd.query
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.Term
 import org.apache.lucene.search._
-import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
  * Helpers for lucene queries

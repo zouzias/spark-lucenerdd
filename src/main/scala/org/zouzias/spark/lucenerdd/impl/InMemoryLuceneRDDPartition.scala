@@ -24,7 +24,7 @@ import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.AbstractLuceneRDDPartition
 import org.zouzias.spark.lucenerdd.analyze.WSAnalyzer
-import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.store.InMemoryIndexStorable
 

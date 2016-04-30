@@ -18,7 +18,7 @@
 package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
-import org.zouzias.spark.lucenerdd.model.LuceneText
+import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.reflect.ClassTag
 
@@ -69,29 +69,42 @@ object LuceneRDDImplicits {
     doc
   }
 
-  private def typeToDocument[T: ClassTag](doc: Document, index: Int, s: T): Document = {
+  private def tupleTypeToDocument[T: ClassTag](doc: Document, index: Int, s: T): Document = {
+   typeToDocument(doc, s"_${index}", s)
+  }
+
+  private def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
     s match {
       case x: LuceneText =>
-        doc.add(new TextField(s"_${index}", x.content, Stored))
+        doc.add(new TextField(fieldName, x.content, Stored))
       case x: String =>
-        doc.add(new StringField(s"_${index}", x, Stored))
+        doc.add(new StringField(fieldName, x, Stored))
       case x: Int =>
-        doc.add(new IntField(s"_${index}", x, Stored))
+        doc.add(new IntField(fieldName, x, Stored))
       case x: Double =>
-        doc.add(new DoubleField(s"_${index}", x, Stored))
+        doc.add(new DoubleField(fieldName, x, Stored))
       case x: Float =>
-        doc.add(new FloatField(s"_${index}", x, Stored))
+        doc.add(new FloatField(fieldName, x, Stored))
       case x: Long =>
-        doc.add(new LongField(s"_${index}", x, Stored))
+        doc.add(new LongField(fieldName, x, Stored))
     }
 
     doc
   }
 
+
+  implicit def mapToDocument[T: ClassTag](map: Map[String, T]): Document = {
+    val doc = new Document
+    map.keys.foreach{ case key =>
+      typeToDocument(doc, key, map.get(key).get)
+    }
+    doc
+  }
+
   implicit def tuple2ToDocument[T1: ClassTag, T2: ClassTag](s: (T1, T2)): Document = {
     val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
     doc
   }
 
@@ -99,9 +112,9 @@ object LuceneRDDImplicits {
   T2: ClassTag,
   T3: ClassTag](s: (T1, T2, T3)): Document = {
     val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    typeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
     doc
   }
 
@@ -110,10 +123,10 @@ object LuceneRDDImplicits {
   T3: ClassTag,
   T4: ClassTag](s: (T1, T2, T3, T4)): Document = {
     val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    typeToDocument[T3](doc, 3, s._3)
-    typeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
     doc
   }
 
@@ -123,11 +136,11 @@ object LuceneRDDImplicits {
   T4: ClassTag,
   T5: ClassTag](s: (T1, T2, T3, T4, T5)): Document = {
     val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    typeToDocument[T3](doc, 3, s._3)
-    typeToDocument[T4](doc, 4, s._4)
-    typeToDocument[T5](doc, 5, s._5)
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T5](doc, 5, s._5)
     doc
   }
 
@@ -138,12 +151,12 @@ object LuceneRDDImplicits {
   T5: ClassTag,
   T6: ClassTag](s: (T1, T2, T3, T4, T5, T6)): Document = {
     val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    typeToDocument[T3](doc, 3, s._3)
-    typeToDocument[T4](doc, 4, s._4)
-    typeToDocument[T5](doc, 5, s._5)
-    typeToDocument[T6](doc, 6, s._6)
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T5](doc, 5, s._5)
+    tupleTypeToDocument[T6](doc, 6, s._6)
     doc
   }
 
@@ -155,13 +168,13 @@ object LuceneRDDImplicits {
   T6: ClassTag,
   T7: ClassTag](s: (T1, T2, T3, T4, T5, T6, T7)): Document = {
     val doc = new Document
-    typeToDocument[T1](doc, 1, s._1)
-    typeToDocument[T2](doc, 2, s._2)
-    typeToDocument[T3](doc, 3, s._3)
-    typeToDocument[T4](doc, 4, s._4)
-    typeToDocument[T5](doc, 5, s._5)
-    typeToDocument[T6](doc, 6, s._6)
-    typeToDocument[T7](doc, 7, s._7)
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T5](doc, 5, s._5)
+    tupleTypeToDocument[T6](doc, 6, s._6)
+    tupleTypeToDocument[T7](doc, 7, s._7)
     doc
   }
 

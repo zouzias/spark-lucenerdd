@@ -51,6 +51,32 @@ scala> :load scripts/loadWords.scala
 ```
 to instantiate an `LuceneRDD[String]` object containing the words from `src/test/resources/words.txt`
 
+
+#### Term query
+
+To perform a exact term query, do
+```scala-2
+scala> val results = luceneRDD.termQuery("_1", "hello", 10)
+scala> results.foreach(println)
+SparkScoreDoc(12.393539,129848,0,Numeric fields:Text fields:_1:[hello])
+...
+```
+
+#### Prefix query
+
+To perform a prefix query, do
+```scala-2
+scala> val results = luceneRDD.prefixQuery("_1", "hel", 10)
+scala> results.foreach(println)
+SparkScoreDoc(1.0,129618,0,Numeric fields:Text fields:_1:[held])
+SparkScoreDoc(1.0,129617,0,Numeric fields:Text fields:_1:[helcotic])
+SparkScoreDoc(1.0,129616,0,Numeric fields:Text fields:_1:[helcosis])
+SparkScoreDoc(1.0,129615,0,Numeric fields:Text fields:_1:[helcoplasty])
+...
+```
+
+#### Fuzzy query
+
 To perform a fuzzy query, do
 ```scala-2
 scala> val results = luceneRDD.fuzzyQuery("_1", "aba", 1)

@@ -43,7 +43,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Generic Lucene Query
- *
    * @param q
    * @param topK
    * @return
@@ -52,7 +51,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Term Query
- *
    * @param fieldName
    * @param query
    * @param topK
@@ -62,7 +60,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Prefix Query
- *
    * @param fieldName
    * @param query
    * @param topK
@@ -72,7 +69,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Fuzzy Query
- *
    * @param fieldName
    * @param query
    * @param maxEdits
@@ -84,7 +80,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * PhraseQuery
- *
    * @param fieldName
    * @param query
    * @param topK
@@ -94,7 +89,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Restricts the entries to those satisfying a predicate
- *
    * @param pred
    * @return
    */

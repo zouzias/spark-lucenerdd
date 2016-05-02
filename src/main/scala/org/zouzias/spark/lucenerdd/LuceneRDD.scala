@@ -18,13 +18,14 @@
 package org.zouzias.spark.lucenerdd
 
 import org.apache.lucene.document.Document
+import org.apache.lucene.facet.FacetResult
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.reflect.ClassTag
 
@@ -71,6 +72,11 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
   }
 
+  private def facetResultsAggregator(f: AbstractLuceneRDDPartition[T] => SparkFacetResult)
+  : SparkFacetResult = {
+    partitionsRDD.map(f(_)).reduce( (x, y) => x.plus(y))
+  }
+
   /**
    * Lucene generic query
    *
@@ -82,14 +88,20 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
   }
 
   /**
-   * Lucene generic query
-   *
-   * @param q
+   * Generic query using Lucene's query parser
+   * @param searchString  Query String
    * @param topK
    * @return
    */
-  def query(q: Query, topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
-    docResultsAggregator(_.query(q, topK))
+  def query(searchString: String,
+            topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.query(searchString, topK))
+  }
+
+  def facetQuery(searchString: String,
+                 facetField: String,
+                 topK: Int = DefaultTopK): SparkFacetResult = {
+    facetResultsAggregator(_.facetQuery(searchString, facetField, topK))
   }
 
   /**

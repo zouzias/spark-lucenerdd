@@ -17,8 +17,7 @@
 
 package org.zouzias.spark.lucenerdd
 
-import org.apache.lucene.search.Query
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.reflect.ClassTag
 
@@ -42,12 +41,20 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def close(): Unit
 
   /**
-   * Generic Lucene Query
-   * @param q
+   * Generic Lucene Query using QueryParser
+   * @param searchString
    * @param topK
    * @return
    */
-  def query(q: Query, topK: Int): Iterable[SparkScoreDoc]
+  def query(searchString: String, topK: Int): Iterable[SparkScoreDoc]
+
+  /**
+   * Generic Lucene faceted Query using QueryParser
+   * @param searchString
+   * @param topK
+   * @return
+   */
+  def facetQuery(searchString: String, facetField: String, topK: Int): SparkFacetResult
 
   /**
    * Term Query

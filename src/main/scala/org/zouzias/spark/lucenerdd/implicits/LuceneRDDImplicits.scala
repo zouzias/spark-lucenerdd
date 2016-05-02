@@ -18,6 +18,8 @@
 package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
+import org.apache.lucene.facet.FacetsConfig
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.reflect.ClassTag
@@ -31,11 +33,12 @@ import scala.reflect.ClassTag
  */
 object LuceneRDDImplicits {
 
-  val Stored = Field.Store.YES
+  private val Stored = Field.Store.YES
+  private val FacetFieldSuffix = "_facet"
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    doc.add(new IntField("_1", v, Stored))
+    doc.add(new IntField(s"_1", v, Stored))
     doc
   }
 
@@ -60,6 +63,9 @@ object LuceneRDDImplicits {
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
     doc.add(new StringField("_1", s, Stored))
+    if (s.nonEmpty) {
+      doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", s))
+    }
     doc
   }
 

@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.facet.{FacetResult, Facets, FacetsCollector}
+import org.apache.lucene.facet.{Facets, FacetsCollector}
 import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts}
 import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.QueryParser

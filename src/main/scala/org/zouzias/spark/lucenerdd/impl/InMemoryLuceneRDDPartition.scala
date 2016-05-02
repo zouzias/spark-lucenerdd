@@ -18,7 +18,7 @@
 package org.zouzias.spark.lucenerdd.impl
 
 import org.apache.lucene.document._
-import org.apache.lucene.facet.{FacetResult, FacetsConfig}
+import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.apache.lucene.search._

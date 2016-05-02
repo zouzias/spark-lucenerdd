@@ -16,9 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.models
 
-import com.twitter.algebird.{MapMonoid, Monoid}
 import org.apache.lucene.facet.FacetResult
-import scala.collection.JavaConverters._
 
 case class SparkFacetResult(facetName: String, facets: Map[String, Long])
 

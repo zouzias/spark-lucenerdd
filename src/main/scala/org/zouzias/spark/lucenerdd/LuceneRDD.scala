@@ -18,8 +18,6 @@
 package org.zouzias.spark.lucenerdd
 
 import org.apache.lucene.document.Document
-import org.apache.lucene.facet.FacetResult
-import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel

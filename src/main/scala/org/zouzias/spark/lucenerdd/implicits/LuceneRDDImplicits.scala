@@ -18,7 +18,6 @@
 package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
-import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
@@ -72,6 +71,12 @@ object LuceneRDDImplicits {
   implicit def textFieldToDocument(s: LuceneText): Document = {
     val doc = new Document
     doc.add(new TextField("_1", s.content, Stored))
+    doc
+  }
+
+  implicit def iterablePrimitiveToDocument[T: ClassTag](iter: Iterable[T]): Document = {
+    val doc = new Document
+    iter.foreach( item => tupleTypeToDocument(doc, 1, item))
     doc
   }
 

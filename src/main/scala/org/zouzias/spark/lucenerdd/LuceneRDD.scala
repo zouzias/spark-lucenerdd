@@ -23,7 +23,7 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
+import org.zouzias.spark.lucenerdd.aggregate.{SparkFacetResultMonoid, SparkScoreDocAggregatable}
 import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
@@ -74,7 +74,7 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   private def facetResultsAggregator(f: AbstractLuceneRDDPartition[T] => SparkFacetResult)
   : SparkFacetResult = {
-    partitionsRDD.map(f(_)).reduce( (x, y) => x.plus(y))
+    partitionsRDD.map(f(_)).reduce( (x, y) => SparkFacetResultMonoid.plus(x, y))
   }
 
   /**

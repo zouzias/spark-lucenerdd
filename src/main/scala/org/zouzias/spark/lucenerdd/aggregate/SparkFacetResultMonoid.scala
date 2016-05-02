@@ -14,26 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.models
+package org.zouzias.spark.lucenerdd.aggregate
 
 import com.twitter.algebird.{MapMonoid, Monoid}
-import org.apache.lucene.facet.FacetResult
-import scala.collection.JavaConverters._
+import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 
-case class SparkFacetResult(facetName: String, facets: Map[String, Long])
+class SparkFacetResultMonoid(facetName: String) extends Monoid[SparkFacetResult] {
+
+  override def zero: SparkFacetResult = SparkFacetResult(facetName, Map.empty[String, Long])
+
+  override def plus(l: SparkFacetResult, r: SparkFacetResult): SparkFacetResult =
+    SparkFacetResultMonoid.plus(l, r)
+}
 
 
-object SparkFacetResult extends Serializable {
+object SparkFacetResultMonoid extends Serializable {
+  private lazy val facetMonoid = new MapMonoid[String, Long]()
 
-  def apply(facetName: String, facetResult: FacetResult): SparkFacetResult = {
-    val facetResultOpt = Option(facetResult)
-    facetResultOpt match {
-    case Some(fctResult) =>
-      val map = fctResult.labelValues
-        .map(labelValue => labelValue.label -> labelValue.value.longValue())
-        .toMap[String, Long]
-      SparkFacetResult(facetName, map)
-      case _ => SparkFacetResult(facetName, Map.empty[String, Long])
-    }
+  def zero(facetName: String): SparkFacetResult = SparkFacetResult(facetName, facetMonoid.zero)
+  def plus(l: SparkFacetResult, r: SparkFacetResult): SparkFacetResult = {
+    require(l.facetName == r.facetName)
+    SparkFacetResult(l.facetName, facetMonoid.plus(l.facets, r.facets))
   }
 }

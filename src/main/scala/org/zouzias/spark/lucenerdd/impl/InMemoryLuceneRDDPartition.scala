@@ -113,7 +113,9 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
    * @param topK
    * @return
    */
-  override def facetQuery(searchString: String, facetField: String, topK: Int): SparkFacetResult = {
+  override def facetQuery(searchString: String,
+                          facetField: String,
+                          topK: Int): SparkFacetResult = {
     LuceneQueryHelpers.facetedSearch(indexSearcher, searchString, facetField, topK)
   }
 }

@@ -23,6 +23,7 @@ import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, 
 import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
+import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 /**
@@ -51,6 +52,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
+   *
    * @param indexSearcher
    * @param searchString
    * @param facetField
@@ -68,12 +70,17 @@ object LuceneQueryHelpers extends Serializable {
     FacetsCollector.search(indexSearcher, q, topK, fc)
 
     // Retrieve facets
-    val facets: Facets = new SortedSetDocValuesFacetCounts(state, fc)
-    SparkFacetResult(facets.getTopChildren(topK, facetField))
+    val facets: Option[Facets] = Option(new SortedSetDocValuesFacetCounts(state, fc))
+
+    facets match {
+      case Some(fcts) => SparkFacetResult(facetField, fcts.getTopChildren(topK, facetField))
+      case None => SparkFacetResultMonoid.zero(facetField)
+    }
   }
 
   /**
    * Count number of lucene documents
+   *
    * @param indexSearcher
    * @return
    */
@@ -83,6 +90,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Search top-k documents
+   *
    * @param indexSearcher
    * @param query
    * @param k
@@ -99,6 +107,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Term query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -116,6 +125,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Prefix query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -133,6 +143,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Fuzzy query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -152,6 +163,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Phrase query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -169,6 +181,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Multi term search
+   *
    * @param indexSearcher
    * @param docMap
    * @param topK

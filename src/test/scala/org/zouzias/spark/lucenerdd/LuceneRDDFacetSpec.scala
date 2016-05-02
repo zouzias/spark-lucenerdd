@@ -26,13 +26,37 @@ class LuceneRDDFacetSpec extends FlatSpec
   with SharedSparkContext {
 
 
-  "LuceneRDD.query" should "use phrase query syntax" in {
+  "LuceneRDD.facetQuery" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
     luceneRDD.facetQuery("*:*", "_1_facet").facets.size should equal (3)
     luceneRDD.facetQuery("*:*", "_1_facet").facets.contains("aaa") should equal (true)
     luceneRDD.facetQuery("*:*", "_1_facet").facets.get("aaa")
+      .foreach(value => value should equal (4))
+
+    luceneRDD.close()
+  }
+
+  "LuceneRDD.facetQuery" should "compute facets with prefix search" in {
+    val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD.facetQuery("_1:aa*", "_1_facet").facets.size should equal (1)
+    luceneRDD.facetQuery("_1:aa*", "_1_facet").facets.contains("aaa") should equal (true)
+    luceneRDD.facetQuery("_1:aa*", "_1_facet").facets.get("aaa")
+      .foreach(value => value should equal (4))
+
+    luceneRDD.close()
+  }
+
+  "LuceneRDD.facetQuery" should "compute facets with term search" in {
+    val words = Array("aaa", "aaa", "aaa", "aaa", "aaaa", "bb", "bb", "bb", "cc", "cc")
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD.facetQuery("_1:aaa", "_1_facet").facets.size should equal (1)
+    luceneRDD.facetQuery("_1:aaa", "_1_facet").facets.contains("aaa") should equal (true)
+    luceneRDD.facetQuery("_1:aaa", "_1_facet").facets.get("aaa")
       .foreach(value => value should equal (4))
 
     luceneRDD.close()

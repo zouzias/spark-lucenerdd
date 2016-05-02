@@ -57,6 +57,7 @@ val typesafe_config           = "com.typesafe"                   % "config"     
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
+val lucene_query_parsers      = "org.apache.lucene"              % "lucene-queryparser"        % luceneV
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
 // scalastyle:on
 
@@ -68,6 +69,7 @@ libraryDependencies ++= Seq(
   lucene_facet,
   lucene_analyzers,
   lucene_expressions,
+  lucene_query_parsers,
   specs2_core,
   scalatest,
   spark_testing_base

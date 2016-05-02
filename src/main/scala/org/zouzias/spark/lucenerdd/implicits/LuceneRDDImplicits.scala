@@ -18,6 +18,7 @@
 package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.reflect.ClassTag
@@ -31,35 +32,43 @@ import scala.reflect.ClassTag
  */
 object LuceneRDDImplicits {
 
-  val Stored = Field.Store.YES
+  private val Stored = Field.Store.YES
+  private val FacetFieldSuffix = "_facet"
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    doc.add(new IntField("_1", v, Stored))
+    doc.add(new IntField(s"_1", v, Stored))
+    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
     doc.add(new LongField("_1", v, Stored))
+    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
     doc.add(new DoubleField("_1", v, Stored))
+    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
     doc.add(new FloatField("_1", v, Stored))
+    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
     doc.add(new StringField("_1", s, Stored))
+    if (s.nonEmpty) {
+      doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", s))
+    }
     doc
   }
 
@@ -79,19 +88,28 @@ object LuceneRDDImplicits {
         doc.add(new TextField(fieldName, x.content, Stored))
       case x: String =>
         doc.add(new StringField(fieldName, x, Stored))
+        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
+        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
       case x: Double =>
         doc.add(new DoubleField(fieldName, x, Stored))
+        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
       case x: Float =>
         doc.add(new FloatField(fieldName, x, Stored))
+        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
       case x: Long =>
         doc.add(new LongField(fieldName, x, Stored))
+        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
     }
-
     doc
   }
 
+  implicit def iterablePrimitiveToDocument[T: ClassTag](iter: Iterable[T]): Document = {
+    val doc = new Document
+    iter.foreach( item => tupleTypeToDocument(doc, 1, item))
+    doc
+  }
 
   implicit def mapToDocument[T: ClassTag](map: Map[String, T]): Document = {
     val doc = new Document

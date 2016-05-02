@@ -16,20 +16,71 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
+import org.apache.lucene.facet.{Facets, FacetsCollector}
+import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts}
 import org.apache.lucene.index.Term
+import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
+import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 /**
  * Helpers for lucene queries
  */
-object LuceneQueryHelpers {
+object LuceneQueryHelpers extends Serializable {
 
-  private val MatchAllDocs = new MatchAllDocsQuery()
+  private lazy val MatchAllDocs = new MatchAllDocsQuery()
+  private val QueryParserDefaultField = "text"
+
+  /**
+   *
+   * @param indexSearcher
+   * @param searchString
+   * @param topK
+   * @return
+   */
+  def searchParser(indexSearcher: IndexSearcher,
+                   searchString: String,
+                   topK: Int)
+  : Seq[SparkScoreDoc] = {
+    val queryParser = new QueryParser(QueryParserDefaultField, new StandardAnalyzer())
+    val q: Query = queryParser.parse(searchString)
+    indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  }
+
+  /**
+   * Faceted search using [[SortedSetDocValuesFacetCounts]]
+   *
+   * @param indexSearcher
+   * @param searchString
+   * @param facetField
+   * @param topK
+   * @return
+   */
+  def facetedSearch(indexSearcher: IndexSearcher,
+                    searchString: String,
+                    facetField: String,
+                    topK: Int): SparkFacetResult = {
+    val queryParser = new QueryParser(QueryParserDefaultField, new StandardAnalyzer())
+    val state = new DefaultSortedSetDocValuesReaderState(indexSearcher.getIndexReader)
+    val fc = new FacetsCollector()
+    val q: Query = queryParser.parse(searchString)
+    FacetsCollector.search(indexSearcher, q, topK, fc)
+
+    // Retrieve facets
+    val facets: Option[Facets] = Option(new SortedSetDocValuesFacetCounts(state, fc))
+
+    facets match {
+      case Some(fcts) => SparkFacetResult(facetField, fcts.getTopChildren(topK, facetField))
+      case None => SparkFacetResultMonoid.zero(facetField)
+    }
+  }
 
   /**
    * Count number of lucene documents
+   *
    * @param indexSearcher
    * @return
    */
@@ -38,7 +89,8 @@ object LuceneQueryHelpers {
   }
 
   /**
-   * Search topK documents
+   * Search top-k documents
+   *
    * @param indexSearcher
    * @param query
    * @param k
@@ -54,7 +106,8 @@ object LuceneQueryHelpers {
   }
 
   /**
-   * Term query on given field
+   * Term query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -72,6 +125,7 @@ object LuceneQueryHelpers {
 
   /**
    * Prefix query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -89,6 +143,7 @@ object LuceneQueryHelpers {
 
   /**
    * Fuzzy query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -108,6 +163,7 @@ object LuceneQueryHelpers {
 
   /**
    * Phrase query
+   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -125,6 +181,7 @@ object LuceneQueryHelpers {
 
   /**
    * Multi term search
+   *
    * @param indexSearcher
    * @param docMap
    * @param topK
@@ -132,7 +189,9 @@ object LuceneQueryHelpers {
    */
   def multiTermQuery(indexSearcher: IndexSearcher,
                      docMap: Map[String, String],
-                     topK : Int): Seq[SparkScoreDoc] = {
+                     topK : Int,
+                     booleanClause: BooleanClause.Occur = BooleanClause.Occur.MUST)
+  : Seq[SparkScoreDoc] = {
 
     val builder = new BooleanQuery.Builder()
 
@@ -141,7 +200,7 @@ object LuceneQueryHelpers {
     }
 
     terms.foreach{ case termQuery =>
-      builder.add(termQuery, BooleanClause.Occur.MUST)
+      builder.add(termQuery, booleanClause)
     }
 
     searchTopK(indexSearcher, builder.build(), topK)

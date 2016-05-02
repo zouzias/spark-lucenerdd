@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
@@ -31,6 +32,34 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
 
   override def afterEach() {
     luceneRDD.close()
+  }
+
+  /**
+   * Do not work with facets (multi-valued issue)
+
+  "LuceneRDD" should "work with RDD[List[String]]" in {
+    val array = Array(List("aaa", "aaa2"), List("bbb", "bbb2"),
+      List("ccc", "ccc2"), List("ddd"), List("eee"))
+    val rdd = sc.parallelize(array)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should be (array.size)
+  }
+
+  "LuceneRDD" should "work with RDD[Set[String]]" in {
+    val array = Array(Set("aaa", "aaa2"), Set("bbb", "bbb2"),
+      Set("ccc", "ccc2"), Set("ddd"), Set("eee"))
+    val rdd = sc.parallelize(array)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should be (array.size)
+  }
+
+   */
+
+  "LuceneRDD" should "work with RDD[String]" in {
+    val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
+    val rdd = sc.parallelize(array)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should be (array.size)
   }
 
   "LuceneRDD" should "work with RDD[Int]" in {

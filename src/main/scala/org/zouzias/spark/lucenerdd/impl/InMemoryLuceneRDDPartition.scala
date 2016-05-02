@@ -18,13 +18,14 @@
 package org.zouzias.spark.lucenerdd.impl
 
 import org.apache.lucene.document._
+import org.apache.lucene.facet.{FacetResult, FacetsConfig}
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.AbstractLuceneRDDPartition
 import org.zouzias.spark.lucenerdd.analyze.WSAnalyzer
-import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.store.InMemoryIndexStorable
 
@@ -43,11 +44,13 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
     new IndexWriterConfig(Analyzer)
     .setOpenMode(OpenMode.CREATE))
 
+  private lazy val FacetsConfig = new FacetsConfig()
+
   private val (iterOriginal, iterIndex) = iter.duplicate
 
   iterIndex.foreach { case elem =>
     // Convert it to lucene document
-    indexWriter.addDocument(docConversion(elem))
+    indexWriter.addDocument(FacetsConfig.build(docConversion(elem)))
   }
 
   indexWriter.commit()
@@ -84,8 +87,9 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
     LuceneQueryHelpers.termQuery(indexSearcher, fieldName, fieldText, topK)
   }
 
-  override def query(q: Query, topK: Int): Iterable[SparkScoreDoc] = {
-    LuceneQueryHelpers.searchTopK(indexSearcher, q, topK)
+  override def query(searchString: String,
+                     topK: Int): Iterable[SparkScoreDoc] = {
+    LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK)
   }
 
   override def prefixQuery(fieldName: String, fieldText: String,
@@ -101,6 +105,16 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
   override def phraseQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SparkScoreDoc] = {
     LuceneQueryHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)
+  }
+
+  /**
+   * Faceted search query
+   *
+   * @param topK
+   * @return
+   */
+  override def facetQuery(searchString: String, facetField: String, topK: Int): SparkFacetResult = {
+    LuceneQueryHelpers.facetedSearch(indexSearcher, searchString, facetField, topK)
   }
 }
 

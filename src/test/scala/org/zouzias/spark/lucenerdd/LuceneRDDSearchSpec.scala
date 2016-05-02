@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
-import org.zouzias.spark.lucenerdd.model.LuceneText
+import org.zouzias.spark.lucenerdd.models.LuceneText
 
 class LuceneRDDSearchSpec extends FlatSpec
   with Matchers
@@ -37,6 +37,14 @@ class LuceneRDDSearchSpec extends FlatSpec
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
   val array = (1 to 24).map(randomString(_))
 
+  "LuceneRDD.query" should "use phrase query syntax" in {
+    val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
+    val rdd = sc.parallelize(words)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.query("_1:aadaa").nonEmpty should equal (true)
+    luceneRDD.query("_1:aa*").size should equal (4)
+    luceneRDD.query("_1:q*").size should equal (1)
+  }
 
   "LuceneRDD" should "return correct number of elements" in {
     val rdd = sc.parallelize(array)

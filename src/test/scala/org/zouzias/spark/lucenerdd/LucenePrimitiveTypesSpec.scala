@@ -60,4 +60,14 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
     luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should equal (array.size)
   }
+
+  "LuceneRDD" should "work with RDD[Map[String, String]]" in {
+    val maps = List(Map( "a" -> "hello"), Map("b" -> "world"), Map("c" -> "how are you"))
+    val rdd = sc.parallelize(maps)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should be (maps.size)
+    luceneRDD.termQuery("a", "hello").nonEmpty should equal (true)
+    luceneRDD.prefixQuery("b", "wor").nonEmpty should equal (true)
+    luceneRDD.prefixQuery("a", "no").nonEmpty should equal (false)
+  }
 }

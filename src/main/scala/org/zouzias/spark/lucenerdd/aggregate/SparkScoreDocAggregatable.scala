@@ -17,7 +17,7 @@
 package org.zouzias.spark.lucenerdd.aggregate
 
 import com.twitter.algebird.TopKMonoid
-import org.zouzias.spark.lucenerdd.model.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
  * TopK monoid to aggregate [[SparkScoreDoc]]

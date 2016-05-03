@@ -26,6 +26,7 @@ import org.apache.lucene.search._
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
+import scala.collection.JavaConverters._
 /**
  * Helpers for lucene queries
  */
@@ -33,6 +34,18 @@ object LuceneQueryHelpers extends Serializable {
 
   private lazy val MatchAllDocs = new MatchAllDocsQuery()
   private val QueryParserDefaultField = "text"
+
+  /**
+   * Return all field names
+   * @param indexSearcher
+   * @return
+   */
+  def fields(indexSearcher: IndexSearcher): Set[String] = {
+    indexSearcher.search(MatchAllDocs, 1).scoreDocs.flatMap(x =>
+      indexSearcher.getIndexReader.document(x.doc)
+      .getFields().asScala
+    ).map(_.name()).toSet
+  }
 
   /**
    *

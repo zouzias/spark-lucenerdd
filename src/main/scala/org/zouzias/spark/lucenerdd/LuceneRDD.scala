@@ -70,9 +70,23 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
   }
 
+  /**
+   * Aggregator of faceted results
+   * @param f
+   * @return
+   */
   private def facetResultsAggregator(f: AbstractLuceneRDDPartition[T] => SparkFacetResult)
   : SparkFacetResult = {
     partitionsRDD.map(f(_)).reduce( (x, y) => SparkFacetResultMonoid.plus(x, y))
+  }
+
+
+  /**
+   * Return all document fields
+   * @return
+   */
+  def fields(): Set[String] = {
+    partitionsRDD.map(_.fields()).reduce(_ ++ _)
   }
 
   /**

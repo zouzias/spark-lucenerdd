@@ -59,6 +59,10 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
 
+  override def fields(): Set[String] = {
+    LuceneQueryHelpers.fields(indexSearcher)
+  }
+
   override def close(): Unit = {
     indexReader.close()
   }
@@ -71,8 +75,12 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
     iterOriginal.contains(elem)
   }
 
-  override def multiTermQuery(docMap: Map[String, String], topK: Int): Seq[SparkScoreDoc] = {
-   LuceneQueryHelpers.multiTermQuery(indexSearcher, docMap, topK)
+  override def multiTermQuery(docMap: Map[String, String],
+                              topK: Int,
+                              booleanClause: BooleanClause.Occur = BooleanClause.Occur.MUST)
+  : Seq[SparkScoreDoc] = {
+   LuceneQueryHelpers.multiTermQuery(indexSearcher, docMap, topK,
+     booleanClause: BooleanClause.Occur)
   }
 
   override def iterator: Iterator[T] = {

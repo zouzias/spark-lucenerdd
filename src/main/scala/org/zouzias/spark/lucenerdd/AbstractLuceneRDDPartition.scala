@@ -17,6 +17,7 @@
 
 package org.zouzias.spark.lucenerdd
 
+import org.apache.lucene.search.BooleanClause
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.reflect.ClassTag
@@ -36,9 +37,21 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   def isDefined(key: T): Boolean
 
-  def multiTermQuery(docMap: Map[String, String], topK: Int): Iterable[SparkScoreDoc]
-
   def close(): Unit
+
+  def fields(): Set[String]
+
+  /**
+   * Multi term query
+   * @param docMap
+   * @param topK
+   * @return
+   */
+  def multiTermQuery(docMap: Map[String, String],
+                     topK: Int,
+                     boolClause: BooleanClause.Occur = BooleanClause.Occur.MUST)
+  : Iterable[SparkScoreDoc]
+
 
   /**
    * Generic Lucene Query using QueryParser

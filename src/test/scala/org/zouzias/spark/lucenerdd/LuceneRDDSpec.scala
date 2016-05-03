@@ -88,4 +88,18 @@ class LuceneRDDSpec extends FlatSpec
     val luceneRDD = LuceneRDD(rdd)
     luceneRDD.filter(x => x.startsWith("iDoNotExist")).count should equal (0)
   }
+
+  "LuceneRDD.fields" should "return _1 as default field" in {
+    val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD.fields() shouldBe Set("_1")
+  }
+
+  "LuceneRDD.fields" should "return correct fields with RDD[Map[String, String]]" in {
+    val maps = List(Map( "a" -> "hello"), Map("b" -> "world"), Map("c" -> "how are you"))
+    val rdd = sc.parallelize(maps)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.fields() shouldBe Set("a", "b", "c")
+  }
 }

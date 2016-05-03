@@ -33,39 +33,40 @@ import scala.reflect.ClassTag
 object LuceneRDDImplicits {
 
   private val Stored = Field.Store.YES
+  private val DefaultFieldName = "_1"
   private val FacetFieldSuffix = "_facet"
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    doc.add(new IntField(s"_1", v, Stored))
+    doc.add(new IntField(DefaultFieldName, v, Stored))
     doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
-    doc.add(new LongField("_1", v, Stored))
+    doc.add(new LongField(DefaultFieldName, v, Stored))
     doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
-    doc.add(new DoubleField("_1", v, Stored))
+    doc.add(new DoubleField(DefaultFieldName, v, Stored))
     doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
-    doc.add(new FloatField("_1", v, Stored))
+    doc.add(new FloatField(DefaultFieldName, v, Stored))
     doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
-    doc.add(new StringField("_1", s, Stored))
+    doc.add(new StringField(DefaultFieldName, s, Stored))
     if (s.nonEmpty) {
       doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", s))
     }
@@ -74,7 +75,7 @@ object LuceneRDDImplicits {
 
   implicit def textFieldToDocument(s: LuceneText): Document = {
     val doc = new Document
-    doc.add(new TextField("_1", s.content, Stored))
+    doc.add(new TextField(DefaultFieldName, s.content, Stored))
     doc
   }
 

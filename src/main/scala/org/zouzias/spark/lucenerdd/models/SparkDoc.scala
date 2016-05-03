@@ -66,13 +66,13 @@ class SparkDoc(doc: Document) extends Serializable {
 
   override def toString(): String = {
     val builder = new StringBuilder
-    builder.append("Numeric fields:\n")
+    if ( numberFields.nonEmpty) builder.append("Numeric fields:")
     numberFields.foreach { case (name, values) =>
-      builder.append(s"${name}:[${values.mkString(",")}]\n")
+      builder.append(s"${name}:[${values.mkString(",")}]")
     }
-    builder.append("Text fields:\n")
+    if (stringFields.nonEmpty) builder.append("Text fields:")
     stringFields.foreach { case (name, values) =>
-      builder.append(s"${name}:[${values.mkString(",")}]\n")
+      builder.append(s"${name}:[${values.mkString(",")}]")
     }
     builder.result()
   }

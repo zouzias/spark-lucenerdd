@@ -8,10 +8,16 @@ Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
 Currently the Lucene index is stored in memory. Also the following Lucene queries are supported under `LuceneRDD`:
 
-* termQuery: Exact term search
-* fuzzyQuery: Fuzzy search
-* phraseQuery: phrase search
-* prefixSearch: prefix search
+
+|Operation| Syntax| Description |
+|-------|---------------------|----------|
+|Term query     | `LuceneRDD.termQuery(fieldName, query, topK)`| Exact term search |
+|Fuzzy query | `LuceneRDD.fuzzyQuery(fieldName, query, maxEdits, topK)`| Fuzzy term search |
+|Phrase query | `LuceneRDD.phraseQuery(fieldName, query, topK)` | Phrase search |
+|Prefix query | `LuceneRDD.prefixSearch(fieldName, prefix, topK)` | Prefix search |
+|Query parser | `LuceneRDD.query(queryString, topK)` | Prefix search |
+
+For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html
 
 Implicit conversions for tuples of size up to 7 with the types (Int, Float, Double, Long, String) are supported. (For phrase queries, the auxiliary class `org.zouzias.spark.lucenerdd.models.LuceneText` must be used.)
 

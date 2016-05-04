@@ -14,22 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.aggregate
+package org.zouzias.spark.lucenerdd.config
 
-import com.twitter.algebird.{MapMonoid, Monoid}
-import org.zouzias.spark.lucenerdd.models.SparkFacetResult
+import com.typesafe.config.ConfigFactory
 
 /**
- * Monoid for [[SparkFacetResult]]
+ * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
  */
-object SparkFacetResultMonoid extends Serializable {
+trait LuceneRDDConfigurable extends Serializable {
 
-  private lazy val facetMonoid = new MapMonoid[String, Long]()
+  val config = ConfigFactory.load()
 
-  def zero(facetName: String): SparkFacetResult = SparkFacetResult(facetName, facetMonoid.zero)
+  protected val MaxDefaultTopKValue: Int = {
+    if (config.hasPath("lucenerdd.query.topk.default")) {
+      config.getInt("lucenerdd.query.topk.maxvalue")
+    }
+    else 1000
+  }
 
-  def plus(l: SparkFacetResult, r: SparkFacetResult): SparkFacetResult = {
-    require(l.facetName == r.facetName) // Check if summing same facets
-    SparkFacetResult(l.facetName, facetMonoid.plus(l.facets, r.facets))
+  /** Default value for topK queries */
+  protected val DefaultTopK: Int = {
+    if (config.hasPath("lucenerdd.query.topk.default")) {
+      config.getInt("lucenerdd.query.topk.default")
+    }
+    else 10
   }
 }

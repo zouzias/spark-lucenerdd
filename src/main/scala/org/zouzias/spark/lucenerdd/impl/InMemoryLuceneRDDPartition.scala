@@ -25,6 +25,7 @@ import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.AbstractLuceneRDDPartition
 import org.zouzias.spark.lucenerdd.analyze.{StdAnalyzer, WSAnalyzer}
+import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.store.InMemoryIndexStorable
@@ -117,12 +118,6 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
     LuceneQueryHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)
   }
 
-  /**
-   * Faceted search query
-   *
-   * @param topK
-   * @return
-   */
   override def facetQuery(searchString: String,
                           facetField: String,
                           topK: Int): SparkFacetResult = {

@@ -17,10 +17,10 @@ The following Lucene queries are supported under `LuceneRDD`:
 |Fuzzy query | `LuceneRDD.fuzzyQuery(field, query, maxEdits, topK)`| Fuzzy term search |
 |Phrase query | `LuceneRDD.phraseQuery(field, query, topK)` | Phrase search |
 |Prefix query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
-|Query parser | `LuceneRDD.query(queryString, topK)` | Prefix search |
+|Query parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
 |Faceted search| `LuceneRDD.facetQuery(queryString, field + "_facet", topK)` | Faceted Search |
 
-For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html)
+For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). For example, using the query parser you can perform prefix queries as `LuceneRDD.query("textField:spar*", 10)`, fuzzy queries, prefix queries, etc.
 
 Implicit conversions for tuples of size up to 7 with the types (Int, Float, Double, Long, String) are supported. (For phrase queries, the auxiliary class `org.zouzias.spark.lucenerdd.models.LuceneText` must be used.)
 

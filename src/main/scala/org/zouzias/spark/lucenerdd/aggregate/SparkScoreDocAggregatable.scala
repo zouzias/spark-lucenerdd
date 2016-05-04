@@ -17,14 +17,13 @@
 package org.zouzias.spark.lucenerdd.aggregate
 
 import com.twitter.algebird.TopKMonoid
+import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
  * TopK monoid to aggregate [[SparkScoreDoc]]
  */
-trait SparkScoreDocAggregatable {
+trait SparkScoreDocAggregatable extends LuceneRDDConfigurable {
 
-  protected def MaxTopK(): Int
-
-  protected val SparkDocTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxTopK)
+  protected val SparkDocTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)
 }

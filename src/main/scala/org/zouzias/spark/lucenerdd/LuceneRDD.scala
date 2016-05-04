@@ -31,14 +31,11 @@ import scala.reflect.ClassTag
  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
  * @tparam T
  */
-class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
-                             private val MaxTopKValue: Int = LuceneRDD.MaxDefaultTopKValue)
+class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
   extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
   with SparkScoreDocAggregatable {
 
-  private val DefaultTopK: Int = LuceneRDD.DefaultTopK
-
-  override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
+override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
   override protected def getPreferredLocations(s: Partition): Seq[String] =
     partitionsRDD.preferredLocations(s)
@@ -60,7 +57,6 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   /**
    * Aggregates lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
-   *
    * @param f
    * @return
    */
@@ -91,7 +87,6 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   /**
    * Lucene generic query
-   *
    * @param doc
    * @return
    */
@@ -118,10 +113,9 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   /**
    * Lucene term query
-   *
-   * @param fieldName
-   * @param query
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Term to search on
+   * @param topK Number of documents to return
    * @return
    */
   def termQuery(fieldName: String, query: String,
@@ -131,10 +125,9 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   /**
    * Lucene prefix query
-   *
-   * @param fieldName
-   * @param query
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Prefix query text
+   * @param topK Number of documents to return
    * @return
    */
   def prefixQuery(fieldName: String, query: String,
@@ -144,11 +137,10 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   /**
    * Lucene fuzzy query
-   *
-   * @param fieldName
-   * @param query
-   * @param maxEdits
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Query text
+   * @param maxEdits Fuzziness, edit distance
+   * @param topK Number of documents to return
    * @return
    */
   def fuzzyQuery(fieldName: String, query: String,
@@ -158,10 +150,9 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
   /**
    * Lucene phrase Query
-   *
-   * @param fieldName
-   * @param query
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Query text
+   * @param topK Number of documents to return
    * @return
    */
   def phraseQuery(fieldName: String, query: String,
@@ -189,8 +180,6 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
     partitionsRDD.map(_.isDefined(elem)).collect().exists(x => x)
   }
 
-  override protected def MaxTopK(): Int = MaxTopKValue
-
   def close(): Unit = {
     partitionsRDD.foreach(_.close())
   }
@@ -198,13 +187,12 @@ class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPar
 
 object LuceneRDD {
 
-  val MaxDefaultTopKValue: Int = 1000
-
-  /** Default value for topK queries */
-  val DefaultTopK: Int = 10
-
   /**
-   * Constructs a LuceneRDD from an RDD of pairs, merging duplicate keys arbitrarily.
+   * Instantiate a LuceneRDD given an RDD[T]
+   * @param elems RDD of type T
+   * @param docConversion Implicit conversion of T to Document
+   * @tparam T Generic type
+   * @return
    */
   def apply[T: ClassTag](elems: RDD[T])(implicit docConversion: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](

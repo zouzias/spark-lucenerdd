@@ -7,6 +7,6 @@ jdk:
   - oraclejdk7
   - openjdk7
 
-script: "sbt clean update coverage test"
+script: "sbt ++$TRAVIS_SCALA_VERSION clean update coverage test"
 after_success: "sbt coverageReport coveralls"
 

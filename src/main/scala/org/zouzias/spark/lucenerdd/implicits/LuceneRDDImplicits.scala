@@ -89,7 +89,9 @@ object LuceneRDDImplicits {
         doc.add(new TextField(fieldName, x.content, Stored))
       case x: String =>
         doc.add(new StringField(fieldName, x, Stored))
-        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
+        if ( x.nonEmpty) { // Issues with empty strings on facets
+          doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
+        }
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
         doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))

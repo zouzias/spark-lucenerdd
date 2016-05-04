@@ -217,4 +217,9 @@ object LuceneRDD {
   (elems: Iterator[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
     apply(sc.parallelize[T](elems.toSeq))
   }
+
+  def apply[T: ClassTag]
+  (elems: Seq[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
+    apply(sc.parallelize[T](elems))
+  }
 }

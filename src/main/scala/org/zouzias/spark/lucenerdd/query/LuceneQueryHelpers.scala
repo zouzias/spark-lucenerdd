@@ -17,7 +17,6 @@
 package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.analysis.Analyzer
-import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.facet.{Facets, FacetsCollector}
 import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts}
@@ -26,7 +25,6 @@ import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
-
 import scala.collection.JavaConverters._
 /**
  * Helpers for lucene queries
@@ -49,10 +47,11 @@ object LuceneQueryHelpers extends Serializable {
   }
 
   /**
-   *
+   * Lucene query parser
    * @param indexSearcher
    * @param searchString
    * @param topK
+   * @param analyzer
    * @return
    */
   def searchParser(indexSearcher: IndexSearcher,
@@ -66,7 +65,6 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
-   *
    * @param indexSearcher
    * @param searchString
    * @param facetField
@@ -93,18 +91,16 @@ object LuceneQueryHelpers extends Serializable {
   }
 
   /**
-   * Count number of lucene documents
-   *
+   * Returns total number of lucene documents
    * @param indexSearcher
    * @return
    */
   def totalDocs(indexSearcher: IndexSearcher): Long = {
-    indexSearcher.search(MatchAllDocs, 1).totalHits
+    indexSearcher.getIndexReader.numDocs().toLong
   }
 
   /**
    * Search top-k documents
-   *
    * @param indexSearcher
    * @param query
    * @param k
@@ -115,13 +111,19 @@ object LuceneQueryHelpers extends Serializable {
     topDocs.scoreDocs.map(_.doc).map(x => indexSearcher.doc(x))
   }
 
+  /**
+   * Search top-k documents given a query
+   * @param indexSearcher
+   * @param query
+   * @param k
+   * @return
+   */
   def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[SparkScoreDoc] = {
    indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   /**
    * Term query
-   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -139,7 +141,6 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Prefix query
-   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -157,7 +158,6 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Fuzzy query
-   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -177,7 +177,6 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Phrase query
-   *
    * @param indexSearcher
    * @param fieldName
    * @param fieldText
@@ -195,7 +194,6 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Multi term search
-   *
    * @param indexSearcher
    * @param docMap
    * @param topK
@@ -208,7 +206,6 @@ object LuceneQueryHelpers extends Serializable {
   : Seq[SparkScoreDoc] = {
 
     val builder = new BooleanQuery.Builder()
-
     val terms = docMap.map{ case (field, fieldValue) =>
       new TermQuery(new Term(field, fieldValue))
     }

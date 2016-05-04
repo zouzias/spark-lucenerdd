@@ -19,12 +19,10 @@ package org.zouzias.spark.lucenerdd
 
 import org.apache.lucene.search.BooleanClause
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
-
 import scala.reflect.ClassTag
 
-
 /**
- *
+ * Class for a LuceneRDD partition.
  * @tparam T the type associated with each entry in the set.
  */
 private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializable {
@@ -55,44 +53,44 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Generic Lucene Query using QueryParser
-   * @param searchString
-   * @param topK
+   * @param searchString Lucene query string, i.e., textField:hello*
+   * @param topK Number of documents to return
    * @return
    */
   def query(searchString: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Generic Lucene faceted Query using QueryParser
-   * @param searchString
-   * @param topK
+   * @param searchString Lucene query string, i.e., textField:hello*
+   * @param topK Number of facets to return
    * @return
    */
   def facetQuery(searchString: String, facetField: String, topK: Int): SparkFacetResult
 
   /**
    * Term Query
-   * @param fieldName
-   * @param query
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Query text
+   * @param topK Number of documents to return
    * @return
    */
   def termQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Prefix Query
-   * @param fieldName
-   * @param query
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Prefix query
+   * @param topK Number of documents to return
    * @return
    */
   def prefixQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
    * Fuzzy Query
-   * @param fieldName
-   * @param query
-   * @param maxEdits
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Query text
+   * @param maxEdits Fuzziness, edit distance
+   * @param topK Number of documents to return
    * @return
    */
   def fuzzyQuery(fieldName: String, query: String,
@@ -100,9 +98,9 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * PhraseQuery
-   * @param fieldName
-   * @param query
-   * @param topK
+   * @param fieldName Name of field
+   * @param query Phrase query, i.e., "hello world"
+   * @param topK Number of documents to return
    * @return
    */
   def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]

@@ -74,6 +74,14 @@ class LuceneTuplesRDDSpec extends FlatSpec with Matchers with SharedSparkContext
     results.size should equal (1)
   }
 
+  "LuceneRDD" should "work with Tuple8" in {
+    val rdd = sc.parallelize(array).map(x => (x, x, 2.0d, 1.0d, x, 1, x, 3.4))
+    val luceneRDD = LuceneRDD(rdd)
+    val results = luceneRDD.termQuery(First,
+      array(scala.util.Random.nextInt(array.size)))
+    results.size should equal (1)
+  }
+
   "LuceneRDD" should "work with mixed types in Tuples" in {
     val rdd = sc.parallelize(array).map(x => (x, 1, x, 2L, x, 3.0F))
     val luceneRDD = LuceneRDD(rdd)

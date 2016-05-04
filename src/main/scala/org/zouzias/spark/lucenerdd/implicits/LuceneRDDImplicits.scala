@@ -36,40 +36,44 @@ object LuceneRDDImplicits {
   private val DefaultFieldName = "_1"
   private val FacetFieldSuffix = "_facet"
 
+  private def addFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
+    if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
+      doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", fieldValue))
+    }
+  }
+
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
     doc.add(new IntField(DefaultFieldName, v, Stored))
-    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
+    addFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
     doc.add(new LongField(DefaultFieldName, v, Stored))
-    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
+    addFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
     doc.add(new DoubleField(DefaultFieldName, v, Stored))
-    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
+    addFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
     doc.add(new FloatField(DefaultFieldName, v, Stored))
-    doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", v.toString))
+    addFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
     doc.add(new StringField(DefaultFieldName, s, Stored))
-    if (s.nonEmpty) {
-      doc.add(new SortedSetDocValuesFacetField(s"_1${FacetFieldSuffix}", s))
-    }
+    addFacetField(doc, DefaultFieldName, s)
     doc
   }
 
@@ -89,21 +93,19 @@ object LuceneRDDImplicits {
         doc.add(new TextField(fieldName, x.content, Stored))
       case x: String =>
         doc.add(new StringField(fieldName, x, Stored))
-        if ( x.nonEmpty) { // Issues with empty strings on facets
-          doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
-        }
+        addFacetField(doc, fieldName, x)
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
-        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
+        addFacetField(doc, fieldName, x.toString)
       case x: Double =>
         doc.add(new DoubleField(fieldName, x, Stored))
-        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
+        addFacetField(doc, fieldName, x.toString)
       case x: Float =>
         doc.add(new FloatField(fieldName, x, Stored))
-        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
+        addFacetField(doc, fieldName, x.toString)
       case x: Long =>
         doc.add(new LongField(fieldName, x, Stored))
-        doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", x.toString))
+        addFacetField(doc, fieldName, x.toString)
     }
     doc
   }
@@ -196,6 +198,26 @@ object LuceneRDDImplicits {
     tupleTypeToDocument[T5](doc, 5, s._5)
     tupleTypeToDocument[T6](doc, 6, s._6)
     tupleTypeToDocument[T7](doc, 7, s._7)
+    doc
+  }
+
+  implicit def tuple8ToDocument[T1: ClassTag,
+  T2: ClassTag,
+  T3: ClassTag,
+  T4: ClassTag,
+  T5: ClassTag,
+  T6: ClassTag,
+  T7: ClassTag,
+  T8: ClassTag](s: (T1, T2, T3, T4, T5, T6, T7, T8)): Document = {
+    val doc = new Document
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T5](doc, 5, s._5)
+    tupleTypeToDocument[T6](doc, 6, s._6)
+    tupleTypeToDocument[T7](doc, 7, s._7)
+    tupleTypeToDocument[T8](doc, 8, s._8)
     doc
   }
 

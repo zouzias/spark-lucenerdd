@@ -201,13 +201,16 @@ object LuceneRDD {
     new LuceneRDD(partitions)
   }
 
+  /**
+   * Instantiate a LuceneRDD with an iterable
+   * @param elems
+   * @param docConversion
+   * @param sc
+   * @tparam T
+   * @return
+   */
   def apply[T: ClassTag]
-  (elems: Iterator[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
+  (elems: Iterable[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
     apply(sc.parallelize[T](elems.toSeq))
-  }
-
-  def apply[T: ClassTag]
-  (elems: Seq[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
-    apply(sc.parallelize[T](elems))
   }
 }

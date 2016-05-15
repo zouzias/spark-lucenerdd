@@ -4,9 +4,9 @@
 
 Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
-The main abstraction is a special type of `RDD` called `LuceneRDD`, which instantiates a Lucene index on each Spark executor (a.k.a worker).
+The main abstraction is a special type of `RDD` called `LuceneRDD`, which instantiates a Lucene index on each Spark executor (a.k.a. worker).
 
-`LuceneRDD`'s responsibility is to collect and aggregate the search results from the executors to the driver. Currently, the following queries are supported:
+`LuceneRDD`'s responsibility is to collect and aggregate the search results from the Spark executors to the Spark driver. Currently, the following queries are supported:
 
 |Operation| Syntax| Description |
 |-------|---------------------|----------|

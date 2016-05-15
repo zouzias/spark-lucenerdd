@@ -1,3 +1,7 @@
+commons-csv-1.1.jar
+spark-csv_2.11-1.4.0.jar
+src/test/resources/h1bvisa-2014.csv
+
 metastore_db/
 .idea/
 *.class

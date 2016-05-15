@@ -19,7 +19,8 @@ name := "spark-lucenerdd"
 organization := "org.zouzias"
 scalaVersion := "2.11.8"
 crossScalaVersions := Seq("2.10.6", "2.11.8")
-licenses += "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
+licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
+homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
 publishMavenStyle := false
 bintrayOrganization in bintray := None
@@ -30,6 +31,13 @@ publishArtifact in (Compile, packageSrc) := true
 
 pomExtra := (
   <url>https://github.com/zouzias/spark-lucenerdd</url>
+  <licenses>
+      <license>
+        <name>Apache-2.0</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+        <distribution>repo</distribution>
+      </license>
+  </licenses>
   <scm>
     <url>git@github.com:amplab/spark-lucenerdd.git</url>
     <connection>scm:git:git@github.com:zouzias/spark-lucenerdd.git</connection>

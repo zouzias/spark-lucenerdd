@@ -84,7 +84,6 @@ scala> results.foreach(println)
 SparkScoreDoc(1.0,129618,0,Numeric fields:Text fields:_1:[held])
 SparkScoreDoc(1.0,129617,0,Numeric fields:Text fields:_1:[helcotic])
 SparkScoreDoc(1.0,129616,0,Numeric fields:Text fields:_1:[helcosis])
-SparkScoreDoc(1.0,129615,0,Numeric fields:Text fields:_1:[helcoplasty])
 ...
 ```
 

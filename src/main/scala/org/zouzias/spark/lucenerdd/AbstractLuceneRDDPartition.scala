@@ -22,7 +22,7 @@ import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import scala.reflect.ClassTag
 
 /**
- * Class for a LuceneRDD partition.
+ * LuceneRDD partition.
  * @tparam T the type associated with each entry in the set.
  */
 private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializable {

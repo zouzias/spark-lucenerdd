@@ -22,7 +22,7 @@ crossScalaVersions := Seq("2.10.6", "2.11.8")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
-publishMavenStyle := false
+publishMavenStyle := true
 bintrayOrganization in bintray := None
 publishArtifact in (Compile, packageBin) := true
 publishArtifact in (Test, packageBin) := false

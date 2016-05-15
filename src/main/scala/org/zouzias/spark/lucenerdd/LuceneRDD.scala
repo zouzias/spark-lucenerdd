@@ -187,6 +187,8 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
 object LuceneRDD {
 
+  val FacetFieldSuffix = "_facet"
+
   /**
    * Instantiate a LuceneRDD given an RDD[T]
    * @param elems RDD of type T

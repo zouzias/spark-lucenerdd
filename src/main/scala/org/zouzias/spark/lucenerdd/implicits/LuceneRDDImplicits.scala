@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField
+import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.reflect.ClassTag
@@ -34,11 +35,11 @@ object LuceneRDDImplicits {
 
   private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
-  private val FacetFieldSuffix = "_facet"
 
   private def addFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
     if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
-      doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${FacetFieldSuffix}", fieldValue))
+      doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+        fieldValue))
     }
   }
 

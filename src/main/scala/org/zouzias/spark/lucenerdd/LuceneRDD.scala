@@ -29,6 +29,7 @@ import scala.reflect.ClassTag
 
 /**
  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
+ *
  * @tparam T
  */
 class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
@@ -57,6 +58,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Aggregates lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
+   *
    * @param f
    * @return
    */
@@ -68,6 +70,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Aggregator of faceted results
+   *
    * @param f
    * @return
    */
@@ -79,6 +82,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Return all document fields
+   *
    * @return
    */
   def fields(): Set[String] = {
@@ -87,6 +91,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Lucene generic query
+   *
    * @param doc
    * @return
    */
@@ -96,6 +101,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Generic query using Lucene's query parser
+   *
    * @param searchString  Query String
    * @param topK
    * @return
@@ -105,6 +111,14 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
     docResultsAggregator(_.query(searchString, topK))
   }
 
+  /**
+   * Faceted query
+   *
+   * @param searchString
+   * @param facetField
+   * @param topK
+   * @return
+   */
   def facetQuery(searchString: String,
                  facetField: String,
                  topK: Int = DefaultTopK): SparkFacetResult = {
@@ -112,7 +126,24 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   }
 
   /**
+   * Faceted query with multiple facets
+   *
+   * @param searchString
+   * @param facetFields
+   * @param topK
+   * @return
+   */
+  def facetQueries(searchString: String,
+                 facetFields: Seq[String],
+                 topK: Int = DefaultTopK): Map[String, SparkFacetResult] = {
+    facetFields.map { case facetField =>
+      facetField -> facetQuery(searchString, facetField, topK)
+    }.toMap[String, SparkFacetResult]
+  }
+
+  /**
    * Lucene term query
+   *
    * @param fieldName Name of field
    * @param query Term to search on
    * @param topK Number of documents to return
@@ -125,6 +156,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Lucene prefix query
+   *
    * @param fieldName Name of field
    * @param query Prefix query text
    * @param topK Number of documents to return
@@ -137,6 +169,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Lucene fuzzy query
+   *
    * @param fieldName Name of field
    * @param query Query text
    * @param maxEdits Fuzziness, edit distance
@@ -150,6 +183,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
   /**
    * Lucene phrase Query
+   *
    * @param fieldName Name of field
    * @param query Query text
    * @param topK Number of documents to return
@@ -187,10 +221,12 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
 object LuceneRDD {
 
+  /** All faceted fields are suffixed with _facet */
   val FacetFieldSuffix = "_facet"
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]
+   *
    * @param elems RDD of type T
    * @param docConversion Implicit conversion of T to Document
    * @tparam T Generic type
@@ -205,6 +241,7 @@ object LuceneRDD {
 
   /**
    * Instantiate a LuceneRDD with an iterable
+   *
    * @param elems
    * @param docConversion
    * @param sc

@@ -1,12 +1,18 @@
-cache: false
+language: scala
+sudo: false
+cache:
+  directories:
+    - $HOME/.ivy2
 language: scala
 scala:
   - "2.10.6"
   - "2.11.8"
 jdk:
   - oraclejdk7
+  - openjdk6
   - openjdk7
-
-script: "sbt ++$TRAVIS_SCALA_VERSION clean update coverage test"
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean update coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION scalastyle
 after_success: "sbt coverageReport coveralls"
 

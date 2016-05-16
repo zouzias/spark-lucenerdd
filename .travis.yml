@@ -9,7 +9,7 @@ scala:
   - "2.11.8"
 jdk:
   - oraclejdk7
-  - openjdk6
+  - oraclejdk8
   - openjdk7
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update coverage test

@@ -25,6 +25,9 @@ homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8",
   "-feature", "-language:implicitConversions")
 
+// Add jcenter repo
+resolvers += Resolver.jcenterRepo
+
 releaseCrossBuild := true
 
 publishMavenStyle := true

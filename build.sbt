@@ -30,7 +30,7 @@ resolvers += Resolver.jcenterRepo
 
 releaseCrossBuild := true
 
-publishMavenStyle := true
+publishMavenStyle := false
 bintrayOrganization in bintray := None
 publishArtifact in (Compile, packageBin) := true
 publishArtifact in Test := false

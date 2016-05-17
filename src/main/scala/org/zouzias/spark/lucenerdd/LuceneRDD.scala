@@ -121,8 +121,12 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def facetQuery(searchString: String,
                  facetField: String,
-                 topK: Int = DefaultTopK): SparkFacetResult = {
-    facetResultsAggregator(_.facetQuery(searchString, facetField, topK))
+                 topK: Int = DefaultTopK,
+                 facetNum: Int = DefaultFacetNum
+  ): (Iterable[SparkScoreDoc], SparkFacetResult) = {
+    val aggrTopDocs = docResultsAggregator(_.query(searchString, topK))
+    val aggrFacets = facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum))
+    (aggrTopDocs, aggrFacets)
   }
 
   /**
@@ -135,10 +139,14 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def facetQueries(searchString: String,
                  facetFields: Seq[String],
-                 topK: Int = DefaultTopK): Map[String, SparkFacetResult] = {
-    facetFields.map { case facetField =>
-      facetField -> facetQuery(searchString, facetField, topK)
+                 topK: Int = DefaultTopK,
+                 facetNum: Int = DefaultFacetNum)
+  : (Iterable[SparkScoreDoc], Map[String, SparkFacetResult]) = {
+    val aggrTopDocs = docResultsAggregator(_.query(searchString, topK))
+    val aggrFacets = facetFields.map { case facetField =>
+      facetField -> facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum))
     }.toMap[String, SparkFacetResult]
+    (aggrTopDocs, aggrFacets)
   }
 
   /**

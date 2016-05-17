@@ -39,4 +39,11 @@ trait LuceneRDDConfigurable extends Serializable {
     }
     else 10
   }
+
+  protected val DefaultFacetNum: Int = {
+    if (config.hasPath("lucenerdd.query.facet.topk.default")) {
+      config.getInt("lucenerdd.query.facet.topk.default")
+    }
+    else 10
+  }
 }

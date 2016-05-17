@@ -65,7 +65,8 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @param topK Number of facets to return
    * @return
    */
-  def facetQuery(searchString: String, facetField: String, topK: Int): SparkFacetResult
+  def facetQuery(searchString: String, facetField: String, topK: Int)
+  : SparkFacetResult
 
   /**
    * Term Query

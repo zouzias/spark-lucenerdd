@@ -35,10 +35,27 @@ class LuceneRDDFacetSpec extends FlatSpec
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.facetQuery("*:*", "_1").facets.size should equal (3)
-    luceneRDD.facetQuery("*:*", "_1").facets.contains("aaa") should equal (true)
-    luceneRDD.facetQuery("*:*", "_1").facets.get("aaa")
+    val facetResults = luceneRDD.facetQuery("*:*", "_1")._2
+
+    facetResults.facets.size should equal (3)
+    facetResults.facets.contains("aaa") should equal (true)
+    facetResults.facets.get("aaa")
       .foreach(value => value should equal (4))
+
+    luceneRDD.close()
+  }
+
+  "LuceneRDD.facetQueries" should "compute facets correctly" in {
+    val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+
+    val facetResults = luceneRDD.facetQueries("*:*", Seq("_1"))._2
+
+    facetResults.contains("_1") should equal(true)
+    facetResults.foreach(_._2.facets.size should equal (3))
+    facetResults.foreach(_._2.facets.contains("aaa") should equal (true))
+    facetResults.foreach(_._2.facets.get("aaa").foreach(value => value should equal (4)))
 
     luceneRDD.close()
   }
@@ -47,7 +64,8 @@ class LuceneRDDFacetSpec extends FlatSpec
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
-    val sortedFacetCounts = luceneRDD.facetQuery("*:*", "_1").sortedFacets().map(_._2)
+
+    val sortedFacetCounts = luceneRDD.facetQuery("*:*", "_1")._2.sortedFacets().map(_._2)
     sortedDesc(sortedFacetCounts) should equal(true)
 
     luceneRDD.close()
@@ -57,9 +75,12 @@ class LuceneRDDFacetSpec extends FlatSpec
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.facetQuery("_1:aa*", "_1").facets.size should equal (1)
-    luceneRDD.facetQuery("_1:aa*", "_1").facets.contains("aaa") should equal (true)
-    luceneRDD.facetQuery("_1:aa*", "_1").facets.get("aaa")
+    val results = luceneRDD.facetQuery("_1:aa*", "_1")
+    val facetResults = results._2
+
+    facetResults.facets.size should equal (1)
+    facetResults.facets.contains("aaa") should equal (true)
+    facetResults.facets.get("aaa")
       .foreach(value => value should equal (4))
 
     luceneRDD.close()
@@ -69,14 +90,20 @@ class LuceneRDDFacetSpec extends FlatSpec
     val words = Array("aaa", "aaa", "aaa", "aaa", "aaaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.facetQuery("_1:aaa", "_1").facets.size should equal (1)
-    luceneRDD.facetQuery("_1:aaa", "_1").facets.contains("aaa") should equal (true)
-    luceneRDD.facetQuery("_1:aaa", "_1").facets.contains("bb") should equal (false)
-    luceneRDD.facetQuery("_1:aaa", "_1").facets.contains("cc") should equal (false)
+    val results = luceneRDD.facetQuery("_1:aaa", "_1")
+    val facetResults = results._2
 
-    luceneRDD.facetQuery("_1:aaa", "_1").facets.get("aaa") should equal (Some(4))
-    luceneRDD.facetQuery("_1:bb", "_1").facets.contains("bb") should equal (true)
-    luceneRDD.facetQuery("_1:bb", "_1").facets.get("bb") should equal (Some(3))
+    facetResults.facets.size should equal (1)
+    facetResults.facets.contains("aaa") should equal (true)
+    facetResults.facets.contains("bb") should equal (false)
+    facetResults.facets.contains("cc") should equal (false)
+    facetResults.facets.get("aaa") should equal (Some(4))
+
+    val resultsB = luceneRDD.facetQuery("_1:bb", "_1")
+    val facetResultsB = resultsB._2
+
+    facetResultsB.facets.contains("bb") should equal (true)
+    facetResultsB.facets.get("bb") should equal (Some(3))
 
     luceneRDD.close()
   }
@@ -86,13 +113,16 @@ class LuceneRDDFacetSpec extends FlatSpec
       ("aaaa", "aaa3"), ("bb", "cc1"), ("bb", "cc1"), ("bb", "cc1"), ("cc", "cc2"), ("cc", "cc2"))
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.size should equal (3)
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.contains("aaa1") should equal (true)
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.contains("aaa2") should equal (true)
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.contains("aaa3") should equal (true)
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.get("aaa1") should equal (Some(1))
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.get("aaa2") should equal (Some(1))
-    luceneRDD.facetQuery("_1:aaa", "_2").facets.get("aaa3") should equal (Some(2))
+    val results = luceneRDD.facetQuery("_1:aaa", "_2")
+    val facetResults = results._2
+
+    facetResults.facets.size should equal (3)
+    facetResults.facets.contains("aaa1") should equal (true)
+    facetResults.facets.contains("aaa2") should equal (true)
+    facetResults.facets.contains("aaa3") should equal (true)
+    facetResults.facets.get("aaa1") should equal (Some(1))
+    facetResults.facets.get("aaa2") should equal (Some(1))
+    facetResults.facets.get("aaa3") should equal (Some(2))
 
     luceneRDD.close()
   }

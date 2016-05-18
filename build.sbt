@@ -32,11 +32,7 @@ releaseCrossBuild := true
 
 publishMavenStyle := true
 bintrayOrganization in bintray := None
-publishArtifact in (Compile, packageBin) := true
 publishArtifact in Test := false
-publishArtifact in (Compile, packageDoc) := false
-publishArtifact in (Compile, packageSrc) := true
-
 pomIncludeRepository := { _ => false }
 
 pomExtra := (

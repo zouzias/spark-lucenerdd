@@ -36,45 +36,65 @@ object LuceneRDDImplicits {
   private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
 
-  private def addFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
+  private def addTextFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
     if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
       doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
         fieldValue))
     }
   }
 
+  private def addNumericFacetField[T: ClassTag](doc: Document,
+                                                fieldName: String,
+                                                fieldValue: T): Unit = {
+      fieldValue match {
+        case x if (x.isInstanceOf[Long]) =>
+          doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+            x.asInstanceOf[Long]))
+        case x if (x.isInstanceOf[Int]) =>
+          doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+            x.asInstanceOf[Int].toLong))
+        case x if (x.isInstanceOf[Double]) =>
+          doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+            x.asInstanceOf[Double].toFloat))
+        case x if (x.isInstanceOf[Double]) =>
+          doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+            x.asInstanceOf[Float]))
+        case _ =>
+      }
+  }
+
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
     doc.add(new IntField(DefaultFieldName, v, Stored))
-    addFacetField(doc, DefaultFieldName, v.toString)
+    addNumericFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
     doc.add(new LongField(DefaultFieldName, v, Stored))
-    addFacetField(doc, DefaultFieldName, v.toString)
+    addNumericFacetField(doc, DefaultFieldName, v)
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
     doc.add(new DoubleField(DefaultFieldName, v, Stored))
-    addFacetField(doc, DefaultFieldName, v.toString)
+    addNumericFacetField(doc, DefaultFieldName, v)
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
     doc.add(new FloatField(DefaultFieldName, v, Stored))
-    addFacetField(doc, DefaultFieldName, v.toString)
+    addNumericFacetField(doc, DefaultFieldName, v)
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
     doc.add(new StringField(DefaultFieldName, s, Stored))
-    addFacetField(doc, DefaultFieldName, s)
+    addTextFacetField(doc, DefaultFieldName, s)
     doc
   }
 
@@ -94,19 +114,19 @@ object LuceneRDDImplicits {
         doc.add(new TextField(fieldName, x.content, Stored))
       case x: String =>
         doc.add(new StringField(fieldName, x, Stored))
-        addFacetField(doc, fieldName, x)
+        addTextFacetField(doc, fieldName, x)
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
-        addFacetField(doc, fieldName, x.toString)
+        addNumericFacetField(doc, fieldName, x)
       case x: Double =>
         doc.add(new DoubleField(fieldName, x, Stored))
-        addFacetField(doc, fieldName, x.toString)
+        addNumericFacetField(doc, fieldName, x)
       case x: Float =>
         doc.add(new FloatField(fieldName, x, Stored))
-        addFacetField(doc, fieldName, x.toString)
+        addNumericFacetField(doc, fieldName, x)
       case x: Long =>
         doc.add(new LongField(fieldName, x, Stored))
-        addFacetField(doc, fieldName, x.toString)
+        addNumericFacetField(doc, fieldName, x)
     }
     doc
   }

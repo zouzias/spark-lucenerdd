@@ -29,7 +29,7 @@ import scala.reflect.ClassTag
  *
  * Currently supports:
  * 1) Primitive types: Int, Long, Float, Double, String and [[LuceneText]]
- * 2) Tuples up to size 7 of the above types
+ * 2) Tuples up to size 8 of the above types
  */
 object LuceneRDDImplicits {
 

@@ -31,8 +31,21 @@ resolvers += Resolver.jcenterRepo
 releaseCrossBuild := true
 
 publishMavenStyle := true
-bintrayOrganization in bintray := None
+
+sonatypeProfileName := "org.zouzias"
+
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value) {
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  }
+  else {
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  }
+}
+
 publishArtifact in Test := false
+
 pomIncludeRepository := { _ => false }
 
 pomExtra := (

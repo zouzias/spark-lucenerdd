@@ -30,22 +30,16 @@ resolvers += Resolver.jcenterRepo
 
 releaseCrossBuild := true
 
-publishMavenStyle := false
+publishMavenStyle := true
 bintrayOrganization in bintray := None
 publishArtifact in (Compile, packageBin) := true
 publishArtifact in Test := false
 publishArtifact in (Compile, packageDoc) := false
 publishArtifact in (Compile, packageSrc) := true
 
+pomIncludeRepository := { _ => false }
+
 pomExtra := (
-  <url>https://github.com/zouzias/spark-lucenerdd</url>
-  <licenses>
-      <license>
-        <name>Apache-2.0</name>
-        <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-        <distribution>repo</distribution>
-      </license>
-  </licenses>
   <scm>
     <url>git@github.com:amplab/spark-lucenerdd.git</url>
     <connection>scm:git:git@github.com:zouzias/spark-lucenerdd.git</connection>

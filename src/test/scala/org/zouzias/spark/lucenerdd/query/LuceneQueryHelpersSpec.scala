@@ -14,12 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark.lucenerdd.query
 
-import org.zouzias.spark.lucenerdd.impl.LuceneRDDPartition
-import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
-import org.zouzias.spark.lucenerdd.LuceneRDD._
-import org.zouzias.spark.lucenerdd.LuceneRDD
-val df = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").load("src/test/resources/h1bvisa-2014.csv")
-val words = df.select("lca_case_employer_name", "lca_case_job_title").map( row => (row.getString(0).toLowerCase, row.getString(1).toLowerCase))
-val luceneRDD = LuceneRDD(words)
-luceneRDD.count
+import com.holdenkarau.spark.testing.SharedSparkContext
+import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+
+class LuceneQueryHelpersSpec extends FlatSpec
+  with Matchers
+  with BeforeAndAfterEach
+  with SharedSparkContext {
+
+  // TODO: add tests here
+}

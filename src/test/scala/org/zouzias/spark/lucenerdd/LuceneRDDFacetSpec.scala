@@ -30,7 +30,6 @@ class LuceneRDDFacetSpec extends FlatSpec
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
-  /*
   "LuceneRDD.facetQuery" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
@@ -41,6 +40,38 @@ class LuceneRDDFacetSpec extends FlatSpec
     facetResults.facets.contains("aaa") should equal (true)
     facetResults.facets.get("aaa")
       .foreach(value => value should equal (4))
+
+    luceneRDD.close()
+  }
+
+  "LuceneRDD.facetQuery" should "compute facets correctly with ints" in {
+    val words = Array(10, 10, 10, 10, 22, 22, 22, 33, 33)
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    val facetResults = luceneRDD.facetQuery("*:*", "_1")._2
+
+    facetResults.facets.size should equal (3)
+    facetResults.facets.contains("10") should equal (true)
+    facetResults.facets.contains("22") should equal (true)
+    facetResults.facets.contains("33") should equal (true)
+    facetResults.facets.get("10").foreach(value => value should equal (4))
+    facetResults.facets.get("33").foreach(value => value should equal (2))
+
+    luceneRDD.close()
+  }
+
+  "LuceneRDD.facetQuery" should "compute facets correctly with doubles" in {
+    val words = Array(10.5D, 10.5D, 10.5D, 10.5D, 22.2D, 22.2D, 22.2D, 33.2D, 33.2D)
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    val facetResults = luceneRDD.facetQuery("*:*", "_1")._2
+
+    facetResults.facets.size should equal (3)
+    facetResults.facets.contains("10.5") should equal (true)
+    facetResults.facets.contains("22.2") should equal (true)
+    facetResults.facets.contains("33.2") should equal (true)
+    facetResults.facets.get("10.5").foreach(value => value should equal (4))
+    facetResults.facets.get("33.2").foreach(value => value should equal (2))
 
     luceneRDD.close()
   }
@@ -126,5 +157,5 @@ class LuceneRDDFacetSpec extends FlatSpec
 
     luceneRDD.close()
   }
-  */
+
 }

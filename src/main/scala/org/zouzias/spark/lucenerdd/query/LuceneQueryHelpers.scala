@@ -18,13 +18,17 @@ package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.facet.{Facets, FacetsCollector}
+import org.apache.lucene.facet.{Facets, FacetsCollector, FacetsConfig}
 import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts}
+import org.apache.lucene.facet.taxonomy.{FastTaxonomyFacetCounts, TaxonomyReader}
+import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
+import org.apache.lucene.store.Directory
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+
 import scala.collection.JavaConverters._
 /**
  * Helpers for lucene queries
@@ -43,7 +47,9 @@ object LuceneQueryHelpers extends Serializable {
     indexSearcher.search(MatchAllDocs, 1).scoreDocs.flatMap(x =>
       indexSearcher.getIndexReader.document(x.doc)
       .getFields().asScala
-    ).map(_.name()).toSet
+    ).map{ case doc =>
+      doc.name()
+    }.toSet[String]
   }
 
   /**
@@ -66,23 +72,23 @@ object LuceneQueryHelpers extends Serializable {
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
    * @param indexSearcher
+   * @param indexSearcher
    * @param searchString
    * @param facetField
    * @param topK
    * @return
    */
-  def facetedSearch(indexSearcher: IndexSearcher,
-                    searchString: String,
-                    facetField: String,
-                    topK: Int)(implicit analyzer: Analyzer): SparkFacetResult = {
+  def facetedTextSearch(indexSearcher: IndexSearcher,
+                        taxoReader: TaxonomyReader,
+                        facetsConfig: FacetsConfig,
+                        searchString: String,
+                        facetField: String,
+                        topK: Int)(implicit analyzer: Analyzer): SparkFacetResult = {
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
-    val state = new DefaultSortedSetDocValuesReaderState(indexSearcher.getIndexReader)
     val fc = new FacetsCollector()
     val q: Query = queryParser.parse(searchString)
     FacetsCollector.search(indexSearcher, q, topK, fc)
-
-    // Retrieve facets
-    val facets: Option[Facets] = Option(new SortedSetDocValuesFacetCounts(state, fc))
+    val facets = Option(new FastTaxonomyFacetCounts(taxoReader, facetsConfig, fc))
 
     facets match {
       case Some(fcts) => SparkFacetResult(facetField, fcts.getTopChildren(topK, facetField))

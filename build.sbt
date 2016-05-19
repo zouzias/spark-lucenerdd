@@ -63,7 +63,7 @@ pomExtra := (
 )
 
 val sparkVersion = "1.5.2"
-val luceneV = "5.5.0"
+val luceneV = "5.5.1"
 
 // scalastyle:off
 val spark_core                = "org.apache.spark"               %% "spark-core"               % sparkVersion

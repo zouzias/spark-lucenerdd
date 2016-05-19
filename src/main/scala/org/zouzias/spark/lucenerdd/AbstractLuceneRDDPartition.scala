@@ -17,8 +17,10 @@
 
 package org.zouzias.spark.lucenerdd
 
+import org.apache.lucene.document.FieldType
 import org.apache.lucene.search.BooleanClause
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+
 import scala.reflect.ClassTag
 
 /**

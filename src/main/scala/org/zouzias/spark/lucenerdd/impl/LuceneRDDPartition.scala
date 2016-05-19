@@ -19,26 +19,27 @@ package org.zouzias.spark.lucenerdd.impl
 
 import org.apache.lucene.document._
 import org.apache.lucene.facet.FacetsConfig
+import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader, DirectoryTaxonomyWriter}
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.{AbstractLuceneRDDPartition, LuceneRDD}
-import org.zouzias.spark.lucenerdd.analyze.{StdAnalyzer, WSAnalyzer}
+import org.zouzias.spark.lucenerdd.analyzers.{StdAnalyzer, WSAnalyzer}
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
-import org.zouzias.spark.lucenerdd.store.InMemoryIndexStorable
+import org.zouzias.spark.lucenerdd.store.IndexStorable
 
 import scala.reflect.{ClassTag, _}
 import scala.collection.JavaConverters._
 
-private[lucenerdd] class InMemoryLuceneRDDPartition[T]
+private[lucenerdd] class LuceneRDDPartition[T]
 (private val iter: Iterator[T])
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
-  with InMemoryIndexStorable
+  with IndexStorable
   with WSAnalyzer
   with Logging {
 
@@ -46,21 +47,23 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
     new IndexWriterConfig(Analyzer)
     .setOpenMode(OpenMode.CREATE))
 
-  private lazy val FacetsConfig = new FacetsConfig()
+  private lazy val taxoWriter = new DirectoryTaxonomyWriter(TaxonomyDir)
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
   iterIndex.foreach { case elem =>
     // (implicitly) convert type T to lucene document
     val doc = docConversion(elem)
-    indexWriter.addDocument(FacetsConfig.build(doc))
+    indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
   }
 
   indexWriter.commit()
+  taxoWriter.close()
   indexWriter.close()
 
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
+  private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
 
   override def fields(): Set[String] = {
     LuceneQueryHelpers.fields(indexSearcher)
@@ -68,6 +71,7 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
 
   override def close(): Unit = {
     indexReader.close()
+    taxoReader.close()
   }
 
   override def size: Long = {
@@ -91,7 +95,7 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
   }
 
   override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
-    new InMemoryLuceneRDDPartition(iterOriginal.filter(pred))(docConversion, kTag)
+    new LuceneRDDPartition(iterOriginal.filter(pred))(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): Iterable[SparkScoreDoc] = {
@@ -121,16 +125,16 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
   override def facetQuery(searchString: String,
                           facetField: String,
                           topK: Int): SparkFacetResult = {
-    LuceneQueryHelpers.facetedSearch(indexSearcher,
+    LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader, FacetsConfig,
       searchString,
-      facetField + LuceneRDD.FacetFieldSuffix,
+      facetField + LuceneRDD.FacetTextFieldSuffix,
       topK)(Analyzer)
   }
 }
 
-object InMemoryLuceneRDDPartition {
+object LuceneRDDPartition {
   def apply[T: ClassTag]
-      (iter: Iterator[T])(implicit docConversion: T => Document): InMemoryLuceneRDDPartition[T] = {
-    new InMemoryLuceneRDDPartition[T](iter)(docConversion, classTag[T])
+      (iter: Iterator[T])(implicit docConversion: T => Document): LuceneRDDPartition[T] = {
+    new LuceneRDDPartition[T](iter)(docConversion, classTag[T])
   }
 }

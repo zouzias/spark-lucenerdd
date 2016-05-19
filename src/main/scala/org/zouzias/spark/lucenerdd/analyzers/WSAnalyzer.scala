@@ -14,11 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.analyze
+package org.zouzias.spark.lucenerdd.analyzers
 
 import org.apache.lucene.analysis.Analyzer
-import org.apache.lucene.analysis.standard.StandardAnalyzer
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 
-trait StdAnalyzer {
-  protected val Analyzer: Analyzer = new StandardAnalyzer()
+/**
+ * White space analyzer
+ */
+trait WSAnalyzer {
+  protected val Analyzer: Analyzer = new WhitespaceAnalyzer()
 }

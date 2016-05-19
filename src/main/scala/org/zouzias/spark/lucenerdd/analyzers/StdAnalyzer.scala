@@ -14,13 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.store
+package org.zouzias.spark.lucenerdd.analyzers
 
-import org.apache.lucene.store.RAMDirectory
+import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.standard.StandardAnalyzer
 
-/**
- * In memory lucene index
- */
-trait InMemoryIndexStorable {
-  protected lazy val IndexDir = new RAMDirectory()
+trait StdAnalyzer {
+  protected val Analyzer: Analyzer = new StandardAnalyzer()
 }

@@ -16,6 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.store
 
+import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store.RAMDirectory
 
 /**
@@ -23,4 +24,7 @@ import org.apache.lucene.store.RAMDirectory
  */
 trait IndexStorable {
   protected lazy val IndexDir = new RAMDirectory()
+  protected lazy val TaxonomyDir = new RAMDirectory()
+
+  protected lazy val FacetsConfig = new FacetsConfig()
 }

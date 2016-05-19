@@ -18,7 +18,7 @@
 package org.zouzias.spark.lucenerdd.implicits
 
 import org.apache.lucene.document._
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetField
+import org.apache.lucene.facet.FacetField
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
@@ -38,7 +38,7 @@ object LuceneRDDImplicits {
 
   private def addTextFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
     if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
-      doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${LuceneRDD.FacetTextFieldSuffix}",
+      doc.add(new FacetField(s"${fieldName}${LuceneRDD.FacetTextFieldSuffix}",
         fieldValue))
     }
   }
@@ -47,6 +47,7 @@ object LuceneRDDImplicits {
                                                 fieldName: String,
                                                 fieldValue: T): Unit = {
     addTextFacetField(doc, fieldName, fieldValue.toString)  // For text-like faceting
+    /*
       fieldValue match {
         case x if (x.isInstanceOf[Long]) =>
           doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
@@ -60,8 +61,8 @@ object LuceneRDDImplicits {
         case x if (x.isInstanceOf[Double]) =>
           doc.add(new DoubleDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
             x.asInstanceOf[Double].toFloat))
-        case _ =>
       }
+      */
   }
 
   implicit def intToDocument(v: Int): Document = {

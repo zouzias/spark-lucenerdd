@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.lucene.document.FieldType
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
@@ -93,13 +94,21 @@ class LuceneRDDSpec extends FlatSpec
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(words)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.fields() shouldBe Set("_1")
+    luceneRDD.fields().contains("_1") should equal(true)
+  }
+
+  "LuceneRDD.fields" should "correctly return field types" in {
+    val words = Array(("a", 1.0F), ("b", 2.0F), ("c", 3.0F))
+    val rdd = sc.parallelize(words)
+    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD.fields().contains("_1") should equal(true)
+    luceneRDD.fields().contains("_2") should equal(true)
   }
 
   "LuceneRDD.fields" should "return correct fields with RDD[Map[String, String]]" in {
     val maps = List(Map( "a" -> "hello"), Map("b" -> "world"), Map("c" -> "how are you"))
     val rdd = sc.parallelize(maps)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.fields() shouldBe Set("a", "b", "c")
+    luceneRDD.fields() should equal(Set("a", "b", "c"))
   }
 }

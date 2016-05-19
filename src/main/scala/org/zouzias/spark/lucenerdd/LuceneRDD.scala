@@ -230,7 +230,8 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 object LuceneRDD {
 
   /** All faceted fields are suffixed with _facet */
-  val FacetFieldSuffix = "_facet"
+  val FacetTextFieldSuffix = "_facet"
+  val FacetNumericFieldSuffix = "_numFacet"
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]

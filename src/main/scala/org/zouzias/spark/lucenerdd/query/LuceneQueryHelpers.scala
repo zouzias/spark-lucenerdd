@@ -25,6 +25,7 @@ import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+
 import scala.collection.JavaConverters._
 /**
  * Helpers for lucene queries
@@ -43,7 +44,9 @@ object LuceneQueryHelpers extends Serializable {
     indexSearcher.search(MatchAllDocs, 1).scoreDocs.flatMap(x =>
       indexSearcher.getIndexReader.document(x.doc)
       .getFields().asScala
-    ).map(_.name()).toSet
+    ).map{ case doc =>
+      doc.name()
+    }.toSet[String]
   }
 
   /**
@@ -71,10 +74,10 @@ object LuceneQueryHelpers extends Serializable {
    * @param topK
    * @return
    */
-  def facetedSearch(indexSearcher: IndexSearcher,
-                    searchString: String,
-                    facetField: String,
-                    topK: Int)(implicit analyzer: Analyzer): SparkFacetResult = {
+  def facetedTextSearch(indexSearcher: IndexSearcher,
+                        searchString: String,
+                        facetField: String,
+                        topK: Int)(implicit analyzer: Analyzer): SparkFacetResult = {
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
     val state = new DefaultSortedSetDocValuesReaderState(indexSearcher.getIndexReader)
     val fc = new FacetsCollector()

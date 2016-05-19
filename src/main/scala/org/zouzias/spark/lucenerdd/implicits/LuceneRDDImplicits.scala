@@ -38,7 +38,7 @@ object LuceneRDDImplicits {
 
   private def addTextFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
     if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
-      doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+      doc.add(new SortedSetDocValuesFacetField(s"${fieldName}${LuceneRDD.FacetTextFieldSuffix}",
         fieldValue))
     }
   }
@@ -46,19 +46,20 @@ object LuceneRDDImplicits {
   private def addNumericFacetField[T: ClassTag](doc: Document,
                                                 fieldName: String,
                                                 fieldValue: T): Unit = {
+    addTextFacetField(doc, fieldName, fieldValue.toString)  // For text-like faceting
       fieldValue match {
         case x if (x.isInstanceOf[Long]) =>
-          doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+          doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
             x.asInstanceOf[Long]))
         case x if (x.isInstanceOf[Int]) =>
-          doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+          doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
             x.asInstanceOf[Int].toLong))
-        case x if (x.isInstanceOf[Double]) =>
-          doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
-            x.asInstanceOf[Double].toFloat))
-        case x if (x.isInstanceOf[Double]) =>
-          doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetFieldSuffix}",
+        case x if (x.isInstanceOf[Float]) =>
+          doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
             x.asInstanceOf[Float]))
+        case x if (x.isInstanceOf[Double]) =>
+          doc.add(new DoubleDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
+            x.asInstanceOf[Double].toFloat))
         case _ =>
       }
   }
@@ -115,17 +116,17 @@ object LuceneRDDImplicits {
       case x: String =>
         doc.add(new StringField(fieldName, x, Stored))
         addTextFacetField(doc, fieldName, x)
+      case x: Long =>
+        doc.add(new LongField(fieldName, x, Stored))
+        addNumericFacetField(doc, fieldName, x)
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
-        addNumericFacetField(doc, fieldName, x)
-      case x: Double =>
-        doc.add(new DoubleField(fieldName, x, Stored))
         addNumericFacetField(doc, fieldName, x)
       case x: Float =>
         doc.add(new FloatField(fieldName, x, Stored))
         addNumericFacetField(doc, fieldName, x)
-      case x: Long =>
-        doc.add(new LongField(fieldName, x, Stored))
+      case x: Double =>
+        doc.add(new DoubleField(fieldName, x, Stored))
         addNumericFacetField(doc, fieldName, x)
     }
     doc

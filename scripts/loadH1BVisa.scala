@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.impl.LuceneRDDPartition
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.LuceneRDD._
 import org.zouzias.spark.lucenerdd.LuceneRDD

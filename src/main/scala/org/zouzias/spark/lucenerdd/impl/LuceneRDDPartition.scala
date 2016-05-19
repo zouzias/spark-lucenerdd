@@ -28,17 +28,17 @@ import org.zouzias.spark.lucenerdd.analyze.{StdAnalyzer, WSAnalyzer}
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
-import org.zouzias.spark.lucenerdd.store.InMemoryIndexStorable
+import org.zouzias.spark.lucenerdd.store.IndexStorable
 
 import scala.reflect.{ClassTag, _}
 import scala.collection.JavaConverters._
 
-private[lucenerdd] class InMemoryLuceneRDDPartition[T]
+private[lucenerdd] class LuceneRDDPartition[T]
 (private val iter: Iterator[T])
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
-  with InMemoryIndexStorable
+  with IndexStorable
   with WSAnalyzer
   with Logging {
 
@@ -91,7 +91,7 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
   }
 
   override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
-    new InMemoryLuceneRDDPartition(iterOriginal.filter(pred))(docConversion, kTag)
+    new LuceneRDDPartition(iterOriginal.filter(pred))(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): Iterable[SparkScoreDoc] = {
@@ -128,9 +128,9 @@ private[lucenerdd] class InMemoryLuceneRDDPartition[T]
   }
 }
 
-object InMemoryLuceneRDDPartition {
+object LuceneRDDPartition {
   def apply[T: ClassTag]
-      (iter: Iterator[T])(implicit docConversion: T => Document): InMemoryLuceneRDDPartition[T] = {
-    new InMemoryLuceneRDDPartition[T](iter)(docConversion, classTag[T])
+      (iter: Iterator[T])(implicit docConversion: T => Document): LuceneRDDPartition[T] = {
+    new LuceneRDDPartition[T](iter)(docConversion, classTag[T])
   }
 }

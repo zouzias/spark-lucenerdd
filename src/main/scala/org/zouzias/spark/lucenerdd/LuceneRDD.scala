@@ -22,7 +22,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.aggregate.{SparkFacetResultMonoid, SparkScoreDocAggregatable}
-import org.zouzias.spark.lucenerdd.impl.InMemoryLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.impl.LuceneRDDPartition
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.reflect.ClassTag
@@ -242,7 +242,7 @@ object LuceneRDD {
    */
   def apply[T: ClassTag](elems: RDD[T])(implicit docConversion: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
-      iter => Iterator(InMemoryLuceneRDDPartition(iter)),
+      iter => Iterator(LuceneRDDPartition(iter)),
       preservesPartitioning = true)
     new LuceneRDD(partitions)
   }

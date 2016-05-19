@@ -21,6 +21,6 @@ import org.apache.lucene.store.RAMDirectory
 /**
  * In memory lucene index
  */
-trait InMemoryIndexStorable {
+trait IndexStorable {
   protected lazy val IndexDir = new RAMDirectory()
 }

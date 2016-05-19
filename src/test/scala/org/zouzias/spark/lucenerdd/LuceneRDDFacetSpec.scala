@@ -30,7 +30,6 @@ class LuceneRDDFacetSpec extends FlatSpec
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
-  /*
   "LuceneRDD.facetQuery" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
@@ -126,5 +125,4 @@ class LuceneRDDFacetSpec extends FlatSpec
 
     luceneRDD.close()
   }
-  */
 }

@@ -33,6 +33,6 @@ class LuceneQueryHelpersSpec extends FlatSpec
     val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
     val rdd = sc.parallelize(array)
     val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.fields() should equal ("_1")
+    luceneRDD.fields() should equal (Set("_1"))
   }
 }

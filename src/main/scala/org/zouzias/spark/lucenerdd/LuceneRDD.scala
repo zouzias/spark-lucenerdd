@@ -22,7 +22,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.aggregate.{SparkFacetResultMonoid, SparkScoreDocAggregatable}
-import org.zouzias.spark.lucenerdd.impl.LuceneRDDPartition
+import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.reflect.ClassTag
@@ -57,7 +57,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   }
 
   /**
-   * Aggregates lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
+   * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
    *
    * @param f
    * @return
@@ -69,10 +69,10 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   }
 
   /**
-   * Aggregator of faceted results
+   * Aggregates faceted search results using monoidal structure [[SparkFacetResultMonoid]]
    *
-   * @param f
-   * @return
+   * @param f a function that computes faceted search results per partition
+   * @return faceted search results
    */
   private def facetResultsAggregator(f: AbstractLuceneRDDPartition[T] => SparkFacetResult)
   : SparkFacetResult = {

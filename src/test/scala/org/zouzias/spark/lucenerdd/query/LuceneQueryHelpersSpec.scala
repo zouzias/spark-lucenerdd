@@ -18,6 +18,8 @@ package org.zouzias.spark.lucenerdd.query
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.zouzias.spark.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
 class LuceneQueryHelpersSpec extends FlatSpec
   with Matchers
@@ -25,4 +27,12 @@ class LuceneQueryHelpersSpec extends FlatSpec
   with SharedSparkContext {
 
   // TODO: add tests here
+
+
+  "LuceneQueryHelpers.fields" should "return the list of fields" in {
+    val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
+    val rdd = sc.parallelize(array)
+    val luceneRDD = LuceneRDD(rdd)
+    luceneRDD.fields() should equal (Set("_1"))
+  }
 }

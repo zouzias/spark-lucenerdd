@@ -18,14 +18,12 @@ package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.facet.{Facets, FacetsCollector, FacetsConfig}
-import org.apache.lucene.facet.sortedset.{DefaultSortedSetDocValuesReaderState, SortedSetDocValuesFacetCounts}
+import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
+import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
 import org.apache.lucene.facet.taxonomy.{FastTaxonomyFacetCounts, TaxonomyReader}
-import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
-import org.apache.lucene.store.Directory
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
@@ -72,7 +70,7 @@ object LuceneQueryHelpers extends Serializable {
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
    * @param indexSearcher
-   * @param indexSearcher
+   * @param taxoReader taxonomy reader used for faceted search
    * @param searchString
    * @param facetField
    * @param topK
@@ -84,12 +82,16 @@ object LuceneQueryHelpers extends Serializable {
                         searchString: String,
                         facetField: String,
                         topK: Int)(implicit analyzer: Analyzer): SparkFacetResult = {
+    // Prepare the query
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
-    val fc = new FacetsCollector()
     val q: Query = queryParser.parse(searchString)
+
+    // Collect the facets
+    val fc = new FacetsCollector()
     FacetsCollector.search(indexSearcher, q, topK, fc)
     val facets = Option(new FastTaxonomyFacetCounts(taxoReader, facetsConfig, fc))
 
+    // Present the facets
     facets match {
       case Some(fcts) => SparkFacetResult(facetField, fcts.getTopChildren(topK, facetField))
       case None => SparkFacetResultMonoid.zero(facetField)
@@ -192,9 +194,10 @@ object LuceneQueryHelpers extends Serializable {
   def phraseQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,
-                  topK: Int): Seq[SparkScoreDoc] = {
+                  topK: Int,
+                  phraseSeparator: String = " "): Seq[SparkScoreDoc] = {
     val builder = new PhraseQuery.Builder()
-    fieldText.split(" ").foreach( token => builder.add(new Term(fieldName, token)))
+    fieldText.split(phraseSeparator).foreach( token => builder.add(new Term(fieldName, token)))
     LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
   }
 

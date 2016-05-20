@@ -15,24 +15,21 @@
  * limitations under the License.
  */
 
-package org.zouzias.spark.lucenerdd.impl
+package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.document._
-import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader, DirectoryTaxonomyWriter}
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.apache.lucene.search._
 import org.apache.spark.Logging
-import org.zouzias.spark.lucenerdd.{AbstractLuceneRDDPartition, LuceneRDD}
-import org.zouzias.spark.lucenerdd.analyzers.{StdAnalyzer, WSAnalyzer}
-import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.store.IndexStorable
 
 import scala.reflect.{ClassTag, _}
-import scala.collection.JavaConverters._
 
 private[lucenerdd] class LuceneRDDPartition[T]
 (private val iter: Iterator[T])

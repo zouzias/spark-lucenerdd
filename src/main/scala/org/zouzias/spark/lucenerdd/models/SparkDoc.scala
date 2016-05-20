@@ -21,6 +21,12 @@ import org.apache.lucene.document.Document
 
 import scala.collection.JavaConverters._
 
+/**
+ * Wrapper around Lucene document
+ *
+ * If [[Document]] were serializable, this class would not be required.
+ * @param doc
+ */
 class SparkDoc(doc: Document) extends Serializable {
 
   private lazy val stringMonoid = new MapMonoid[String, List[String]]()

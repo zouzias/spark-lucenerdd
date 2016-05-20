@@ -32,6 +32,12 @@ case class SparkFacetResult(facetName: String, facets: Map[String, Long]) {
 
 object SparkFacetResult extends Serializable {
 
+  /**
+   * Convert [[FacetResult]] to [[SparkFacetResult]]
+   * @param facetName name of facet
+   * @param facetResult input facet results
+   * @return
+   */
   def apply(facetName: String, facetResult: FacetResult): SparkFacetResult = {
     val facetResultOpt = Option(facetResult)
     facetResultOpt match {

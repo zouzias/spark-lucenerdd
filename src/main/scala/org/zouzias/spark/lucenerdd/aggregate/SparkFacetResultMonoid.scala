@@ -21,6 +21,8 @@ import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 
 /**
  * Monoid for [[SparkFacetResult]]
+ *
+ * Used to aggregate faceted results from the executors to the driver
  */
 object SparkFacetResultMonoid extends Serializable {
 

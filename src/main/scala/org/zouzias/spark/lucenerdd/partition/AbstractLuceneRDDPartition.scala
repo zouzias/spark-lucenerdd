@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-package org.zouzias.spark.lucenerdd
+package org.zouzias.spark.lucenerdd.partition
 
-import org.apache.lucene.document.FieldType
 import org.apache.lucene.search.BooleanClause
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 

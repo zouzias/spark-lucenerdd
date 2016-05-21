@@ -237,11 +237,10 @@ object LuceneRDD {
    * Instantiate a LuceneRDD given an RDD[T]
    *
    * @param elems RDD of type T
-   * @param docConversion Implicit conversion of T to Document
    * @tparam T Generic type
    * @return
    */
-  def apply[T: ClassTag](elems: RDD[T])(implicit docConversion: T => Document): LuceneRDD[T] = {
+  def apply[T <% Document : ClassTag](elems: RDD[T]): LuceneRDD[T] = {
     val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
       iter => Iterator(LuceneRDDPartition(iter)),
       preservesPartitioning = true)
@@ -252,13 +251,12 @@ object LuceneRDD {
    * Instantiate a LuceneRDD with an iterable
    *
    * @param elems
-   * @param docConversion
    * @param sc
    * @tparam T
    * @return
    */
-  def apply[T: ClassTag]
-  (elems: Iterable[T])(implicit docConversion: T => Document, sc: SparkContext): LuceneRDD[T] = {
+  def apply[T <% Document : ClassTag]
+  (elems: Iterable[T])(implicit sc: SparkContext): LuceneRDD[T] = {
     apply(sc.parallelize[T](elems.toSeq))
   }
 }

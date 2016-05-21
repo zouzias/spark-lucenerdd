@@ -14,5 +14,6 @@ jdk:
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update coverage test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
+  - sbt ++$TRAVIS_SCALA_VERSION assembly
 after_success: "sbt coverageReport coveralls"
 

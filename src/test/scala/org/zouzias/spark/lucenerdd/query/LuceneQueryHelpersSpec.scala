@@ -16,23 +16,92 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
-import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.lucene.document.Field.Store
+import org.apache.lucene.document._
+import org.apache.lucene.facet.FacetField
+import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader, DirectoryTaxonomyWriter}
+import org.apache.lucene.index.IndexWriterConfig.OpenMode
+import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
+import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.LuceneRDD
-import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
+import org.zouzias.spark.lucenerdd.store.IndexStorable
+
+import scala.io.Source
 
 class LuceneQueryHelpersSpec extends FlatSpec
+  with IndexStorable
+  with WSAnalyzer
   with Matchers
-  with BeforeAndAfterEach
-  with SharedSparkContext {
+  with BeforeAndAfterEach {
 
-  // TODO: add tests here
+  // Load cities
+  val countries = Source.fromFile("src/test/resources/countries.txt").getLines()
+    .map(_.toLowerCase()).toSeq
 
+  private val MaxFacetValue: Int = 10
+
+  private lazy val indexWriter = new IndexWriter(IndexDir,
+    new IndexWriterConfig(Analyzer)
+      .setOpenMode(OpenMode.CREATE))
+
+  private lazy val taxoWriter = new DirectoryTaxonomyWriter(TaxonomyDir)
+
+  countries.zipWithIndex.foreach { case (elem, index) =>
+    val doc = convertToDoc(index % MaxFacetValue, elem)
+    indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
+  }
+
+  indexWriter.commit()
+  taxoWriter.close()
+  indexWriter.close()
+
+  private val indexReader = DirectoryReader.open(IndexDir)
+  private val indexSearcher = new IndexSearcher(indexReader)
+  private lazy val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
+
+
+  private lazy val TestFacetName = s"_2${LuceneRDD.FacetTextFieldSuffix}"
+
+  def convertToDoc(pos: Int, text: String): Document = {
+    val doc = new Document()
+    doc.add(new StringField("_1", text, Store.YES))
+    doc.add(new FacetField(s"_1${LuceneRDD.FacetTextFieldSuffix}", text))
+    doc.add(new IntField("_2", pos, Store.YES))
+    doc.add(new FacetField(TestFacetName, pos.toString))
+    doc
+  }
 
   "LuceneQueryHelpers.fields" should "return the list of fields" in {
-    val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
-    val rdd = sc.parallelize(array)
-    val luceneRDD = LuceneRDD(rdd)
-    luceneRDD.fields() should equal (Set("_1"))
+    LuceneQueryHelpers.fields(indexSearcher) should equal (Set("_1", "_2"))
+  }
+
+  "LuceneQueryHelpers.totalDocs" should "return correct total document counts" in {
+    LuceneQueryHelpers.totalDocs(indexSearcher) should equal (countries.size)
+  }
+
+  "LuceneQueryHelpers.facetedTextSearch" should "return correct facet counts" in {
+    val facets = LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader,
+      FacetsConfig, "*:*", TestFacetName, 100)(Analyzer)
+
+    facets.facetName should equal(TestFacetName)
+    facets.facets.size should equal(MaxFacetValue)
+  }
+
+  "LuceneQueryHelpers.termQuery" should "return correct documents" in {
+    val greece = "greece"
+    val topDocs = LuceneQueryHelpers.termQuery(indexSearcher, "_1", greece, 100)
+
+    topDocs.exists(doc => doc.doc.textField("_1").forall(x =>
+      x.toString().toLowerCase().contains(greece))) should equal(true)
+  }
+
+  "LuceneQueryHelpers.prefixQuery" should "return correct documents" in {
+    val prefix = "gree"
+    val topDocs = LuceneQueryHelpers.prefixQuery(indexSearcher, "_1", prefix, 100)
+
+    topDocs.forall(doc => doc.doc.textField("_1").exists(x =>
+      x.toString().toLowerCase().contains(prefix))) should equal(true)
   }
 }

@@ -21,6 +21,8 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
+import scala.io.Source
+
 class LuceneRDDSearchSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
@@ -46,13 +48,13 @@ class LuceneRDDSearchSpec extends FlatSpec
     luceneRDD.query("_1:q*").size should equal (1)
   }
 
-  "LuceneRDD" should "return correct number of elements" in {
+  "LuceneRDD.count" should "return correct number of elements" in {
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should equal (array.size)
   }
 
-  "LuceneRDD" should "correctly search with TermQueries" in {
+  "LuceneRDD.termQuery" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(First,
@@ -60,7 +62,7 @@ class LuceneRDDSearchSpec extends FlatSpec
     results.size should equal (1)
   }
 
-  "LuceneRDD" should "correctly search with PrefixQueries" in {
+  "LuceneRDD.prefixQuery" should "correctly search with PrefixQueries" in {
 
     val prefices = Array("aaaabcd", "aaadcb", "aaz", "az", "qwerty")
     val rdd = sc.parallelize(prefices)
@@ -72,7 +74,7 @@ class LuceneRDDSearchSpec extends FlatSpec
     luceneRDD.prefixQuery(First, "aaaa").size should equal (1)
   }
 
-  "LuceneRDD" should "correctly search with FuzzyQuery" in {
+  "LuceneRDD.fuzzyQuery" should "correctly search with FuzzyQuery" in {
     val prefices = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(prefices)
     luceneRDD = LuceneRDD(rdd)
@@ -82,7 +84,30 @@ class LuceneRDDSearchSpec extends FlatSpec
     luceneRDD.fuzzyQuery(First, "werty", 1).size should equal (1)
   }
 
-  "LuceneRDD" should "correctly search with PhraseQuery" in {
+  "LuceneRDD.link" should "correctly link with query parser (prefix)" in {
+    val leftCountries = Array("gree", "germa", "spa", "ita")
+    implicit val mySC = sc
+    val leftCountriesRDD = sc.parallelize(leftCountries)
+
+    val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
+      .map(_.toLowerCase()).toSeq)
+
+    luceneRDD = LuceneRDD(countries)
+
+    def linker(country: String): String = {
+      s"_1:${country}*"
+    }
+
+    val linked = luceneRDD.link(leftCountriesRDD, linker, 10)
+    linked.count() should equal(leftCountries.size)
+    // Greece and Greenland should appear
+    linked.filter(link => link._1 == "gree" && link._2.length == 2)
+    // Italy should appear
+    linked.filter(link => link._1 == "ita" && link._2.length == 1)
+  }
+
+
+  "LuceneRDD.phraseQuery" should "correctly search with PhraseQuery" in {
     val phrases = Array("hello world", "how are you", "my name is Tassos").map(LuceneText(_))
     val rdd = sc.parallelize(phrases)
     luceneRDD = LuceneRDD(rdd)

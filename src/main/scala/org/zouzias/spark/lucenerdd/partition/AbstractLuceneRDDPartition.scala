@@ -61,6 +61,15 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def query(searchString: String, topK: Int): Iterable[SparkScoreDoc]
 
   /**
+   * Multiple generic Lucene Queries using QueryParser
+   * @param searchString
+   * @param topK
+   * @return
+   */
+  def queries(searchString: Iterable[String], topK: Int)
+  : Iterable[(String, Iterable[SparkScoreDoc])]
+
+  /**
    * Generic Lucene faceted Query using QueryParser
    * @param searchString Lucene query string, i.e., textField:hello*
    * @param topK Number of facets to return

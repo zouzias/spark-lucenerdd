@@ -104,6 +104,13 @@ private[lucenerdd] class LuceneRDDPartition[T]
     LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK)(Analyzer)
   }
 
+  override def queries(searchStrings: Iterable[String],
+                     topK: Int): Iterable[(String, Iterable[SparkScoreDoc])] = {
+    searchStrings.map( searchString =>
+      searchString -> query(searchString, topK)
+    )
+  }
+
   override def prefixQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SparkScoreDoc] = {
     LuceneQueryHelpers.prefixQuery(indexSearcher, fieldName, fieldText, topK)

@@ -1,4 +1,3 @@
-country
 Abkhazia
 Afghanistan
 Akrotiri and Dhekelia
@@ -46,7 +45,7 @@ Chad
 Chile
 China
 Christmas Island
-Cocos (Keeling) Islands
+Cocos Islands
 Colombia
 Comoros
 Cook Islands
@@ -62,7 +61,7 @@ Denmark
 Djibouti
 Dominica
 Dominican Republic
-East Timor (Timor-Leste)
+East Timor
 Easter Island
 Ecuador
 Egypt
@@ -175,7 +174,7 @@ Poland
 Portugal
 Puerto Rico
 Qatar
-Republic of China (Taiwan)
+Taiwan
 Republic of the Congo
 Romania
 Russia

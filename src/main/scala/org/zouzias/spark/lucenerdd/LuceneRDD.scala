@@ -150,6 +150,35 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   }
 
   /**
+   * Entity linkage via Lucene query over all elements of an RDD.
+   *
+   * @param other RDD to be linked
+   * @param searchQueryGen Function that generates a search query for each element of other
+   * @tparam T1 A type
+   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
+   */
+  def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
+    (implicit sc: SparkContext)
+    : RDD[(T1, List[SparkScoreDoc])] = {
+    /*
+    val resultsByPart = partitionsRDD.flatMap(_.queries(queries.value, topK))
+        .mapValues(x => SparkDocTopKMonoid.build(x))
+    val aggTopDocs = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus(_, _))
+      .map{ case (_, topKMonoid) => topKMonoid.items}
+
+    other.zip(aggTopDocs)
+    */
+
+    // Collect searchString Lucene Queries to Spark driver
+    val queries = sc.broadcast(other.map(searchQueryGen).collect())
+    val results = queries.value.map{ case query =>
+      docResultsAggregator(_.query(query, topK)).toList
+    }
+    val rdd = sc.parallelize(results)
+    other.zip(rdd)
+  }
+
+  /**
    * Lucene term query
    *
    * @param fieldName Name of field

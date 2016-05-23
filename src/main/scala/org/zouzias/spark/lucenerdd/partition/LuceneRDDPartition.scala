@@ -18,16 +18,15 @@
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.document._
-import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader, DirectoryTaxonomyWriter}
-import org.apache.lucene.index.IndexWriterConfig.OpenMode
-import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
+import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
+import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
-import org.zouzias.spark.lucenerdd.store.IndexStorable
+import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect.{ClassTag, _}
 
@@ -36,27 +35,20 @@ private[lucenerdd] class LuceneRDDPartition[T]
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
-  with IndexStorable
   with WSAnalyzer
+  with IndexWithTaxonomyWriter
   with Logging {
-
-  private lazy val indexWriter = new IndexWriter(IndexDir,
-    new IndexWriterConfig(Analyzer)
-    .setOpenMode(OpenMode.CREATE))
-
-  private lazy val taxoWriter = new DirectoryTaxonomyWriter(TaxonomyDir)
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
   iterIndex.foreach { case elem =>
-    // (implicitly) convert type T to lucene document
+    // (implicitly) convert type T to Lucene document
     val doc = docConversion(elem)
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
   }
 
-  indexWriter.commit()
-  taxoWriter.close()
-  indexWriter.close()
+  // Close the indexWriter and taxonomyWriter (for faceted search)
+  closeAllWriters()
 
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)

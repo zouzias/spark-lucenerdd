@@ -26,13 +26,12 @@ import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
-import org.zouzias.spark.lucenerdd.store.IndexStorable
+import org.zouzias.spark.lucenerdd.store.{IndexStorable, IndexWithTaxonomyWriter}
 
 import scala.io.Source
 
 class LuceneQueryHelpersSpec extends FlatSpec
-  with IndexStorable
-  with WSAnalyzer
+  with IndexWithTaxonomyWriter
   with Matchers
   with BeforeAndAfterEach {
 
@@ -41,12 +40,6 @@ class LuceneQueryHelpersSpec extends FlatSpec
     .map(_.toLowerCase()).toSeq
 
   private val MaxFacetValue: Int = 10
-
-  private lazy val indexWriter = new IndexWriter(IndexDir,
-    new IndexWriterConfig(Analyzer)
-      .setOpenMode(OpenMode.CREATE))
-
-  private lazy val taxoWriter = new DirectoryTaxonomyWriter(TaxonomyDir)
 
   countries.zipWithIndex.foreach { case (elem, index) =>
     val doc = convertToDoc(index % MaxFacetValue, elem)

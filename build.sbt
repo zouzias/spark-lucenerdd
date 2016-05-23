@@ -83,6 +83,7 @@ val lucene_facet              = "org.apache.lucene"              % "lucene-facet
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
 val lucene_query_parsers      = "org.apache.lucene"              % "lucene-queryparser"        % luceneV
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
+val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 // scalastyle:on
 
 
@@ -94,6 +95,7 @@ libraryDependencies ++= Seq(
   lucene_analyzers,
   lucene_expressions,
   lucene_query_parsers,
+  lucene_spatial,
   specs2_core,
   scalatest,
   spark_testing_base

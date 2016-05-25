@@ -34,6 +34,14 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
   def close(): Unit
 
   /**
+   * Nearest neighbour search
+   * @param point query point
+   * @param k number of neighbors to return
+   * @return
+   */
+  def knn(point: (Double, Double), k: Int): List[SparkScoreDoc]
+
+    /**
    * Generic Lucene Query using QueryParser
    *
    * @param searchString Lucene query string, i.e., textField:hello*

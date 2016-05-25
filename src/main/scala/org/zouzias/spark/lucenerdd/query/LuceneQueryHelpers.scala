@@ -33,7 +33,7 @@ import scala.collection.JavaConverters._
  */
 object LuceneQueryHelpers extends Serializable {
 
-  private lazy val MatchAllDocs = new MatchAllDocsQuery()
+  lazy val MatchAllDocs = new MatchAllDocsQuery()
   private val QueryParserDefaultField = "text"
 
   /**

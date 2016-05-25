@@ -37,6 +37,11 @@ object SparkScoreDoc extends Serializable {
       SparkDoc(indexSearcher.doc(scoreDoc.doc)))
   }
 
+  def apply(indexSearcher: IndexSearcher, scoreDoc: ScoreDoc, score: Float): SparkScoreDoc = {
+    SparkScoreDoc(score, scoreDoc.doc, scoreDoc.shardIndex,
+      SparkDoc(indexSearcher.doc(scoreDoc.doc)))
+  }
+
   /**
    * Ordering by score (descending)
    */

@@ -22,7 +22,6 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
-import org.zouzias.spark.lucenerdd.partition.AbstractLuceneRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
 
 import scala.reflect.ClassTag
@@ -56,6 +55,7 @@ class PointLuceneRDD[K: ClassTag, V: ClassTag]
   /**
    * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
    *
+   * TODO: Move to aggregations
    * @param f
    * @return
    */
@@ -67,19 +67,27 @@ class PointLuceneRDD[K: ClassTag, V: ClassTag]
   }
 
   /**
-   * Generic query
+   * K-nearest neighbors search
    *
-   * @param searchString  Query String
-   * @param topK
+   * @param queryPoint query point
+   * @param k number of nearest points to return
    * @return
    */
-  def query(searchString: String,
-            topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = ???
-
-  def knn(point: (Double, Double), k: Int): Iterable[SparkScoreDoc] = {
-    docResultsAggregator(_.knn(point, k).reverse).reverse
+  def knnSearch(queryPoint: (Double, Double), k: Int): Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.knnSearch(queryPoint, k).reverse).reverse.take(k)
   }
 
+  /**
+   * Search for points within a circle
+   *
+   * @param center center of circle
+   * @param radius radius of circle in kilometers (KM)
+   * @param k number of points to return
+   * @return
+   */
+  def circleSearch(center: (Double, Double), radius: Double, k: Int): Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.circleSearch(center, radius, k)).take(k)
+  }
 
   override def count(): Long = {
     partitionsRDD.map(_.size).reduce(_ + _)

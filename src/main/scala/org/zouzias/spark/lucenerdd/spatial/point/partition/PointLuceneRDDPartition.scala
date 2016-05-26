@@ -25,6 +25,7 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree
+import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
@@ -112,10 +113,11 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
    * @param pred
    * @return
    */
-  override def filter(pred: (K, V) => Boolean): AbstractPointLuceneRDDPartition[K, V] = ???
+  override def filter(pred: (K, V) => Boolean): AbstractPointLuceneRDDPartition[K, V] = {
+    PointLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)))
+  }
 
-  override def isDefined(key: K): Boolean = ???
-
+  override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
 
   override def close(): Unit = {
     indexReader.close()
@@ -124,22 +126,12 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
 
   override def iterator: Iterator[(K, V)] = iterOriginal
 
-
-  /**
-   * Generic Lucene Query using QueryParser
-   *
-   * @param searchString Lucene query string, i.e., textField:hello*
-   * @param topK         Number of documents to return
-   * @return
-   */
-  override def query(searchString: String, topK: Int)
-  : Iterable[SparkScoreDoc] = ???
-
-
   private def docLocation(scoreDoc: ScoreDoc): Option[(Double, Double)] = {
     val pointStr = indexReader.document(scoreDoc.doc)
                   .getField(strategy.getFieldName())
                   .stringValue()
+
+    // TODO: fix this
     val coords = pointStr.split(' ')
     val coordDoubles = coords.map(_.toDouble)
     if (coordDoubles.length == 2) {
@@ -150,7 +142,18 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
     }
   }
 
-  override def knn(point: (Double, Double), k: Int): List[SparkScoreDoc] = {
+  override def circleSearch(center: (Double, Double), radius: Double, k: Int)
+  : Iterable[SparkScoreDoc] = {
+    val args = new SpatialArgs(SpatialOperation.Intersects,
+        ctx.makeCircle(center._1, center._2,
+        DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
+
+    val query = strategy.makeQuery(args)
+    val docs = indexSearcher.search(query, k)
+    docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  }
+
+  override def knnSearch(point: (Double, Double), k: Int): List[SparkScoreDoc] = {
 
     // Match all, order by distance ascending
     val pt = ctx.makePoint(point._1, point._2)
@@ -163,11 +166,6 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
     val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
 
     val docs = indexSearcher.search(LuceneQueryHelpers.MatchAllDocs, k, distSort)
-
-    // scalastyle:off println
-    docs.scoreDocs.map(x => (x.score, indexSearcher.doc(x.doc))).reverse.foreach(println)
-    // scalastyle:on println
-
 
     // To get the distance, we could compute from stored values like earlier.
     // However in this example we sorted on it, and the distance will get

@@ -14,18 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.pointLuceneRDD.spatial.point
+package org.zouzias.spark.lucenerdd.spatial.point
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.models.SparkDoc
 import org.zouzias.spark.lucenerdd.spatial.implicits.PointLuceneRDDImplicits._
 
 class PointLuceneRDDSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {
+
+  val Bern = ( (7.45, 46.95), "Bern")
+  val Zurich = ( (8.55, 47.366667), "Zurich")
+  val Laussanne = ( (6.6335, 46.519833), "Laussanne")
+  val Athens = ((23.716667, 37.966667), "Athens")
+  val Toronto = ((-79.4, 43.7), "Toronto")
+  val k = 5
 
   var pointLuceneRDD: PointLuceneRDD[_, _] = _
 
@@ -39,24 +46,39 @@ class PointLuceneRDDSpec extends FlatSpec
   }
 
   "PointLuceneRDD.knn" should "return k-nearest neighbors (knn)" in {
-    val Bern = ( (7.45, 46.95), "Bern")
-    val Zurich = ( (8.55, 47.366667), "Zurich")
-    val Laussanne = ( (6.6335, 46.519833), "Laussanne")
-    val Athens = ((23.716667, 37.966667), "Athens")
-    val Toronto = ((-79.4, 43.7), "Toronto")
-    val k = 5
 
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = PointLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knn(Bern._1, k)
+    val results = pointLuceneRDD.knnSearch(Bern._1, k)
 
-    results.head.doc.textField("_1").exists(l => l.exists(_ == "Bern")) should equal(true)
-    results.last.doc.textField("_1").exists(l => l.exists(_ == "Toronto")) should equal(true)
+    // Closest is Bern and fartherst is Toronto
+    docTextFieldEq(results.head.doc, "_1", Bern._2) should equal(true)
+    docTextFieldEq(results.last.doc, "_1", Toronto._2) should equal(true)
 
-    // Reverted distances
+    // Distances must be sorted
     val revertedDists = results.map(_.score).toList.reverse
     sortedDesc(revertedDists)
+  }
+
+  def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {
+    doc.textField(fieldName).forall(_.contains(fieldValue))
+  }
+
+  "PointLuceneRDD.radiusSearch" should "return radius search" in {
+    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = PointLuceneRDD(rdd)
+
+    // Bern, Laussanne and Zurich is within 300km
+    val results = pointLuceneRDD.circleSearch(Bern._1, 300, k)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 }

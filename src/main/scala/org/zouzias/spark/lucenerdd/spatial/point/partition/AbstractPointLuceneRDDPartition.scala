@@ -39,16 +39,17 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
    * @param k number of neighbors to return
    * @return
    */
-  def knn(point: (Double, Double), k: Int): List[SparkScoreDoc]
+  def knnSearch(point: (Double, Double), k: Int): List[SparkScoreDoc]
 
-    /**
-   * Generic Lucene Query using QueryParser
+  /**
+   * Search for points within a circle
    *
-   * @param searchString Lucene query string, i.e., textField:hello*
-   * @param topK Number of documents to return
+   * @param center center of circle
+   * @param radius radius of circle in kilometers (KM)
+   * @param k number of points to return
    * @return
    */
-  def query(searchString: String, topK: Int): Iterable[SparkScoreDoc]
+  def circleSearch(center: (Double, Double), radius: Double, k: Int): Iterable[SparkScoreDoc]
 
   /**
    * Restricts the entries to those satisfying a predicate

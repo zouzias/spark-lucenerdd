@@ -29,6 +29,8 @@ import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.spatial.grids.GridLoader
+import org.zouzias.spark.lucenerdd.spatial.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._
@@ -41,32 +43,9 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
    docConversion: V => Document)
   extends AbstractPointLuceneRDDPartition[K, V]
     with WSAnalyzer
-    with IndexWithTaxonomyWriter{
-
-  /**
-   * The Spatial4j {@link SpatialContext} is a sort of global-ish singleton
-   * needed by Lucene spatial.  It's a facade to the rest of Spatial4j, acting
-   * as a factory for {@link Shape}s and provides access to reading and writing
-   * them from Strings.
-   */
-  private val ctx: SpatialContext = SpatialContext.GEO
-
-  // results in sub-meter precision for geohash
-  private val maxLevels = 11
-
-  // This can also be constructed from SpatialPrefixTreeFactory
-  private val grid = new GeohashPrefixTree(ctx, maxLevels)
-
-  /**
-   * The Lucene spatial {@link SpatialStrategy} encapsulates an approach to
-   * indexing and searching shapes, and providing distance values for them.
-   * It's a simple API to unify different approaches. You might use more than
-   * one strategy for a shape as each strategy has its strengths and weaknesses.
-   * <p />
-   * Note that these are initialized with a field name.
-   */
-  private val strategy = new RecursivePrefixTreeStrategy(grid,
-    PointLuceneRDDPartition.LocationDefaultField)
+    with IndexWithTaxonomyWriter
+    with GridLoader
+    with SpatialStrategy {
 
   private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
 
@@ -185,7 +164,6 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
 }
 
 object PointLuceneRDDPartition {
-  val LocationDefaultField = "__location__"
 
   def apply[K: ClassTag, V: ClassTag]
   (iter: Iterator[(K, V)])

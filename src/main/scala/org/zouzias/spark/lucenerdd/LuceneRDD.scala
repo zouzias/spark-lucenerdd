@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
  *
  * @tparam T
  */
-class LuceneRDD[T: ClassTag](private val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
+class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
   extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
   with SparkScoreDocAggregatable {
 

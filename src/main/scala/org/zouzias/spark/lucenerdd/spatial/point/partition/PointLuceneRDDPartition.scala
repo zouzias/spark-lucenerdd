@@ -16,15 +16,12 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point.partition
 
-import com.spatial4j.core.context.SpatialContext
 import com.spatial4j.core.distance.DistanceUtils
 import com.spatial4j.core.shape.{Point, Shape}
 import org.apache.lucene.document.{Document, StoredField}
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
-import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy
-import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc

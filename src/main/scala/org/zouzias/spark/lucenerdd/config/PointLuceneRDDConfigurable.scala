@@ -14,21 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial
+package org.zouzias.spark.lucenerdd.config
 
-import com.spatial4j.core.context.SpatialContext
-import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
+trait PointLuceneRDDConfigurable extends Configurable {
 
-trait ContextLoader extends PointLuceneRDDConfigurable{
+  protected val getGridMaxLevel: Int = {
+    if (config.hasPath("lucenerdd.spatial.grid.level.max")) {
+      config.getInt("lucenerdd.spatial.grid.level.max")
+    }
+    else 11
+  }
 
-  protected val LocationDefaultField = getLocationFieldName
-
-  /**
-   * The Spatial4j {@link SpatialContext} is a sort of global-ish singleton
-   * needed by Lucene spatial.  It's a facade to the rest of Spatial4j, acting
-   * as a factory for {@link Shape}s and provides access to reading and writing
-   * them from Strings.
-   */
-  protected val ctx: SpatialContext = SpatialContext.GEO
+  protected val getLocationFieldName: String = {
+    if (config.hasPath("lucenerdd.spatial.location.field.name")) {
+      config.getString("lucenerdd.spatial.location.field.name")
+    }
+    else "__location__"
+  }
 
 }
+

@@ -16,14 +16,11 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
-import com.typesafe.config.ConfigFactory
 
 /**
  * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
  */
-trait LuceneRDDConfigurable extends Serializable {
-
-  val config = ConfigFactory.load()
+trait LuceneRDDConfigurable extends Configurable {
 
   protected val MaxDefaultTopKValue: Int = {
     if (config.hasPath("lucenerdd.query.topk.default")) {

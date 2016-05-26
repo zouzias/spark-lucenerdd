@@ -17,13 +17,15 @@
 package org.zouzias.spark.lucenerdd.spatial.grids
 
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree
+import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 
 
-trait GridLoader extends ContextLoader{
+trait GridLoader extends ContextLoader
+  with PointLuceneRDDConfigurable {
 
   // results in sub-meter precision for geohash
-  protected val maxLevels = 11
+  protected val maxLevels = getGridMaxLevel
 
   // This can also be constructed from SpatialPrefixTreeFactory
   protected val grid = new GeohashPrefixTree(ctx, maxLevels)

@@ -14,21 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial
+package org.zouzias.spark.lucenerdd.config
 
-import com.spatial4j.core.context.SpatialContext
-import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
+import com.typesafe.config.ConfigFactory
 
-trait ContextLoader extends PointLuceneRDDConfigurable{
-
-  protected val LocationDefaultField = getLocationFieldName
-
-  /**
-   * The Spatial4j {@link SpatialContext} is a sort of global-ish singleton
-   * needed by Lucene spatial.  It's a facade to the rest of Spatial4j, acting
-   * as a factory for {@link Shape}s and provides access to reading and writing
-   * them from Strings.
-   */
-  protected val ctx: SpatialContext = SpatialContext.GEO
-
+trait Configurable extends Serializable {
+  val config = ConfigFactory.load()
 }

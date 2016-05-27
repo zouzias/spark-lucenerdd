@@ -17,9 +17,9 @@
 package org.zouzias.spark.lucenerdd.spatial
 
 import com.spatial4j.core.context.SpatialContext
-import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.config.SpatialLuceneRDDConfigurable
 
-trait ContextLoader extends PointLuceneRDDConfigurable{
+trait ContextLoader extends SpatialLuceneRDDConfigurable{
 
   protected val LocationDefaultField = getLocationFieldName
 

@@ -14,13 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.point.partition
+package org.zouzias.spark.lucenerdd.spatial.core.partition
 
+import com.spatial4j.core.shape.{Rectangle, Shape}
+import org.apache.lucene.document.Document
+import org.apache.lucene.spatial.query.SpatialOperation
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag
 
-abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
+abstract class AbstractSpatialLuceneRDDPartition[K, V] extends Serializable {
 
   protected implicit def kTag: ClassTag[K]
   protected implicit def vTag: ClassTag[V]
@@ -33,8 +36,11 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
 
   def close(): Unit
 
-  /**
+  protected def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document
+
+    /**
    * Nearest neighbour search
+   *
    * @param point query point
    * @param k number of neighbors to return
    * @return
@@ -47,9 +53,22 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
    * @param center center of circle
    * @param radius radius of circle in kilometers (KM)
    * @param k number of points to return
+   * @param operationName spatial operation
    * @return
    */
-  def circleSearch(center: (Double, Double), radius: Double, k: Int): Iterable[SparkScoreDoc]
+  def circleSearch(center: (Double, Double), radius: Double, k: Int,
+                   operationName: String): Iterable[SparkScoreDoc]
+
+
+  /**
+   * Bounding box search
+   *
+   * @param shape query search
+   * @param operationName spatial operation name, see [[SpatialOperation]]
+   * @param k
+   * @return
+   */
+  def bboxSearch(shape: Shape, operationName: String, k: Int): Iterable[SparkScoreDoc]
 
   /**
    * Restricts the entries to those satisfying a predicate
@@ -57,5 +76,5 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
    * @param pred
    * @return
    */
-  def filter(pred: (K, V) => Boolean): AbstractPointLuceneRDDPartition[K, V]
+  def filter(pred: (K, V) => Boolean): AbstractSpatialLuceneRDDPartition[K, V]
 }

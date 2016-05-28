@@ -16,10 +16,9 @@
  */
 package org.zouzias.spark.lucenerdd.spatial
 
-import java.io.StringWriter
+import java.io.{StringReader, StringWriter}
 
 import com.spatial4j.core.context.SpatialContext
-import com.spatial4j.core.io.ShapeIO
 import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
 
@@ -34,6 +33,10 @@ trait ContextLoader extends PointLuceneRDDConfigurable{
     val writer = new StringWriter()
     shapeWriter.write(writer, shape)
     writer.toString
+  }
+
+  protected def stringToShape(shapeAsString: String): Shape = {
+   shapeReader.read(new StringReader(shapeAsString))
   }
 
   /**

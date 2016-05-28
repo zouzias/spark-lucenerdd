@@ -105,7 +105,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
                   .stringValue()
 
    try{
-     Some(shapeReader.read(new StringReader(shapeString)))
+     Some(stringToShape(shapeString))
    }
     catch {
       case _: Throwable => None
@@ -154,7 +154,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : Iterable[SparkScoreDoc] = {
-    val shape = shapeReader.read(new StringReader(shapeAsString))
+    val shape = stringToShape(shapeAsString)
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)

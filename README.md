@@ -2,8 +2,9 @@
 
 [![Master](https://travis-ci.org/zouzias/spark-lucenerdd.svg?branch=master)](https://travis-ci.org/zouzias/spark-lucenerdd)
 [![Coverage Status](https://coveralls.io/repos/github/zouzias/spark-lucenerdd/badge.svg?branch=master)](https://coveralls.io/github/zouzias/spark-lucenerdd?branch=master)
-[![Maven Scala 2.10](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.10.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.10/)
-[![Maven Scala 2.11](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
+
+Scala 2.10 [![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.10.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.10/)
+Scala 2.11 [![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
 
 Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 

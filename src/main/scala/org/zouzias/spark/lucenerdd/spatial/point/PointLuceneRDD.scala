@@ -17,18 +17,102 @@
 package org.zouzias.spark.lucenerdd.spatial.point
 
 import org.apache.lucene.document.Document
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.zouzias.spark.lucenerdd.spatial.core.SpatialLuceneRDD
-import org.zouzias.spark.lucenerdd.spatial.core.partition.AbstractSpatialLuceneRDDPartition
-import org.zouzias.spark.lucenerdd.spatial.point.partition.PointLuceneRDDPartition
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
+import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
 
 import scala.reflect.ClassTag
 
 
 class PointLuceneRDD[K: ClassTag, V: ClassTag]
-  (private val partitionsRDD: RDD[AbstractSpatialLuceneRDDPartition[K, V]])
-  extends SpatialLuceneRDD[K, V](partitionsRDD)
+  (private val partitionsRDD: RDD[AbstractPointLuceneRDDPartition[K, V]])
+  extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
+    with SparkScoreDocAggregatable {
+
+  override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
+
+  override protected def getPreferredLocations(s: Partition): Seq[String] =
+    partitionsRDD.preferredLocations(s)
+
+  override def persist(newLevel: StorageLevel): this.type = {
+    partitionsRDD.persist(newLevel)
+    this
+  }
+
+  override def unpersist(blocking: Boolean = true): this.type = {
+    partitionsRDD.unpersist(blocking)
+    this
+  }
+
+  override def setName(_name: String): this.type = {
+    partitionsRDD.setName(_name)
+    this
+  }
+
+  /**
+   * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
+   *
+   * TODO: Move to aggregations
+   * @param f
+   * @return
+   */
+  private def docResultsAggregator
+  (f: AbstractPointLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
+  : List[SparkScoreDoc] = {
+    val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
+    parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
+  }
+
+  /**
+   * K-nearest neighbors search
+   *
+   * @param queryPoint query point
+   * @param k number of nearest points to return
+   * @return
+   */
+  def knnSearch(queryPoint: (Double, Double), k: Int): Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.knnSearch(queryPoint, k).reverse).reverse.take(k)
+  }
+
+  /**
+   * Search for points within a circle
+   *
+   * @param center center of circle
+   * @param radius radius of circle in kilometers (KM)
+   * @param k number of points to return
+   * @return
+   */
+  def circleSearch(center: (Double, Double), radius: Double, k: Int): Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.circleSearch(center, radius, k)).take(k)
+  }
+
+  override def count(): Long = {
+    partitionsRDD.map(_.size).reduce(_ + _)
+  }
+
+  /** RDD compute method. */
+  override def compute(part: Partition, context: TaskContext): Iterator[(K, V)] = {
+    firstParent[AbstractPointLuceneRDDPartition[K, V]].iterator(part, context).next.iterator
+  }
+
+  def filter(pred: (K, V) => Boolean): PointLuceneRDD[K, V] = {
+    val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
+      partition.map(_.filter(pred)), preservesPartitioning = true
+    )
+    new PointLuceneRDD(newPartitionRDD)
+  }
+
+  def exists(elem: K): Boolean = {
+    partitionsRDD.map(_.isDefined(elem)).collect().exists(x => x)
+  }
+
+  def close(): Unit = {
+    partitionsRDD.foreach(_.close())
+  }
+}
 
 object PointLuceneRDD {
 
@@ -41,11 +125,11 @@ object PointLuceneRDD {
   def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
                                      (implicit pointConverter: K => (Double, Double),
                                       docConverter: V => Document)
-  : SpatialLuceneRDD[K, V] = {
-    val partitions = elems.mapPartitions[AbstractSpatialLuceneRDDPartition[K, V]](
+  : PointLuceneRDD[K, V] = {
+    val partitions = elems.mapPartitions[AbstractPointLuceneRDDPartition[K, V]](
       iter => Iterator(PointLuceneRDDPartition[K, V](iter)),
       preservesPartitioning = true)
-    new SpatialLuceneRDD(partitions)
+    new PointLuceneRDD(partitions)
   }
 
   /**
@@ -57,8 +141,7 @@ object PointLuceneRDD {
    */
   def apply[K: ClassTag, V: ClassTag]
   (elems: Iterable[(K, V)])(implicit sc: SparkContext, pointConverter: K => (Double, Double),
-                            docConverter: V => Document): SpatialLuceneRDD[K, V] = {
+                            docConverter: V => Document): PointLuceneRDD[K, V] = {
     apply(sc.parallelize[(K, V)](elems.toSeq))
   }
 }
-

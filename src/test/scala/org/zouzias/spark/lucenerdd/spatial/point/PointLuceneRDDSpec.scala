@@ -20,7 +20,6 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.SparkDoc
-import org.zouzias.spark.lucenerdd.spatial.core.SpatialLuceneRDD
 import org.zouzias.spark.lucenerdd.spatial.implicits.PointLuceneRDDImplicits._
 
 class PointLuceneRDDSpec extends FlatSpec
@@ -35,7 +34,7 @@ class PointLuceneRDDSpec extends FlatSpec
   val Toronto = ((-79.4, 43.7), "Toronto")
   val k = 5
 
-  var pointLuceneRDD: SpatialLuceneRDD[_, _] = _
+  var pointLuceneRDD: PointLuceneRDD[_, _] = _
 
   override def afterEach() {
     pointLuceneRDD.close()

@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
-trait SpatialLuceneRDDConfigurable extends Configurable {
+trait PointLuceneRDDConfigurable extends Configurable {
 
   protected val getGridMaxLevel: Int = {
     if (config.hasPath("lucenerdd.spatial.grid.level.max")) {

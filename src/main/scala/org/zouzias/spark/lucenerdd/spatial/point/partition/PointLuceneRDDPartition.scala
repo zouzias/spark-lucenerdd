@@ -16,20 +16,35 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point.partition
 
+import com.spatial4j.core.distance.DistanceUtils
 import com.spatial4j.core.shape.{Point, Shape}
 import org.apache.lucene.document.{Document, StoredField}
-import org.zouzias.spark.lucenerdd.spatial.core.partition.{AbstractSpatialLuceneRDDPartition, SpatialLuceneRDDPartition}
+import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
+import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
+import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
+import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.spatial.grids.GridLoader
+import org.zouzias.spark.lucenerdd.spatial.strategies.SpatialStrategy
+import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._
 
-class PointLuceneRDDPartition[K, V]
+private[lucenerdd] class PointLuceneRDDPartition[K, V]
   (private val iter: Iterator[(K, V)])
   (override implicit val kTag: ClassTag[K],
-  override implicit val vTag: ClassTag[V])
+   override implicit val vTag: ClassTag[V])
   (implicit locationConversion: K => (Double, Double),
-   docConversion: V => Document) extends SpatialLuceneRDDPartition[K, V](iter) {
+   docConversion: V => Document)
+  extends AbstractPointLuceneRDDPartition[K, V]
+    with WSAnalyzer
+    with IndexWithTaxonomyWriter
+    with GridLoader
+    with SpatialStrategy {
 
-  override protected def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
+  private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
 
     // Potentially more than one shape in this field is supported by some
     // strategies; see the Javadoc of the SpatialStrategy impl to see.
@@ -47,14 +62,101 @@ class PointLuceneRDDPartition[K, V]
     doc
   }
 
+  private val (iterOriginal, iterIndex) = iter.duplicate
+
+  iterIndex.foreach { case (key, value) =>
+    // (implicitly) convert type K to [[Point]] and V to a Lucene document
+    val doc = docConversion(value)
+    val pt = locationConversion(key)
+    val point = ctx.makePoint(pt._1, pt._2)
+    val docWithLocation = decorateWithLocation(doc, Seq(point))
+    indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
+  }
+
+  // Close the indexWriter and taxonomyWriter (for faceted search)
+  closeAllWriters()
+
+  private val indexReader = DirectoryReader.open(IndexDir)
+  private val indexSearcher = new IndexSearcher(indexReader)
+  private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
+
+
+  override def size: Long = iterOriginal.size
+
   /**
    * Restricts the entries to those satisfying a predicate
    *
    * @param pred
    * @return
    */
-  override def filter(pred: (K, V) => Boolean): AbstractSpatialLuceneRDDPartition[K, V] = {
-      PointLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)))
+  override def filter(pred: (K, V) => Boolean): AbstractPointLuceneRDDPartition[K, V] = {
+    PointLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)))
+  }
+
+  override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
+
+  override def close(): Unit = {
+    indexReader.close()
+    taxoReader.close()
+  }
+
+  override def iterator: Iterator[(K, V)] = iterOriginal
+
+  private def docLocation(scoreDoc: ScoreDoc): Option[(Double, Double)] = {
+    val pointStr = indexReader.document(scoreDoc.doc)
+                  .getField(strategy.getFieldName())
+                  .stringValue()
+
+    // TODO: fix this
+    val coords = pointStr.split(' ')
+    val coordDoubles = coords.map(_.toDouble)
+    if (coordDoubles.length == 2) {
+      Some((coordDoubles(0), coordDoubles(1)))
+    }
+    else {
+      None
+    }
+  }
+
+  override def circleSearch(center: (Double, Double), radius: Double, k: Int)
+  : Iterable[SparkScoreDoc] = {
+    val args = new SpatialArgs(SpatialOperation.Intersects,
+        ctx.makeCircle(center._1, center._2,
+        DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
+
+    val query = strategy.makeQuery(args)
+    val docs = indexSearcher.search(query, k)
+    docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  }
+
+  override def knnSearch(point: (Double, Double), k: Int): List[SparkScoreDoc] = {
+
+    // Match all, order by distance ascending
+    val pt = ctx.makePoint(point._1, point._2)
+
+    // the distance (in km)
+    val valueSource = strategy.makeDistanceValueSource(pt, DistanceUtils.DEG_TO_KM)
+
+
+    // false = ascending dist
+    val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
+
+    val docs = indexSearcher.search(LuceneQueryHelpers.MatchAllDocs, k, distSort)
+
+    // To get the distance, we could compute from stored values like earlier.
+    // However in this example we sorted on it, and the distance will get
+    // computed redundantly.  If the distance is only needed for the top-X
+    // search results then that's not a big deal. Alternatively, try wrapping
+    // the ValueSource with CachingDoubleValueSource then retrieve the value
+    // from the ValueSource now. See LUCENE-4541 for an example.
+    docs.scoreDocs.flatMap { case scoreDoc => {
+        val location = docLocation(scoreDoc)
+        location.map { case (x, y) =>
+          SparkScoreDoc(indexSearcher, scoreDoc,
+            ctx.calcDistance(pt, x, y).toFloat)
+        }
+      }
+    }.toList
   }
 }
 
@@ -63,8 +165,7 @@ object PointLuceneRDDPartition {
   def apply[K: ClassTag, V: ClassTag]
   (iter: Iterator[(K, V)])
   (implicit keyToPoint: K => (Double, Double),
-   docConversion: V => Document): SpatialLuceneRDDPartition[K, V] = {
+   docConversion: V => Document): PointLuceneRDDPartition[K, V] = {
     new PointLuceneRDDPartition[K, V](iter)(classTag[K], classTag[V])(keyToPoint, docConversion)
   }
 }
-

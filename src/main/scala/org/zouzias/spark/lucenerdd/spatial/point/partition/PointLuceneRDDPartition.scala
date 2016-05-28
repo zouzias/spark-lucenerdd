@@ -38,7 +38,7 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
   (private val iter: Iterator[(K, V)])
   (override implicit val kTag: ClassTag[K],
    override implicit val vTag: ClassTag[V])
-  (implicit locationConversion: K => (Double, Double),
+  (implicit shapeConversion: K => Shape,
    docConversion: V => Document)
   extends AbstractPointLuceneRDDPartition[K, V]
     with WSAnalyzer
@@ -58,7 +58,7 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
       // store it too; the format is up to you
       // (assume point in this example)
       val pt: Point = shape.asInstanceOf[Point]
-      doc.add(new StoredField(strategy.getFieldName(), s"${pt.getX()} ${pt.getY()}"))
+      doc.add(new StoredField(strategy.getFieldName(), shapeToString(shape)))
     }
 
     doc
@@ -69,9 +69,8 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
   iterIndex.foreach { case (key, value) =>
     // (implicitly) convert type K to [[Point]] and V to a Lucene document
     val doc = docConversion(value)
-    val pt = locationConversion(key)
-    val point = ctx.makePoint(pt._1, pt._2)
-    val docWithLocation = decorateWithLocation(doc, Seq(point))
+    val shape = shapeConversion(key)
+    val docWithLocation = decorateWithLocation(doc, Seq(shape))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
   }
 
@@ -103,19 +102,16 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
 
   override def iterator: Iterator[(K, V)] = iterOriginal
 
-  private def docLocation(scoreDoc: ScoreDoc): Option[(Double, Double)] = {
-    val pointStr = indexReader.document(scoreDoc.doc)
+  private def docLocation(scoreDoc: ScoreDoc): Option[Shape] = {
+    val shapeString = indexReader.document(scoreDoc.doc)
                   .getField(strategy.getFieldName())
                   .stringValue()
 
-    // TODO: fix this
-    val coords = pointStr.split(' ')
-    val coordDoubles = coords.map(_.toDouble)
-    if (coordDoubles.length == 2) {
-      Some((coordDoubles(0), coordDoubles(1)))
-    }
-    else {
-      None
+   try{
+     Some(shapeReader.read(new StringReader(shapeString)))
+   }
+    catch {
+      case _: Throwable => None
     }
   }
 
@@ -138,7 +134,6 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
     // the distance (in km)
     val valueSource = strategy.makeDistanceValueSource(pt, DistanceUtils.DEG_TO_KM)
 
-
     // false = ascending dist
     val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
 
@@ -152,9 +147,9 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
     // from the ValueSource now. See LUCENE-4541 for an example.
     docs.scoreDocs.flatMap { case scoreDoc => {
         val location = docLocation(scoreDoc)
-        location.map { case (x, y) =>
+        location.map { case shape =>
           SparkScoreDoc(indexSearcher, scoreDoc,
-            ctx.calcDistance(pt, x, y).toFloat)
+            ctx.calcDistance(pt, shape.getCenter).toFloat)
         }
       }
     }.toList
@@ -174,8 +169,8 @@ object PointLuceneRDDPartition {
 
   def apply[K: ClassTag, V: ClassTag]
   (iter: Iterator[(K, V)])
-  (implicit keyToPoint: K => (Double, Double),
-   docConversion: V => Document): PointLuceneRDDPartition[K, V] = {
-    new PointLuceneRDDPartition[K, V](iter)(classTag[K], classTag[V])(keyToPoint, docConversion)
+  (implicit shapeConv: K => Shape,
+   docConv: V => Document): PointLuceneRDDPartition[K, V] = {
+    new PointLuceneRDDPartition[K, V](iter) (classTag[K], classTag[V]) (shapeConv, docConv)
   }
 }

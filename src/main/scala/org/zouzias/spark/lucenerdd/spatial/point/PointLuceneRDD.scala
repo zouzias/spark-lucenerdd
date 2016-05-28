@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point
 
-
+import com.spatial4j.core.shape.Shape
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
@@ -142,7 +142,7 @@ object PointLuceneRDD {
    * @return
    */
   def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
-                                     (implicit pointConverter: K => (Double, Double),
+                                     (implicit shapeConv: K => Shape,
                                       docConverter: V => Document)
   : PointLuceneRDD[K, V] = {
     val partitions = elems.mapPartitions[AbstractPointLuceneRDDPartition[K, V]](
@@ -159,7 +159,7 @@ object PointLuceneRDD {
    * @return
    */
   def apply[K: ClassTag, V: ClassTag]
-  (elems: Iterable[(K, V)])(implicit sc: SparkContext, pointConverter: K => (Double, Double),
+  (elems: Iterable[(K, V)])(implicit sc: SparkContext, shapeConv: K => Shape,
                             docConverter: V => Document): PointLuceneRDD[K, V] = {
     apply(sc.parallelize[(K, V)](elems.toSeq))
   }

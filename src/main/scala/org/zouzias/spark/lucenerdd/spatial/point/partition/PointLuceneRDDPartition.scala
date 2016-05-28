@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point.partition
 
+import java.io.StringReader
+
 import com.spatial4j.core.distance.DistanceUtils
 import com.spatial4j.core.shape.{Point, Shape}
 import org.apache.lucene.document.{Document, StoredField}
@@ -80,7 +82,6 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
   private val indexSearcher = new IndexSearcher(indexReader)
   private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
 
-
   override def size: Long = iterOriginal.size
 
   /**
@@ -118,9 +119,9 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
     }
   }
 
-  override def circleSearch(center: (Double, Double), radius: Double, k: Int)
+  override def circleSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc] = {
-    val args = new SpatialArgs(SpatialOperation.Intersects,
+    val args = new SpatialArgs(SpatialOperation.get(operationName),
         ctx.makeCircle(center._1, center._2,
         DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
 
@@ -157,6 +158,15 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
         }
       }
     }.toList
+  }
+
+  override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
+  : Iterable[SparkScoreDoc] = {
+    val shape = shapeReader.read(new StringReader(shapeAsString))
+    val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
+    val query = strategy.makeQuery(args)
+    val docs = indexSearcher.search(query, k)
+    docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 }
 

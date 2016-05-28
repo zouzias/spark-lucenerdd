@@ -16,6 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point.partition
 
+import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag
@@ -49,7 +50,19 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
    * @param k number of points to return
    * @return
    */
-  def circleSearch(center: (Double, Double), radius: Double, k: Int): Iterable[SparkScoreDoc]
+  def circleSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  : Iterable[SparkScoreDoc]
+
+  /**
+   * Spatial search with arbitrary shape
+   *
+   * @param shapeAsString
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def spatialSearch(shapeAsString: String, k: Int, operationName: String)
+  : Iterable[SparkScoreDoc]
 
   /**
    * Restricts the entries to those satisfying a predicate

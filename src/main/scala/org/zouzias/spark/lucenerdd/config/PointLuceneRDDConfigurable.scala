@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
+import com.spatial4j.core.io.{ShapeIO, ShapeReader, ShapeWriter}
+
 trait PointLuceneRDDConfigurable extends Configurable {
 
   protected val getGridMaxLevel: Int = {
@@ -32,5 +34,13 @@ trait PointLuceneRDDConfigurable extends Configurable {
     else "__location__"
   }
 
+  protected val getShapeFormat: String = {
+    if (config.hasPath("lucenerdd.spatial.shape.io.format")) {
+      val format = config.getString("lucenerdd.spatial.shape.io.format")
+      val availableFormats = Array(ShapeIO.GeoJSON, ShapeIO.LEGACY, ShapeIO.POLY, ShapeIO.WKT)
+      if (availableFormats.contains(format)) format else ShapeIO.WKT
+    }
+    else ShapeIO.WKT
+  }
 }
 

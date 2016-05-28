@@ -17,11 +17,15 @@
 package org.zouzias.spark.lucenerdd.spatial
 
 import com.spatial4j.core.context.SpatialContext
+import com.spatial4j.core.io.ShapeIO
 import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
 
 trait ContextLoader extends PointLuceneRDDConfigurable{
 
   protected val LocationDefaultField = getLocationFieldName
+
+  protected lazy val shapeReader = ctx.getFormats().getReader(getShapeFormat)
+  protected lazy val shapeWriter = ctx.getFormats().getWriter(getShapeFormat)
 
   /**
    * The Spatial4j {@link SpatialContext} is a sort of global-ish singleton
@@ -29,6 +33,6 @@ trait ContextLoader extends PointLuceneRDDConfigurable{
    * as a factory for {@link Shape}s and provides access to reading and writing
    * them from Strings.
    */
-  protected val ctx: SpatialContext = SpatialContext.GEO
+  protected lazy val ctx: SpatialContext = SpatialContext.GEO
 
 }

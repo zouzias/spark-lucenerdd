@@ -16,7 +16,9 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point
 
+
 import org.apache.lucene.document.Document
+import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
@@ -85,8 +87,25 @@ class PointLuceneRDD[K: ClassTag, V: ClassTag]
    * @param k number of points to return
    * @return
    */
-  def circleSearch(center: (Double, Double), radius: Double, k: Int): Iterable[SparkScoreDoc] = {
-    docResultsAggregator(_.circleSearch(center, radius, k)).take(k)
+  def circleSearch(center: (Double, Double), radius: Double, k: Int)
+  : Iterable[SparkScoreDoc] = {
+    // Points can only intersect
+    docResultsAggregator(_.circleSearch(center, radius, k,
+      SpatialOperation.Intersects.getName)).take(k)
+  }
+
+  /**
+   * Spatial search with arbitrary shape
+   *
+   * @param shapeWKT
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def spatialSearch(shapeWKT: String, k: Int,
+                    operationName: String = SpatialOperation.Intersects.getName)
+  : Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.spatialSearch(shapeWKT, k, operationName)).take(k)
   }
 
   override def count(): Long = {
@@ -133,7 +152,7 @@ object PointLuceneRDD {
   }
 
   /**
-   * Instantiate a LuceneRDD with an iterable
+   * Instantiate a PointLuceneRDD with an iterable
    *
    * @param elems
    * @param sc

@@ -16,11 +16,21 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.implicits
 
+import java.io.StringReader
 
-object PointLuceneRDDImplicits {
+import com.spatial4j.core.shape.Point
+import org.zouzias.spark.lucenerdd.spatial.ContextLoader
+
+
+object PointLuceneRDDImplicits extends ContextLoader{
 
   implicit def identity(point: (Double, Double)): (Double, Double) = {
     point
+  }
+
+  implicit def WktToCircle(shapeAsString: String): (Double, Double) = {
+    val pt: Point = shapeReader.read(new StringReader(shapeAsString)).getCenter
+    (pt.getX, pt.getY)
   }
 
 }

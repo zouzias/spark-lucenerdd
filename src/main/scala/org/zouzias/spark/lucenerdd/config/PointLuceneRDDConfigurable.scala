@@ -16,31 +16,31 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
+import com.spatial4j.core.io.{ShapeIO, ShapeReader, ShapeWriter}
 
-/**
- * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
- */
-trait LuceneRDDConfigurable extends Configurable {
+trait PointLuceneRDDConfigurable extends Configurable {
 
-  protected val MaxDefaultTopKValue: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.maxvalue")
+  protected val getGridMaxLevel: Int = {
+    if (config.hasPath("lucenerdd.spatial.grid.level.max")) {
+      config.getInt("lucenerdd.spatial.grid.level.max")
     }
-    else 1000
+    else 11
   }
 
-  /** Default value for topK queries */
-  protected val DefaultTopK: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.default")
+  protected val getLocationFieldName: String = {
+    if (config.hasPath("lucenerdd.spatial.location.field.name")) {
+      config.getString("lucenerdd.spatial.location.field.name")
     }
-    else 10
+    else "__location__"
   }
 
-  protected val DefaultFacetNum: Int = {
-    if (config.hasPath("lucenerdd.query.facet.topk.default")) {
-      config.getInt("lucenerdd.query.facet.topk.default")
+  protected val getShapeFormat: String = {
+    if (config.hasPath("lucenerdd.spatial.shape.io.format")) {
+      val format = config.getString("lucenerdd.spatial.shape.io.format")
+      val availableFormats = Array(ShapeIO.GeoJSON, ShapeIO.LEGACY, ShapeIO.POLY, ShapeIO.WKT)
+      if (availableFormats.contains(format)) format else ShapeIO.WKT
     }
-    else 10
+    else ShapeIO.WKT
   }
 }
+

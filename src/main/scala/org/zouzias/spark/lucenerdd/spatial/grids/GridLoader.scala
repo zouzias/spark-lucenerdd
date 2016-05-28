@@ -14,33 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.config
+package org.zouzias.spark.lucenerdd.spatial.grids
+
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree
+import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 
 
-/**
- * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
- */
-trait LuceneRDDConfigurable extends Configurable {
+trait GridLoader extends ContextLoader
+  with PointLuceneRDDConfigurable {
 
-  protected val MaxDefaultTopKValue: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.maxvalue")
-    }
-    else 1000
-  }
+  // results in sub-meter precision for geohash
+  protected val maxLevels = getGridMaxLevel
 
-  /** Default value for topK queries */
-  protected val DefaultTopK: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.default")
-    }
-    else 10
-  }
-
-  protected val DefaultFacetNum: Int = {
-    if (config.hasPath("lucenerdd.query.facet.topk.default")) {
-      config.getInt("lucenerdd.query.facet.topk.default")
-    }
-    else 10
-  }
+  // This can also be constructed from SpatialPrefixTreeFactory
+  protected val grid = new GeohashPrefixTree(ctx, maxLevels)
 }

@@ -14,33 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.config
+package org.zouzias.spark.lucenerdd.spatial.strategies
 
+import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy
+import org.zouzias.spark.lucenerdd.spatial.grids.GridLoader
 
-/**
- * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
- */
-trait LuceneRDDConfigurable extends Configurable {
+trait SpatialStrategy extends GridLoader {
 
-  protected val MaxDefaultTopKValue: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.maxvalue")
-    }
-    else 1000
-  }
+  /**
+   * The Lucene spatial {@link SpatialStrategy} encapsulates an approach to
+   * indexing and searching shapes, and providing distance values for them.
+   * It's a simple API to unify different approaches. You might use more than
+   * one strategy for a shape as each strategy has its strengths and weaknesses.
+   * <p />
+   * Note that these are initialized with a field name.
+   */
+  protected val strategy = new RecursivePrefixTreeStrategy(grid,
+    LocationDefaultField)
 
-  /** Default value for topK queries */
-  protected val DefaultTopK: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.default")
-    }
-    else 10
-  }
-
-  protected val DefaultFacetNum: Int = {
-    if (config.hasPath("lucenerdd.query.facet.topk.default")) {
-      config.getInt("lucenerdd.query.facet.topk.default")
-    }
-    else 10
-  }
 }

@@ -16,31 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
+import com.typesafe.config.ConfigFactory
 
-/**
- * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
- */
-trait LuceneRDDConfigurable extends Configurable {
-
-  protected val MaxDefaultTopKValue: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.maxvalue")
-    }
-    else 1000
-  }
-
-  /** Default value for topK queries */
-  protected val DefaultTopK: Int = {
-    if (config.hasPath("lucenerdd.query.topk.default")) {
-      config.getInt("lucenerdd.query.topk.default")
-    }
-    else 10
-  }
-
-  protected val DefaultFacetNum: Int = {
-    if (config.hasPath("lucenerdd.query.facet.topk.default")) {
-      config.getInt("lucenerdd.query.facet.topk.default")
-    }
-    else 10
-  }
+trait Configurable extends Serializable {
+  val config = ConfigFactory.load()
 }

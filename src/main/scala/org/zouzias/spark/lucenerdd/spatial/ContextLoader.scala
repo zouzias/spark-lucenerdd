@@ -14,23 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.implicits
+package org.zouzias.spark.lucenerdd.spatial
 
-import java.io.StringReader
+import com.spatial4j.core.context.SpatialContext
+import com.spatial4j.core.io.ShapeIO
+import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
 
-import com.spatial4j.core.shape.Point
-import org.zouzias.spark.lucenerdd.spatial.ContextLoader
+trait ContextLoader extends PointLuceneRDDConfigurable{
 
+  protected val LocationDefaultField = getLocationFieldName
 
-object PointLuceneRDDImplicits extends ContextLoader{
+  protected lazy val shapeReader = ctx.getFormats().getReader(getShapeFormat)
+  protected lazy val shapeWriter = ctx.getFormats().getWriter(getShapeFormat)
 
-  implicit def identity(point: (Double, Double)): (Double, Double) = {
-    point
-  }
-
-  implicit def WktToCircle(shapeAsString: String): (Double, Double) = {
-    val pt: Point = shapeReader.read(new StringReader(shapeAsString)).getCenter
-    (pt.getX, pt.getY)
-  }
+  /**
+   * The Spatial4j {@link SpatialContext} is a sort of global-ish singleton
+   * needed by Lucene spatial.  It's a facade to the rest of Spatial4j, acting
+   * as a factory for {@link Shape}s and provides access to reading and writing
+   * them from Strings.
+   */
+  protected lazy val ctx: SpatialContext = SpatialContext.GEO
 
 }

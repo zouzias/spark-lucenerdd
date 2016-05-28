@@ -50,7 +50,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
-  "PointLuceneRDD.knn" should "return k-nearest neighbors (knn)" in {
+  "ShapeLuceneRDD.knn" should "return k-nearest neighbors (knn)" in {
 
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
@@ -69,11 +69,11 @@ class ShapeLuceneRDDSpec extends FlatSpec
     sortedDesc(revertedDists)
   }
 
-  def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {
+  private def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {
     doc.textField(fieldName).forall(_.contains(fieldValue))
   }
 
-  "PointLuceneRDD.circleSearch" should "return correct results" in {
+  "ShapeLuceneRDD.circleSearch" should "return correct results" in {
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
@@ -91,7 +91,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "PointLuceneRDD.spatialSearch" should "return radius search" in {
+  "ShapeLuceneRDD.spatialSearch" should "return radius search" in {
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)

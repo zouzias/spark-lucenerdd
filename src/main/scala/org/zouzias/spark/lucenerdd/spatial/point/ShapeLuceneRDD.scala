@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point
 
-import com.spatial4j.core.shape.Shape
+import com.spatial4j.core.shape.{Point, Shape}
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
@@ -67,6 +67,12 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   : List[SparkScoreDoc] = {
     val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
+  }
+
+  def knnSearch(queryPoint: Point, k: Int): Iterable[SparkScoreDoc] = {
+    val x = queryPoint.getX()
+    val y = queryPoint.getY()
+    knnSearch((x, y), k)
   }
 
   /**

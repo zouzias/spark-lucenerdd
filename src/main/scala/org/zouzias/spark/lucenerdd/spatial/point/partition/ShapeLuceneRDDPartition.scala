@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd.spatial.point.partition
 import java.io.StringReader
 
 import com.spatial4j.core.distance.DistanceUtils
-import com.spatial4j.core.shape.{Point, Shape}
+import com.spatial4j.core.shape.Shape
 import org.apache.lucene.document.{Document, StoredField}
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
@@ -34,13 +34,13 @@ import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._
 
-private[lucenerdd] class PointLuceneRDDPartition[K, V]
+private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   (private val iter: Iterator[(K, V)])
   (override implicit val kTag: ClassTag[K],
    override implicit val vTag: ClassTag[V])
   (implicit shapeConversion: K => Shape,
    docConversion: V => Document)
-  extends AbstractPointLuceneRDDPartition[K, V]
+  extends AbstractShapeLuceneRDDPartition[K, V]
     with WSAnalyzer
     with IndexWithTaxonomyWriter
     with GridLoader
@@ -55,9 +55,6 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
         doc.add(field)
       }
 
-      // store it too; the format is up to you
-      // (assume point in this example)
-      val pt: Point = shape.asInstanceOf[Point]
       doc.add(new StoredField(strategy.getFieldName(), shapeToString(shape)))
     }
 
@@ -67,7 +64,7 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
   private val (iterOriginal, iterIndex) = iter.duplicate
 
   iterIndex.foreach { case (key, value) =>
-    // (implicitly) convert type K to [[Point]] and V to a Lucene document
+    // (implicitly) convert type K to Shape and V to a Lucene document
     val doc = docConversion(value)
     val shape = shapeConversion(key)
     val docWithLocation = decorateWithLocation(doc, Seq(shape))
@@ -89,8 +86,8 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
    * @param pred
    * @return
    */
-  override def filter(pred: (K, V) => Boolean): AbstractPointLuceneRDDPartition[K, V] = {
-    PointLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)))
+  override def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V] = {
+    ShapeLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)))
   }
 
   override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
@@ -165,12 +162,12 @@ private[lucenerdd] class PointLuceneRDDPartition[K, V]
   }
 }
 
-object PointLuceneRDDPartition {
+object ShapeLuceneRDDPartition {
 
   def apply[K: ClassTag, V: ClassTag]
   (iter: Iterator[(K, V)])
   (implicit shapeConv: K => Shape,
-   docConv: V => Document): PointLuceneRDDPartition[K, V] = {
-    new PointLuceneRDDPartition[K, V](iter) (classTag[K], classTag[V]) (shapeConv, docConv)
+   docConv: V => Document): ShapeLuceneRDDPartition[K, V] = {
+    new ShapeLuceneRDDPartition[K, V](iter) (classTag[K], classTag[V]) (shapeConv, docConv)
   }
 }

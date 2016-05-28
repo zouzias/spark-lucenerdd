@@ -21,7 +21,7 @@ import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 
 
-object PointLuceneRDDImplicits extends ContextLoader{
+object ShapeLuceneRDDImplicits extends ContextLoader{
 
   implicit def identity(point: (Double, Double)): Shape = {
     ctx.makePoint(point._1, point._2)

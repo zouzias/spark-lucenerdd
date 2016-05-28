@@ -21,7 +21,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag
 
-abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
+abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
 
   protected implicit def kTag: ClassTag[K]
   protected implicit def vTag: ClassTag[V]
@@ -36,6 +36,7 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
 
   /**
    * Nearest neighbour search
+ *
    * @param point query point
    * @param k number of neighbors to return
    * @return
@@ -70,5 +71,5 @@ abstract class AbstractPointLuceneRDDPartition[K, V] extends Serializable {
    * @param pred
    * @return
    */
-  def filter(pred: (K, V) => Boolean): AbstractPointLuceneRDDPartition[K, V]
+  def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V]
 }

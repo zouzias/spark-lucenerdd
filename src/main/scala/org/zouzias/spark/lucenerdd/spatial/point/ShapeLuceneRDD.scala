@@ -24,13 +24,13 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
-import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
+import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
 
 import scala.reflect.ClassTag
 
 
-class PointLuceneRDD[K: ClassTag, V: ClassTag]
-  (private val partitionsRDD: RDD[AbstractPointLuceneRDDPartition[K, V]])
+class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
+  (private val partitionsRDD: RDD[AbstractShapeLuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
     with SparkScoreDocAggregatable {
 
@@ -58,11 +58,12 @@ class PointLuceneRDD[K: ClassTag, V: ClassTag]
    * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
    *
    * TODO: Move to aggregations
+ *
    * @param f
    * @return
    */
   private def docResultsAggregator
-  (f: AbstractPointLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
+  (f: AbstractShapeLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
   : List[SparkScoreDoc] = {
     val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
@@ -114,14 +115,14 @@ class PointLuceneRDD[K: ClassTag, V: ClassTag]
 
   /** RDD compute method. */
   override def compute(part: Partition, context: TaskContext): Iterator[(K, V)] = {
-    firstParent[AbstractPointLuceneRDDPartition[K, V]].iterator(part, context).next.iterator
+    firstParent[AbstractShapeLuceneRDDPartition[K, V]].iterator(part, context).next.iterator
   }
 
-  def filter(pred: (K, V) => Boolean): PointLuceneRDD[K, V] = {
+  def filter(pred: (K, V) => Boolean): ShapeLuceneRDD[K, V] = {
     val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
       partition.map(_.filter(pred)), preservesPartitioning = true
     )
-    new PointLuceneRDD(newPartitionRDD)
+    new ShapeLuceneRDD(newPartitionRDD)
   }
 
   def exists(elem: K): Boolean = {
@@ -133,7 +134,7 @@ class PointLuceneRDD[K: ClassTag, V: ClassTag]
   }
 }
 
-object PointLuceneRDD {
+object ShapeLuceneRDD {
 
   /**
    * Instantiate a PointLuceneRDD given an RDD[T]
@@ -144,11 +145,11 @@ object PointLuceneRDD {
   def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
                                      (implicit shapeConv: K => Shape,
                                       docConverter: V => Document)
-  : PointLuceneRDD[K, V] = {
-    val partitions = elems.mapPartitions[AbstractPointLuceneRDDPartition[K, V]](
-      iter => Iterator(PointLuceneRDDPartition[K, V](iter)),
+  : ShapeLuceneRDD[K, V] = {
+    val partitions = elems.mapPartitions[AbstractShapeLuceneRDDPartition[K, V]](
+      iter => Iterator(ShapeLuceneRDDPartition[K, V](iter)),
       preservesPartitioning = true)
-    new PointLuceneRDD(partitions)
+    new ShapeLuceneRDD(partitions)
   }
 
   /**
@@ -160,7 +161,7 @@ object PointLuceneRDD {
    */
   def apply[K: ClassTag, V: ClassTag]
   (elems: Iterable[(K, V)])(implicit sc: SparkContext, shapeConv: K => Shape,
-                            docConverter: V => Document): PointLuceneRDD[K, V] = {
+                            docConverter: V => Document): ShapeLuceneRDD[K, V] = {
     apply(sc.parallelize[(K, V)](elems.toSeq))
   }
 }

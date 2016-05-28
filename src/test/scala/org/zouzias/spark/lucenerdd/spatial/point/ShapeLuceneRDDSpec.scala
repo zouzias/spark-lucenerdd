@@ -24,9 +24,9 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.SparkDoc
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
-import org.zouzias.spark.lucenerdd.spatial.implicits.PointLuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.spatial.implicits.ShapeLuceneRDDImplicits._
 
-class PointLuceneRDDSpec extends FlatSpec
+class ShapeLuceneRDDSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext
@@ -39,7 +39,7 @@ class PointLuceneRDDSpec extends FlatSpec
   val Toronto = ((-79.4, 43.7), "Toronto")
   val k = 5
 
-  var pointLuceneRDD: PointLuceneRDD[_, _] = _
+  var pointLuceneRDD: ShapeLuceneRDD[_, _] = _
 
   override def afterEach() {
     pointLuceneRDD.close()
@@ -54,7 +54,7 @@ class PointLuceneRDDSpec extends FlatSpec
 
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = PointLuceneRDD(rdd)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
 
     val results = pointLuceneRDD.knnSearch(Bern._1, k)
 
@@ -76,7 +76,7 @@ class PointLuceneRDDSpec extends FlatSpec
   "PointLuceneRDD.circleSearch" should "return correct results" in {
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = PointLuceneRDD(rdd)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
 
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.circleSearch(Bern._1, 300, k)
@@ -94,7 +94,7 @@ class PointLuceneRDDSpec extends FlatSpec
   "PointLuceneRDD.spatialSearch" should "return radius search" in {
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = PointLuceneRDD(rdd)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
 
     val point = ctx.makePoint(Bern._1._1, Bern._1._2)
     val circle = ctx.makeCircle(point,

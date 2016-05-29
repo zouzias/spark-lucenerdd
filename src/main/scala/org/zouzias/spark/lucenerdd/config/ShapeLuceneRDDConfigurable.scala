@@ -16,9 +16,9 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
-import com.spatial4j.core.io.{ShapeIO, ShapeReader, ShapeWriter}
+import com.spatial4j.core.io.ShapeIO
 
-trait PointLuceneRDDConfigurable extends Configurable {
+trait ShapeLuceneRDDConfigurable extends Configurable {
 
   protected val getGridMaxLevel: Int = {
     if (config.hasPath("lucenerdd.spatial.grid.level.max")) {

@@ -20,9 +20,9 @@ import java.io.{StringReader, StringWriter}
 
 import com.spatial4j.core.context.SpatialContext
 import com.spatial4j.core.shape.Shape
-import org.zouzias.spark.lucenerdd.config.PointLuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 
-trait ContextLoader extends PointLuceneRDDConfigurable{
+trait ContextLoader extends ShapeLuceneRDDConfigurable{
 
   protected val LocationDefaultField = getLocationFieldName
 

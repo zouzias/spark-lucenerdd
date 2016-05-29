@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.spatial
 import java.io.{StringReader, StringWriter}
 
 import com.spatial4j.core.context.SpatialContext
+import com.spatial4j.core.context.jts.{JtsSpatialContext, JtsSpatialContextFactory}
 import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 
@@ -45,6 +46,7 @@ trait ContextLoader extends ShapeLuceneRDDConfigurable{
    * as a factory for {@link Shape}s and provides access to reading and writing
    * them from Strings.
    */
-  protected lazy val ctx: SpatialContext = SpatialContext.GEO
+  protected lazy val ctx: JtsSpatialContext = ctxFactory.newSpatialContext() // SpatialContext.GEO
 
+  protected lazy val ctxFactory = new JtsSpatialContextFactory()
 }

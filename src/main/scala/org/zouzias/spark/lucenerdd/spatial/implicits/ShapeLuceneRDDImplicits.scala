@@ -23,7 +23,24 @@ import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 
 object ShapeLuceneRDDImplicits extends ContextLoader{
 
-  implicit def identity(point: (Double, Double)): Shape = {
+  implicit def convertToPoint(point: (Double, Double)): Shape = {
     ctx.makePoint(point._1, point._2)
+  }
+
+  implicit def rectangleToShape(rect: (Double, Double, Double, Double)): Shape = {
+    val minX = rect._1
+    val maxX = rect._2
+    val minY = rect._3
+    val maxY = rect._4
+
+    ctx.makeRectangle(minX, maxX, minY, maxY)
+  }
+
+  implicit def circleToShape(circle: ((Double, Double), Double)): Shape = {
+    val x = circle._1._1
+    val y = circle._1._2
+    val radius = circle._2
+
+    ctx.makeCircle(x, y, radius)
   }
 }

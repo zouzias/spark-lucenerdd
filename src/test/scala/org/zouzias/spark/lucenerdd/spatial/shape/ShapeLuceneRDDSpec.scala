@@ -25,19 +25,18 @@ import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.SparkDoc
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 import org.zouzias.spark.lucenerdd.spatial.implicits.ShapeLuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 class ShapeLuceneRDDSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext
-  with ContextLoader {
+  with ContextLoader
+  with LuceneRDDTestUtils {
 
-  val Bern = ( (7.45, 46.95), "Bern")
-  val Zurich = ( (8.55, 47.366667), "Zurich")
-  val Laussanne = ( (6.6335, 46.519833), "Laussanne")
-  val Athens = ((23.716667, 37.966667), "Athens")
-  val Toronto = ((-79.4, 43.7), "Toronto")
-  val k = 5
+  val k = 6
+
+  val Radius: Double = 5D
 
   var pointLuceneRDD: ShapeLuceneRDD[_, _] = _
 
@@ -52,7 +51,6 @@ class ShapeLuceneRDDSpec extends FlatSpec
 
   "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (knn)" in {
 
-    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
@@ -74,7 +72,6 @@ class ShapeLuceneRDDSpec extends FlatSpec
   }
 
   "ShapeLuceneRDD.circleSearch" should "return correct results" in {
-    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
@@ -87,12 +84,12 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
 
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.spatialSearch" should "return radius search with circle" in {
-    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
+  "ShapeLuceneRDD.spatialSearch(circle)" should "return correct results" in {
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
@@ -113,12 +110,12 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
 
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.spatialSearch(Rectangle)" should "return spatial search results (rectangle)" in {
-    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
+  "ShapeLuceneRDD.spatialSearch(Rectangle)" should "return correct results" in {
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
@@ -140,6 +137,35 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
 
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+  }
+
+  "ShapeLuceneRDD.spatialSearch(Polygon)" should "return correct results" in {
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
+
+    val x = Bern._1._1
+    val y = Bern._1._2
+    val eps = DistanceUtils.dist2Degrees(150, DistanceUtils.EARTH_MEAN_RADIUS_KM)
+
+    val polygon = polygonToShape(convertToPolygon(Bern, eps)._1)
+
+    val writer = new StringWriter()
+    shapeWriter.write(writer, polygon)
+    val polygonAsString = writer.getBuffer.toString
+
+    // Bern, Laussanne and Zurich is within 300km
+    val results = pointLuceneRDD.spatialSearch(polygonAsString, k)
+
+    results.size should equal(3)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }

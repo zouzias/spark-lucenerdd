@@ -18,10 +18,13 @@ package org.zouzias.spark.lucenerdd.spatial.implicits
 
 
 import com.spatial4j.core.shape.Shape
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 
 
 object ShapeLuceneRDDImplicits extends ContextLoader{
+
+  private val GeometryFactory = new GeometryFactory()
 
   implicit def convertToPoint(point: (Double, Double)): Shape = {
     ctx.makePoint(point._1, point._2)
@@ -32,7 +35,6 @@ object ShapeLuceneRDDImplicits extends ContextLoader{
     val maxX = rect._2
     val minY = rect._3
     val maxY = rect._4
-
     ctx.makeRectangle(minX, maxX, minY, maxY)
   }
 
@@ -40,7 +42,13 @@ object ShapeLuceneRDDImplicits extends ContextLoader{
     val x = circle._1._1
     val y = circle._1._2
     val radius = circle._2
-
     ctx.makeCircle(x, y, radius)
   }
+
+  implicit def polygonToShape(rect: Array[(Double, Double)]): Shape = {
+    val coordinates = rect.map(p => new Coordinate(p._1, p._2))
+    val polygon = GeometryFactory.createPolygon(coordinates)
+    ctx.makeShape(polygon)
+  }
+
 }

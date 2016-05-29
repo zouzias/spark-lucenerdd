@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.spatial
 import java.io.{StringReader, StringWriter}
 
 import com.spatial4j.core.context.SpatialContext
+import com.spatial4j.core.context.jts.{JtsSpatialContext, JtsSpatialContextFactory}
 import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 
@@ -44,7 +45,12 @@ trait ContextLoader extends ShapeLuceneRDDConfigurable{
    * needed by Lucene spatial.  It's a facade to the rest of Spatial4j, acting
    * as a factory for {@link Shape}s and provides access to reading and writing
    * them from Strings.
+   *
+   * Quoting from spatial4j (https://github.com/locationtech/spatial4j#getting-started)
+   *
+   * "To get a SpatialContext (or just "context" for short), you could use a global singleton
+   * SpatialContext.GEO or JtsSpatialContext.GEO which both use geodesic surface-of-sphere
+   * calculations (when available); the JTS one principally adds Polygon support."
    */
-  protected lazy val ctx: SpatialContext = SpatialContext.GEO
-
+  protected lazy val ctx: JtsSpatialContext = JtsSpatialContext.GEO // SpatialContext.GEO
 }

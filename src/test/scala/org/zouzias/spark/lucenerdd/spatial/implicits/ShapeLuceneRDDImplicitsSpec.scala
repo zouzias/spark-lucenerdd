@@ -22,39 +22,20 @@ import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.spatial.implicits.ShapeLuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
+import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 
 class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext
-  with ContextLoader {
+  with ContextLoader
+  with LuceneRDDTestUtils {
 
-
-  val Bern = ((7.45, 46.95), "Bern")
-  val Zurich = ( (8.55, 47.366667), "Zurich")
-  val Laussanne = ( (6.6335, 46.519833), "Laussanne")
-  val Athens = ((23.716667, 37.966667), "Athens")
-  val Toronto = ((-79.4, 43.7), "Toronto")
-
-  val Radius = 5
-
-  def convertToCircle(city: ((Double, Double), String)): (((Double, Double), Double), String) = {
-    ((city._1, Radius), city._2)
-  }
-
-  def convertToRectangle(city: ((Double, Double), String))
-  : ((Double, Double, Double, Double), String) = {
-    val x = city._1._1
-    val y = city._1._2
-
-    ((x - Radius, x + Radius, y - Radius, y + Radius), city._2)
-  }
-
+  val Radius: Double = 5D
 
   "ShapeLuceneRDDImplicits" should "implicitly convert to point" in {
 
-    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     val shapeRDD = ShapeLuceneRDD(rdd)
 
@@ -63,21 +44,30 @@ class ShapeLuceneRDDImplicitsSpec extends FlatSpec
 
   "ShapeLuceneRDDImplicits" should "implicitly convert to circle" in {
 
-    val cities: Array[(((Double, Double), Double), String)]
-    = Array(Bern, Zurich, Laussanne, Athens, Toronto).map(convertToCircle)
-    val rdd = sc.parallelize(cities)
+    val circleCities: Array[(((Double, Double), Double), String)]
+    = cities.map(convertToCircle)
+    val rdd = sc.parallelize(circleCities)
     val shapeRDD = ShapeLuceneRDD(rdd)
 
-    shapeRDD.count should equal(cities.length)
+    shapeRDD.count should equal(circleCities.length)
   }
 
   "ShapeLuceneRDDImplicits" should "implicitly convert to rectangle" in {
 
-    val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto).map(convertToRectangle)
-    val rdd = sc.parallelize(cities)
+    val rectangleCities = cities.map(convertToRectangle)
+    val rdd = sc.parallelize(rectangleCities)
     val shapeRDD = ShapeLuceneRDD(rdd)
 
-    shapeRDD.count should equal(cities.length)
+    shapeRDD.count should equal(rectangleCities.length)
+  }
+
+  "ShapeLuceneRDDImplicits" should "implicitly convert to polygon" in {
+
+    val polygonCities = cities.map(convertToPolygon(_, Radius))
+    val rdd = sc.parallelize(polygonCities)
+    val shapeRDD = ShapeLuceneRDD(rdd)
+
+    shapeRDD.count should equal(polygonCities.length)
   }
 
 }

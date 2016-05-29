@@ -25,7 +25,6 @@ import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.SparkDoc
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 import org.zouzias.spark.lucenerdd.spatial.implicits.ShapeLuceneRDDImplicits._
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
 
 class ShapeLuceneRDDSpec extends FlatSpec
   with Matchers
@@ -51,7 +50,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
-  "ShapeLuceneRDD.knn" should "return k-nearest neighbors (knn)" in {
+  "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (knn)" in {
 
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
@@ -118,7 +117,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.spatialSearch(Rectangle)" should "return radius search with rectangle" in {
+  "ShapeLuceneRDD.spatialSearch(Rectangle)" should "return spatial search results (rectangle)" in {
     val cities = Array(Bern, Zurich, Laussanne, Athens, Toronto)
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)

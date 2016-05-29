@@ -143,7 +143,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 object ShapeLuceneRDD {
 
   /**
-   * Instantiate a PointLuceneRDD given an RDD[T]
+   * Instantiate a ShapeLuceneRDD given an RDD[T]
    *
    * @param elems RDD of type T
    * @return
@@ -159,7 +159,7 @@ object ShapeLuceneRDD {
   }
 
   /**
-   * Instantiate a PointLuceneRDD with an iterable
+   * Instantiate a ShapeLuceneRDD with an iterable
    *
    * @param elems
    * @param sc

@@ -150,7 +150,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     val y = Bern._1._2
     val eps = DistanceUtils.dist2Degrees(150, DistanceUtils.EARTH_MEAN_RADIUS_KM)
 
-    val polygon = polygonToShape(convertToPolygon(Bern, eps)._1)
+    val polygon = arrayPolygonToShape(convertToPolygon(Bern, eps)._1)
 
     val writer = new StringWriter()
     shapeWriter.write(writer, polygon)

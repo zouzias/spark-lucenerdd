@@ -45,7 +45,13 @@ object ShapeLuceneRDDImplicits extends ContextLoader{
     ctx.makeCircle(x, y, radius)
   }
 
-  implicit def polygonToShape(rect: Array[(Double, Double)]): Shape = {
+  implicit def listPolygonToShape(rect: List[(Double, Double)]): Shape = {
+    val coordinates = rect.map(p => new Coordinate(p._1, p._2)).toArray
+    val polygon = GeometryFactory.createPolygon(coordinates)
+    ctx.makeShape(polygon)
+  }
+
+  implicit def arrayPolygonToShape(rect: Array[(Double, Double)]): Shape = {
     val coordinates = rect.map(p => new Coordinate(p._1, p._2))
     val polygon = GeometryFactory.createPolygon(coordinates)
     ctx.makeShape(polygon)

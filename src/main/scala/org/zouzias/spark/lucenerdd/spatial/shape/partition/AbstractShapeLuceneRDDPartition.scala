@@ -16,7 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
-import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag

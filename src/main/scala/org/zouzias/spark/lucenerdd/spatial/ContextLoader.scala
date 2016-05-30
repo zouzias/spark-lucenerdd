@@ -18,8 +18,7 @@ package org.zouzias.spark.lucenerdd.spatial
 
 import java.io.{StringReader, StringWriter}
 
-import com.spatial4j.core.context.SpatialContext
-import com.spatial4j.core.context.jts.{JtsSpatialContext, JtsSpatialContextFactory}
+import com.spatial4j.core.context.jts.JtsSpatialContext
 import com.spatial4j.core.shape.Shape
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 

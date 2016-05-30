@@ -16,8 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
-import java.io.StringReader
-
 import com.spatial4j.core.distance.DistanceUtils
 import com.spatial4j.core.shape.Shape
 import org.apache.lucene.document.{Document, StoredField}

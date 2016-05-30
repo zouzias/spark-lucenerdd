@@ -31,5 +31,4 @@ trait SpatialStrategy extends GridLoader {
    */
   protected val strategy = new RecursivePrefixTreeStrategy(grid,
     LocationDefaultField)
-
 }

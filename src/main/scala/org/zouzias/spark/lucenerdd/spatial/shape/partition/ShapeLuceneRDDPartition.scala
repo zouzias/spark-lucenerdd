@@ -17,7 +17,8 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
 import com.spatial4j.core.distance.DistanceUtils
-import com.spatial4j.core.shape.Shape
+import com.spatial4j.core.shape.impl.PointImpl
+import com.spatial4j.core.shape.{Point, Shape}
 import org.apache.lucene.document.{Document, StoredField}
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
@@ -153,10 +154,38 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : Iterable[SparkScoreDoc] = {
     val shape = stringToShape(shapeAsString)
+    spatialSearch(shape, k, operationName)
+  }
+
+  private def spatialSearch(shape: Shape, k: Int, operationName: String)
+    : Iterable[SparkScoreDoc] = {
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
     docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  }
+
+  override def spatialSearch(point: (Double, Double), k: Int, operationName: String)
+  : Iterable[SparkScoreDoc] = {
+    val shape = ctx.makePoint(point._1, point._2)
+    spatialSearch(shape, k, operationName)
+  }
+
+  override def bboxSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  : Iterable[SparkScoreDoc] = {
+    val x = center._1
+    val y = center._2
+    val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)
+    val shape = ctx.makeRectangle(x - radiusKM, x + radiusKM, y - radiusKM, y + radiusKM)
+    spatialSearch(shape, k, operationName)
+  }
+
+  override def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
+                          operationName: String): Iterable[SparkScoreDoc] = {
+    val lowerLeftPt = ctx.makePoint(lowerLeft._1, lowerLeft._2)
+    val upperRightPt = ctx.makePoint(upperRight._1, upperRight._2)
+    val shape = ctx.makeRectangle(lowerLeftPt, upperRightPt)
+    spatialSearch(shape, k, operationName)
   }
 }
 

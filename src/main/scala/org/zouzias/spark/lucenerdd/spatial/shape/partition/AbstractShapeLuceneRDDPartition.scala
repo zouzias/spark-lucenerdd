@@ -65,6 +65,39 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
   : Iterable[SparkScoreDoc]
 
   /**
+   * Spatial search with point
+   * @param point
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def spatialSearch(point: (Double, Double), k: Int, operationName: String)
+  : Iterable[SparkScoreDoc]
+
+  /**
+   * Bounding box search with point and radius
+   *
+   * @param center given as (x, y)
+   * @param radius distance from center in kilometers (KM)
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def bboxSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  : Iterable[SparkScoreDoc]
+
+  /**
+   * Bounding box search with lower left and upper right corners
+   * @param lowerLeft
+   * @param upperRight
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
+                 operationName: String) : Iterable[SparkScoreDoc]
+
+  /**
    * Restricts the entries to those satisfying a predicate
    *
    * @param pred

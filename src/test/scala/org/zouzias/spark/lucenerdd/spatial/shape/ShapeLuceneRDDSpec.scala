@@ -185,7 +185,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
 
     val x = Bern._1._1
     val y = Bern._1._2
-    val eps = DistanceUtils.dist2Degrees(300, DistanceUtils.EARTH_MEAN_RADIUS_KM)
+    val eps = DistanceUtils.dist2Degrees(150, DistanceUtils.EARTH_MEAN_RADIUS_KM)
     val rectangle = ctx.makeRectangle(x - eps, x + eps, y - eps, y + eps)
 
     val writer = new StringWriter()

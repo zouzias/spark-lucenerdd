@@ -104,8 +104,8 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   /**
    * Spatial search with arbitrary shape
    *
-   * @param shapeWKT
-   * @param k
+   * @param shapeWKT Shape in WKT format
+   * @param k Number of element to return
    * @param operationName
    * @return
    */
@@ -113,6 +113,49 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                     operationName: String = SpatialOperation.Intersects.getName)
   : Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.spatialSearch(shapeWKT, k, operationName)).take(k)
+  }
+
+  /**
+   * Spatial search with a single Point
+   *
+   * @param point
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def spatialSearch(point: (Double, Double), k: Int,
+                    operationName: String)
+  : Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.spatialSearch(point, k, operationName)).take(k)
+  }
+
+  /**
+   * Bounding box search with center and radius
+   *
+   * @param center given as (x, y)
+   * @param radius in kilometers (KM)
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def bboxSearch(center: (Double, Double), radius: Double, k: Int,
+                    operationName: String = SpatialOperation.Intersects.getName)
+  : Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.bboxSearch(center, radius, k, operationName)).take(k)
+  }
+
+  /**
+   * Bounding box search with
+   * @param lowerLeft
+   * @param upperRight
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
+                 operationName: String)
+  : Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.bboxSearch(lowerLeft, upperRight, k, operationName)).take(k)
   }
 
   override def count(): Long = {

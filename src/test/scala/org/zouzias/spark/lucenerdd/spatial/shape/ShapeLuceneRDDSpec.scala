@@ -115,6 +115,70 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
+  "ShapeLuceneRDD.bboxSearch((Double, Double), Double)" should "return correct results" in {
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
+
+    val x = Bern._1._1
+    val y = Bern._1._2
+    val radius = 150
+
+    // Bern, Laussanne and Zurich is within 300km
+    val results = pointLuceneRDD.bboxSearch((x, y), radius, k)
+
+    results.size should equal(3)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+  }
+
+  "ShapeLuceneRDD.bboxSearch(lowerLeft, upperRight)" should "return correct results" in {
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
+
+    val x = Bern._1._1
+    val y = Bern._1._2
+    val width = DistanceUtils.dist2Degrees(150, DistanceUtils.EARTH_MEAN_RADIUS_KM)
+
+    // Bern, Laussanne and Zurich is within 300km
+    val results = pointLuceneRDD.bboxSearch((x - width, y - width), (x + width, y + width), k, "Intersects")
+
+    results.size should equal(3)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+  }
+
+  "ShapeLuceneRDD.spatialSearch((Double, Double))" should "return a single point intersection" in {
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
+
+    val point = ctx.makePoint(Bern._1._1, Bern._1._2)
+    val results = pointLuceneRDD.spatialSearch( (Bern._1._1, Bern._1._2), k, "Intersects")
+
+    results.size should equal(1)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(false)
+
+    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+  }
+
+
+
   "ShapeLuceneRDD.spatialSearch(Rectangle)" should "return correct results" in {
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)

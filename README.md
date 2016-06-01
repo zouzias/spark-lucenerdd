@@ -47,55 +47,8 @@ To make the spark-lucenerdd available, you have to assembly the project and add 
 
 ### Example usage
 
-Download and install Apache Spark locally.
+Here are a few examples using `LuceneRDD` for full text search and entity linkage. The entity linkage is done via Lucene's flexible query language.
 
-Setup your SPARK_HOME environment variable to your extracted spark directory, i.e., with Spark 1.5.2 extracted in your home directory, do
-
-```bash
-HOME_DIR=`echo ~`
-export SPARK_HOME=${HOME_DIR}/spark-1.5.2-bin-2.6.0
-```
-
-```bash
-./spark-shell.sh # Starts spark shell using spark-lucenerdd JAR
-```
-
-Now, `LuceneRDD` is available in Spark shell. In spark shell, type
-
-```scala-2
-scala> :load scripts/loadWords.scala
-```
-to instantiate an `LuceneRDD[String]` object containing the words from `src/test/resources/words.txt`
-
-#### Term query
-
-To perform a exact term query, do
-```scala-2
-scala> val results = luceneRDD.termQuery("_1", "hello", 10)
-scala> results.foreach(println)
-SparkScoreDoc(12.393539,129848,0,Numeric fields:Text fields:_1:[hello])
-...
-```
-
-#### Prefix query
-
-To perform a prefix query, do
-```scala-2
-scala> val results = luceneRDD.prefixQuery("_1", "hel", 10)
-scala> results.foreach(println)
-SparkScoreDoc(1.0,129618,0,Numeric fields:Text fields:_1:[held])
-SparkScoreDoc(1.0,129617,0,Numeric fields:Text fields:_1:[helcotic])
-SparkScoreDoc(1.0,129616,0,Numeric fields:Text fields:_1:[helcosis])
-...
-```
-
-#### Fuzzy query
-
-To perform a fuzzy query, do
-```scala-2
-scala> val results = luceneRDD.fuzzyQuery("_1", "aba", 1)
-scala> results.foreach(println)
-SparkScoreDoc(7.155413,175248,0,Numeric fields:Text fields:_1:[yaba])
-SparkScoreDoc(7.155413,33820,0,Numeric fields:Text fields:_1:[paba])
-...
-```
+* [Text search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
+* [Spatial search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
+* [Entity linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)

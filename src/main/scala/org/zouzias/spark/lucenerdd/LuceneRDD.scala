@@ -158,7 +158,6 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
-    (implicit sc: SparkContext)
     : RDD[(T1, List[SparkScoreDoc])] = {
     /*
     val resultsByPart = partitionsRDD.flatMap(_.queries(queries.value, topK))
@@ -170,11 +169,11 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
     */
 
     // Collect searchString Lucene Queries to Spark driver
-    val queries = sc.broadcast(other.map(searchQueryGen).collect())
+    val queries = partitionsRDD.context.broadcast(other.map(searchQueryGen).collect())
     val results = queries.value.map{ case query =>
       docResultsAggregator(_.query(query, topK)).toList
     }
-    val rdd = sc.parallelize(results)
+    val rdd = partitionsRDD.context.parallelize(results)
     other.zip(rdd)
   }
 

@@ -22,8 +22,18 @@ crossScalaVersions := Seq("2.10.6", "2.11.8")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
-scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8",
-  "-feature", "-language:implicitConversions")
+scalacOptions ++= Seq("-deprecation",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-unchecked",
+  "-Xlint",
+  "-Yno-adapted-args",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-value-discard",
+  "-language:implicitConversions")
+
+javacOptions ++= Seq("-Xlint")
 
 // Add jcenter repo
 resolvers += Resolver.jcenterRepo

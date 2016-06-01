@@ -1,7 +1,3 @@
-/**
- * Created by taazoan3 on 2016-05-03.
- */
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with

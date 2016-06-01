@@ -52,3 +52,5 @@ Here are a few examples using `LuceneRDD` for full text search and entity linkag
 * [Text search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
 * [Spatial search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
 * [Entity linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)
+
+For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki)

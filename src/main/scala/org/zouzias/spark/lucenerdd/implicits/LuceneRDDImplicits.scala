@@ -102,7 +102,7 @@ object LuceneRDDImplicits {
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
         doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
-          x))
+          x.toLong))
       case x: Float =>
         doc.add(new FloatField(fieldName, x, Stored))
         doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",

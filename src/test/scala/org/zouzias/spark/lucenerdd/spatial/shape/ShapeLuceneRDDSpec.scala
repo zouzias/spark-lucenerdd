@@ -121,7 +121,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
 
     val x = Bern._1._1
     val y = Bern._1._2
-    val radius = 150
+    val radius = 150.0
 
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.bboxSearch((x, y), radius, k)

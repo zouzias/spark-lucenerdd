@@ -77,7 +77,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   private val indexSearcher = new IndexSearcher(indexReader)
   private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
 
-  override def size: Long = iterOriginal.size
+  override def size: Long = iterOriginal.size.toLong
 
   /**
    * Restricts the entries to those satisfying a predicate

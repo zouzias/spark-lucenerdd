@@ -17,6 +17,8 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.lucene.index.Term
+import org.apache.lucene.search.{PrefixQuery, Query}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.LuceneText
@@ -99,6 +101,29 @@ class LuceneRDDSearchSpec extends FlatSpec
     }
 
     val linked = luceneRDD.link(leftCountriesRDD, linker, 10)
+    linked.count() should equal(leftCountries.size)
+    // Greece and Greenland should appear
+    linked.filter(link => link._1 == "gree" && link._2.length == 2)
+    // Italy should appear
+    linked.filter(link => link._1 == "ita" && link._2.length == 1)
+  }
+
+  "LuceneRDD.linkByQuery" should "correctly link with prefix query" in {
+    val leftCountries = Array("gree", "germa", "spa", "ita")
+    implicit val mySC = sc
+    val leftCountriesRDD = sc.parallelize(leftCountries)
+
+    val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
+      .map(_.toLowerCase()).toSeq)
+
+    luceneRDD = LuceneRDD(countries)
+
+    def linker(country: String): Query = {
+      val term = new Term("_1", country)
+      new PrefixQuery(term)
+    }
+
+    val linked = luceneRDD.linkByQuery(leftCountriesRDD, linker, 10)
     linked.count() should equal(leftCountries.size)
     // Greece and Greenland should appear
     linked.filter(link => link._1 == "gree" && link._2.length == 2)

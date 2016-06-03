@@ -20,6 +20,7 @@ package org.zouzias.spark.lucenerdd
 import org.apache.lucene.document.Document
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
+import org.apache.lucene.search.Query
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.aggregate.{SparkFacetResultMonoid, SparkScoreDocAggregatable}
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
@@ -159,22 +160,32 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, List[SparkScoreDoc])] = {
-    /*
-    val resultsByPart = partitionsRDD.flatMap(_.queries(queries.value, topK))
-        .mapValues(x => SparkDocTopKMonoid.build(x))
-    val aggTopDocs = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus(_, _))
-      .map{ case (_, topKMonoid) => topKMonoid.items}
-
-    other.zip(aggTopDocs)
-    */
-
     // Collect searchString Lucene Queries to Spark driver
-    val queries = partitionsRDD.context.broadcast(other.map(searchQueryGen).collect())
-    val results = queries.value.map{ case query =>
+    val queries = other.map(searchQueryGen).collect()
+    val queriesB = partitionsRDD.context.broadcast(queries)
+    val results = queriesB.value.map{ case query =>
       docResultsAggregator(_.query(query, topK)).toList
     }
     val rdd = partitionsRDD.context.parallelize(results)
     other.zip(rdd)
+  }
+
+  /**
+   * Entity linkage via Lucene query over all elements of an RDD.
+   *
+   * @param other RDD to be linked
+   * @param searchQueryGen Function that generates a Lucene Query object for each element of other
+   * @tparam T1 A type
+   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
+   */
+  def linkByQuery[T1: ClassTag](other: RDD[T1],
+                                searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
+  : RDD[(T1, List[SparkScoreDoc])] = {
+    def typeToQueryString = (input: T1) => {
+      searchQueryGen(input).toString
+    }
+
+    link[T1](other, typeToQueryString, topK)
   }
 
   /**

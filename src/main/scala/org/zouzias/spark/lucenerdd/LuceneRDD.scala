@@ -156,7 +156,10 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
    * @tparam T1 A type
-   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
+   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second
+   *
+   * Note: Currently the query strings of the other RDD are collected to the driver and
+   * broadcast to the workers.
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, List[SparkScoreDoc])] = {

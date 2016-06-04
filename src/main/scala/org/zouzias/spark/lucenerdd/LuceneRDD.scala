@@ -17,6 +17,7 @@
 
 package org.zouzias.spark.lucenerdd
 
+import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.document.Document
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -159,22 +160,25 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, List[SparkScoreDoc])] = {
-    /*
-    val resultsByPart = partitionsRDD.flatMap(_.queries(queries.value, topK))
-        .mapValues(x => SparkDocTopKMonoid.build(x))
-    val aggTopDocs = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus(_, _))
-      .map{ case (_, topKMonoid) => topKMonoid.items}
 
-    other.zip(aggTopDocs)
-    */
+    val queries = other.map(searchQueryGen).collect()
+    val queriesB = partitionsRDD.context.broadcast(queries)
 
-    // Collect searchString Lucene Queries to Spark driver
-    val queries = partitionsRDD.context.broadcast(other.map(searchQueryGen).collect())
-    val results = queries.value.map{ case query =>
-      docResultsAggregator(_.query(query, topK)).toList
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
+      case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
+        val results = partition.query(qr, topK).map(SparkDocTopKMonoid.build(_))
+        if (results.nonEmpty) {
+          index.toLong -> results.reduce(SparkDocTopKMonoid.plus(_, _))
+        }
+        else {
+          index.toLong -> SparkDocTopKMonoid.zero
+        }
+      }
     }
-    val rdd = partitionsRDD.context.parallelize(results)
-    other.zip(rdd)
+
+    val results = resultsByPart.reduceByKey( (x, y) => SparkDocTopKMonoid.plus(x, y))
+    other.zipWithIndex.map(_.swap).join(results)
+      .map{ case (_, joined) => (joined._1, joined._2.items)}
   }
 
   /**

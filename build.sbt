@@ -72,18 +72,27 @@ pomExtra := (
   </developers>
 )
 
-val sparkVersion = "1.5.2"
 val luceneV = "5.5.1"
 
-// scalastyle:off
-val spark_core                = "org.apache.spark"               %% "spark-core"               % sparkVersion
-val spark_sql                 = "org.apache.spark"               %% "spark-sql"                % sparkVersion
 
+spName := "zouzias/spark-lucenerdd"
+sparkVersion := "1.6.1"
+spShortDescription := "Spark RDD with Lucene's query capabilities"
+sparkComponents ++= Seq("core", "sql")
+spAppendScalaVersion := true
+// This is necessary because of how we explicitly specify Spark dependencies
+// for tests rather than using the sbt-spark-package plugin to provide them.
+spIgnoreProvided := true
+
+val testSparkVersion = settingKey[String]("The version of Spark to test against.")
+
+testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
+
+
+// scalastyle:off
 val specs2_core               = "org.specs2"                     %% "specs2-core"             % "2.3.11" % "test"
 val scala_check               = "org.scalacheck"                 %% "scalacheck"              % "1.12.2" % "test"
-
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6" % "test"
-val spark_testing_base        = "com.holdenkarau"                %% "spark-testing-base"       % s"${sparkVersion}_0.3.1" % "test" intransitive()
 
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.0"
 
@@ -100,8 +109,6 @@ val jts                       = "com.vividsolutions"             % "jts"        
 
 
 libraryDependencies ++= Seq(
-  spark_core % "provided",
-  spark_sql % "provided",
   algebird,
   lucene_facet,
   lucene_analyzers,
@@ -110,8 +117,14 @@ libraryDependencies ++= Seq(
   lucene_spatial,
   jts,
   specs2_core,
-  scalatest,
-  spark_testing_base
+  scalatest
+)
+
+libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
+  "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.3.3" % "test" intransitive(),
+  "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
@@ -120,7 +133,6 @@ compileScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).
 
 
 parallelExecution in Test := false
-
 
 // Skip tests during assembly
 test in assembly := {}

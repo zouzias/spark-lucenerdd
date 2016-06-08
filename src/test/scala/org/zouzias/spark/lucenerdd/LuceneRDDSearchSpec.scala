@@ -37,14 +37,6 @@ class LuceneRDDSearchSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  override val conf = new SparkConf().
-    setMaster("local[*]").
-    setAppName("test").
-    set("spark.ui.enabled", "false").
-    set("spark.app.id", appID)
-
-    // .set("spark.kryo.registrator", "org.zouzias.spark.lucenerdd.serialization.LuceneRDDKryoRegistrator")
-
   val First = "_1"
 
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString

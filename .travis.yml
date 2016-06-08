@@ -4,13 +4,29 @@ cache:
   directories:
     - $HOME/.ivy2
 language: scala
-scala:
-  - "2.10.6"
-  - "2.11.8"
-jdk:
-  - oraclejdk7
-  - oraclejdk8
-  - openjdk7
+ matrix:
+  include:
+    # Spark 1.4.1
+    - jdk: openjdk6
+      scala: 2.10.6
+      env: TEST_SPARK_VERSION="1.4.1"
+    - jdk: openjdk7
+      scala: 2.11.8
+      env: TEST_SPARK_VERSION="1.4.1"
+    # Spark 1.5.0
+    - jdk: openjdk7
+      scala: 2.10.6
+      env: TEST_SPARK_VERSION="1.5.2"
+    - jdk: openjdk7
+      scala: 2.11.8
+      env: TEST_SPARK_VERSION="1.5.2"
+    # Spark 1.6.0
+    - jdk: openjdk7
+      scala: 2.10.6
+      env: TEST_SPARK_VERSION="1.6.1"
+    - jdk: openjdk7
+      scala: 2.11.8
+      env: TEST_SPARK_VERSION="1.6.1"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update coverage test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle

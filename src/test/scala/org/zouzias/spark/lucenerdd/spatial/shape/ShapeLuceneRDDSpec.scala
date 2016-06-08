@@ -64,7 +64,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
 
     // Distances must be sorted
     val revertedDists = results.map(_.score).toList.reverse
-    sortedDesc(revertedDists)
+    sortedDesc(revertedDists) should equal(true)
   }
 
   private def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {

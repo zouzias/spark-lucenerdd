@@ -77,15 +77,17 @@ val luceneV = "5.5.1"
 
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "1.6.1"
-sparkComponents ++= Seq("core", "sql", "yarn")
+spShortDescription := "Spark RDD with Lucene's query capabilities"
+sparkComponents ++= Seq("core", "sql")
+spAppendScalaVersion := true
+// This is necessary because of how we explicitly specify Spark dependencies
+// for tests rather than using the sbt-spark-package plugin to provide them.
+spIgnoreProvided := true
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
 testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
 
-// This is necessary because of how we explicitly specify Spark dependencies
-// for tests rather than using the sbt-spark-package plugin to provide them.
-spIgnoreProvided := true
 
 // scalastyle:off
 val specs2_core               = "org.specs2"                     %% "specs2-core"             % "2.3.11" % "test"

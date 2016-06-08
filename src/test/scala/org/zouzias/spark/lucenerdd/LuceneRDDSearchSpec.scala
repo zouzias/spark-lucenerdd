@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.{PrefixQuery, Query}
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.LuceneText
@@ -35,6 +36,14 @@ class LuceneRDDSearchSpec extends FlatSpec
   override def afterEach() {
     luceneRDD.close()
   }
+
+  override val conf = new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID)
+
+    // .set("spark.kryo.registrator", "org.zouzias.spark.lucenerdd.serialization.LuceneRDDKryoRegistrator")
 
   val First = "_1"
 
@@ -118,7 +127,7 @@ class LuceneRDDSearchSpec extends FlatSpec
 
     luceneRDD = LuceneRDD(countries)
 
-    def linker(country: String): Query = {
+    val linker = (country: String) => {
       val term = new Term("_1", country)
       new PrefixQuery(term)
     }

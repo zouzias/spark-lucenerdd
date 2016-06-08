@@ -3,8 +3,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2
-language: scala
- matrix:
+matrix:
   include:
     # Spark 1.4.1
     - jdk: openjdk6

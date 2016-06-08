@@ -74,8 +74,9 @@ pomExtra := (
 
 val luceneV = "5.5.1"
 
-sparkVersion := "1.6.1"
 
+spName := "zouzias/spark-lucenerdd"
+sparkVersion := "1.6.1"
 sparkComponents ++= Seq("core", "sql", "yarn")
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")

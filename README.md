@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/zouzias/spark-lucenerdd/badge.svg?branch=master)](https://coveralls.io/github/zouzias/spark-lucenerdd?branch=master)
 [![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
 
-Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities. Both Scala 2.10 and 2.11 are supported.
+Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
 The main abstraction is a special type of `RDD` called `LuceneRDD`, which instantiates a Lucene index on each Spark executor (a.k.a. worker).
 
@@ -24,6 +24,39 @@ For more information on using Lucene's query parser, see [Query Parser](https://
 
 For example, using the query parser you can perform prefix queries on the field named textField and prefix query 
 `spar` as `LuceneRDD.query("textField:spar*", 10)`.
+
+
+## Linking
+
+You can link against this library (for Spark 1.4+) in your program at the following coordinates:
+
+Using SBT:
+
+```
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.0.12"
+```
+
+Using Maven:
+
+```xml
+<dependency>
+    <groupId>org.zouzias</groupId>
+    <artifactId>spark-lucenerdd_2.11</artifactId>
+    <version>0.0.12</version>
+</dependency>
+```
+
+This library can also be added to Spark jobs launched through `spark-shell` or `spark-submit` by using the `--packages` command line option.
+For example, to include it when starting the spark shell:
+
+```
+$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.0.12
+```
+
+Unlike using `--jars`, using `--packages` ensures that this library and its dependencies will be added to the classpath.
+The `--packages` argument can also be used with `bin/spark-submit`.
+
+This library is cross-published for Scala 2.11, so 2.11 users should replace 2.10 with 2.11 in the commands listed above.
 
 ### Project Status and Limitations
 

@@ -31,6 +31,10 @@ Currently the Lucene index is only stored in memory and the following Lucene que
 
 Implicit conversions for tuples of size up to 7 with the types (Int, Float, Double, Long, String) are supported. (For phrase queries, the auxiliary class `org.zouzias.spark.lucenerdd.models.LuceneText` must be used.) For tuples, the field names are by default set to "_1", "_2", etc following Scala's naming conventions for these fields.
 
+## Requirements
+
+This library requires Spark 1.4+ and Java 7+.
+
 ### Development
 
 Install Java, [SBT](http://www.scala-sbt.org) and clone the project

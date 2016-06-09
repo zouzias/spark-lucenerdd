@@ -18,6 +18,7 @@ The main abstraction is a special type of `RDD` called `LuceneRDD`, which instan
 |Prefix query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
 |Query parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
 |Faceted search| `LuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
+|Entity Linkage| `LuceneRDD.link(otherEntity: RDD[T], linkageFunction: T => searchQuery, topK)`| Entity linkage via Lucene queries|
 
 Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc. 
 For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). 

@@ -19,7 +19,6 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.document.FieldType
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 
 class LuceneRDDSpec extends FlatSpec
   with Matchers

@@ -18,7 +18,7 @@ The main abstraction is a special type of `RDD` called `LuceneRDD`, which instan
 |Prefix query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
 |Query parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
 |Faceted search| `LuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
-|Entity Linkage| `LuceneRDD.link(otherEntity: RDD[T], linkageFunction: T => searchQuery, topK)`| Entity linkage via Lucene queries|
+|[Record Linkage](https://en.wikipedia.org/wiki/Record_linkage)| `LuceneRDD.link(otherEntity: RDD[T], linkageFunction: T => searchQuery, topK)`| Record linkage via Lucene queries|
 
 Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc. 
 For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). 
@@ -85,10 +85,10 @@ To make the spark-lucenerdd available, you have to assembly the project and add 
 
 ### Example usage
 
-Here are a few examples using `LuceneRDD` for full text search and entity linkage. The entity linkage is done via Lucene's flexible query language.
+Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit rLucene's flexible query language.
 
-* [Text search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
-* [Spatial search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
-* [Entity linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)
+* [Text Search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
+* [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
+* [Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)
 
 For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki)

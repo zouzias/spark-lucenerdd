@@ -17,7 +17,7 @@
 
 import scala.io.Source
 import org.apache.spark.rdd.RDD
-import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
+import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 

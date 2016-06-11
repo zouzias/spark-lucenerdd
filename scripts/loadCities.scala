@@ -17,9 +17,9 @@
 
 import scala.io.Source
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
-import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
-import org.zouzias.spark.lucenerdd.LuceneRDD._
+import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.LuceneRDD
+
 val cities = Source.fromFile("src/test/resources/cities.txt").getLines().toSeq
 val rdd = sc.parallelize(cities)
 val luceneRDD = LuceneRDD(rdd)

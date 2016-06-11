@@ -17,8 +17,7 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
 import com.spatial4j.core.distance.DistanceUtils
-import com.spatial4j.core.shape.impl.PointImpl
-import com.spatial4j.core.shape.{Point, Shape}
+import com.spatial4j.core.shape.Shape
 import org.apache.lucene.document.{Document, StoredField}
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader

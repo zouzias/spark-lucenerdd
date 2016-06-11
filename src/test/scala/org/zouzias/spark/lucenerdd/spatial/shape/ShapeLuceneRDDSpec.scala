@@ -23,9 +23,9 @@ import com.spatial4j.core.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.models.SparkDoc
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
-import org.zouzias.spark.lucenerdd.spatial.implicits.ShapeLuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
+import org.zouzias.spark.lucenerdd.spatial.shape._
 
 class ShapeLuceneRDDSpec extends FlatSpec
   with Matchers

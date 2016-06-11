@@ -19,10 +19,10 @@ package org.zouzias.spark.lucenerdd.spatial.implicits
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
-import org.zouzias.spark.lucenerdd.spatial.implicits.ShapeLuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
+import org.zouzias.spark.lucenerdd.spatial.shape._
 
 class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   with Matchers

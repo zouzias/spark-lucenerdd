@@ -14,15 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.implicits
-
+package org.zouzias.spark.lucenerdd.spatial
 
 import com.spatial4j.core.shape.Shape
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
-import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 
 
-object ShapeLuceneRDDImplicits extends ContextLoader{
+package object shape extends ContextLoader{
 
   private val GeometryFactory = new GeometryFactory()
 

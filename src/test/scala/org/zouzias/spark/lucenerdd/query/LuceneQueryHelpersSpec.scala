@@ -19,8 +19,8 @@ package org.zouzias.spark.lucenerdd.query
 import org.apache.lucene.document.Field.Store
 import org.apache.lucene.document._
 import org.apache.lucene.facet.FacetField
-import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader}
-import org.apache.lucene.index.{DirectoryReader}
+import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
+import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.LuceneRDD

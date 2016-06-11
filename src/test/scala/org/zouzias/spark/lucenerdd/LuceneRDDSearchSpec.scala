@@ -21,7 +21,6 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.search.{FuzzyQuery, PrefixQuery, Query}
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits._
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.io.Source

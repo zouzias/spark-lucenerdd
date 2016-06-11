@@ -25,7 +25,6 @@ import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContex
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
-
 import scala.reflect.ClassTag
 
 

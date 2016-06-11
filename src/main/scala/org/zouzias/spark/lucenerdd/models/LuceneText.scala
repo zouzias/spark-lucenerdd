@@ -21,6 +21,6 @@ package org.zouzias.spark.lucenerdd.models
  * Wrapper for Lucene text field
  *
  * The purpose of this class is solely to make phrase query work. It is used in implicit conversions
- * and pattern matched in [[org.zouzias.spark.lucenerdd.implicits.LuceneRDDImplicits]]
+ * and pattern matched in the package object [[org.zouzias.spark.lucenerdd]]
  */
 case class LuceneText(content: String)

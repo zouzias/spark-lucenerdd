@@ -14,24 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark
 
-package org.zouzias.spark.lucenerdd.implicits
-
-import org.apache.lucene.document._
+import org.apache.lucene.document.{DoubleDocValuesField, _}
 import org.apache.lucene.facet.FacetField
-import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.reflect.ClassTag
 
-/**
- * Implicit conversions of basic types to Apache Lucene documents
- *
- * Currently supports:
- * 1) Primitive types: Int, Long, Float, Double, String and [[LuceneText]]
- * 2) Tuples up to size 8 of the above types
- */
-object LuceneRDDImplicits {
+package object lucenerdd {
 
   private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
@@ -85,7 +76,7 @@ object LuceneRDDImplicits {
   }
 
   private def tupleTypeToDocument[T: ClassTag](doc: Document, index: Int, s: T): Document = {
-   typeToDocument(doc, s"_${index}", s)
+    typeToDocument(doc, s"_${index}", s)
   }
 
   private def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {

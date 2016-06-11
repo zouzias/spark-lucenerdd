@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.aggregate
 
-import com.twitter.algebird.{MapMonoid, Monoid}
+import com.twitter.algebird.MapMonoid
 import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 
 /**

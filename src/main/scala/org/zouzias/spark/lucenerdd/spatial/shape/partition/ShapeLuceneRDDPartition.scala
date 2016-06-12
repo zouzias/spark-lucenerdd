@@ -23,7 +23,6 @@ import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
-import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.spatial.grids.GridLoader
@@ -39,7 +38,6 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   (implicit shapeConversion: K => Shape,
    docConversion: V => Document)
   extends AbstractShapeLuceneRDDPartition[K, V]
-    with WSAnalyzer
     with IndexWithTaxonomyWriter
     with GridLoader
     with SpatialStrategy {

@@ -18,10 +18,8 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
-import org.apache.lucene.search.{FuzzyQuery, PrefixQuery, Query}
-import org.apache.spark.SparkConf
+import org.apache.lucene.search.{FuzzyQuery, PrefixQuery}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.io.Source
 
@@ -127,8 +125,8 @@ class LuceneRDDSearchSpec extends FlatSpec
     linked.count() should equal(leftCountries.size)
     // Greece should appear only
     linked.collect.exists(link => link._1 == "gree" && link._2.length == 1)  should equal(true)
-    // Italy, Iraq and Iran should appear
-    linked.collect.exists(link => link._1 == "ita" && link._2.length == 3) should equal(true)
+    // At least Italy, Iraq and Iran should appear
+    linked.collect.exists(link => link._1 == "ita" && link._2.length >= 3) should equal(true)
   }
 
   "LuceneRDD.linkByQuery" should "correctly link with prefix query" in {
@@ -175,12 +173,12 @@ class LuceneRDDSearchSpec extends FlatSpec
     // Greece should appear only
     linked.collect().exists(link => link._1 == "gree" && link._2.length == 1) should equal(true)
     // Italy, Iraq and Iran should appear
-    linked.collect().exists(link => link._1 == "ita" && link._2.length == 3) should equal (true)
+    linked.collect().exists(link => link._1 == "ita" && link._2.length >= 3) should equal (true)
   }
 
 
   "LuceneRDD.phraseQuery" should "correctly search with PhraseQuery" in {
-    val phrases = Array("hello world", "how are you", "my name is Tassos").map(LuceneText(_))
+    val phrases = Array("hello world", "how are you", "my name is Tassos")
     val rdd = sc.parallelize(phrases)
     luceneRDD = LuceneRDD(rdd)
 

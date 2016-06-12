@@ -18,6 +18,9 @@ package org.zouzias.spark.lucenerdd.config
 
 import com.typesafe.config.ConfigFactory
 
+/**
+ * Use typesafe configuration
+ */
 trait Configurable extends Serializable {
   val config = ConfigFactory.load()
 }

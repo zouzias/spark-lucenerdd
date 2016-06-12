@@ -16,7 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
-
 /**
  * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
  */

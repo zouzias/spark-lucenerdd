@@ -17,38 +17,50 @@
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd._
 
-val acmDF = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("scripts/recordLinkage/DBLP-ACM/ACM.csv")
-val dblp2DF= sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("scripts/recordLinkage/DBLP-ACM/DBLP2.csv")
-val groundTruthDF = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("scripts/recordLinkage/DBLP-ACM/DBLP-ACM_perfectMapping.csv")
+val amazonDF = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("scripts/recordLinkage/Amazon-GoogleProducts/Amazon.csv")
+val googleDF= sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("scripts/recordLinkage/Amazon-GoogleProducts/GoogleProducts.csv")
+val groundTruthDF = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("scripts/recordLinkage/Amazon-GoogleProducts/Amazon_GoogleProducts_perfectMapping.csv")
 
-val acm = acmDF.map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3), row.get(4).toString))
-val dblp2 = LuceneRDD(dblp2DF.map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3), row.get(4).toString)))
+val amazon = amazonDF.select("id", "title", "description", "manufacturer").map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3)))
+val googleLuceneRDD = LuceneRDD(googleDF.map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3))))
 
 
+val linker: (String, String, String, String) => String = {
+  case (_, name, description, manu) => {
+    val nameTokens = name.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 1).distinct.mkString(" OR ")
+    val descTerms = description.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 6).distinct.mkString(" OR ")
+    val manuTerms = manu.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 1).mkString(" OR ")
 
-val linker: (String, String, String, String, String) => String = {
-  case (_, title, authors, _, year) => {
-    val titleTokens = title.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 1).mkString(" OR ")
-    val authorsTerms = authors.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 1).mkString(" OR ")
-
-    if (authorsTerms.nonEmpty) {
-      s"(_2:(${titleTokens})) OR (_3:${authorsTerms})"
+    /*
+    if (descTerms.nonEmpty && nameTokens.nonEmpty && manuTerms.nonEmpty) {
+      s"(_2:(${nameTokens})) OR (_3:${descTerms}) OR (_4:${manuTerms})"
     }
-    else{
-      s"_2:(${titleTokens})"
+    else if (nameTokens.nonEmpty && manuTerms.nonEmpty) {
+      s"(_2:(${nameTokens})) OR (_4:${manuTerms})"
+    }
+    else if (nameTokens.nonEmpty) {
+      s"_2:(${nameTokens})"
+    }
+    else {
+      "*:*"
+    }*/
+
+    if (nameTokens.nonEmpty) {
+      s"_2:(${nameTokens})"
+    }
+    else {
+      "*:*"
     }
   }
 }
 
-
-//val linkedResults = dblp2.link[(String, String, String, String, String)](acm, linker.tupled, 3)
-val linkedResults = dblp2.link(acm, linker.tupled, 3)
+val linkedResults = googleLuceneRDD.link(amazon, linker.tupled, 3)
 
 import sqlContext.implicits._
 
-val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (acm, topDocs) => (topDocs.head.doc.textField("_1").get.head, acm._1.toInt)}.toDF("idDBLP", "idACM")
+val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (left, topDocs) => (topDocs.head.doc.textField("_1").get.head, left._1)}.toDF("idGoogleBase", "idAmazon")
 
-val correctHits: Double = linkageResults.join(groundTruthDF, groundTruthDF.col("idDBLP").equalTo(linkageResults("idDBLP")) &&  groundTruthDF.col("idACM").equalTo(linkageResults("idACM"))).count
+val correctHits: Double = linkageResults.join(groundTruthDF, groundTruthDF.col("idAmazon").equalTo(linkageResults("idAmazon")) &&  groundTruthDF.col("idGoogleBase").equalTo(linkageResults("idGoogleBase"))).count
 val total: Double = groundTruthDF.count
 val accuracy = correctHits / total
 println(s"Accuracy of linkage is ${accuracy}")

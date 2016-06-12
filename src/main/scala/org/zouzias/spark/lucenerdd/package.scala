@@ -18,7 +18,6 @@ package org.zouzias.spark
 
 import org.apache.lucene.document.{DoubleDocValuesField, _}
 import org.apache.lucene.facet.FacetField
-import org.zouzias.spark.lucenerdd.models.LuceneText
 
 import scala.reflect.ClassTag
 
@@ -64,14 +63,8 @@ package object lucenerdd {
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
-    doc.add(new StringField(DefaultFieldName, s, Stored))
+    doc.add(new TextField(DefaultFieldName, s, Stored))
     addTextFacetField(doc, DefaultFieldName, s)
-    doc
-  }
-
-  implicit def textFieldToDocument(s: LuceneText): Document = {
-    val doc = new Document
-    doc.add(new TextField(DefaultFieldName, s.content, Stored))
     doc
   }
 
@@ -81,10 +74,8 @@ package object lucenerdd {
 
   private def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
     s match {
-      case x: LuceneText =>
-        doc.add(new TextField(fieldName, x.content, Stored))
       case x: String =>
-        doc.add(new StringField(fieldName, x, Stored))
+        doc.add(new TextField(fieldName, x, Stored))
         addTextFacetField(doc, fieldName, x)
       case x: Long =>
         doc.add(new LongField(fieldName, x, Stored))

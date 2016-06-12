@@ -17,7 +17,7 @@
 
 package org.zouzias.spark.lucenerdd
 
-import com.twitter.algebird.{TopK, TopKMonoid}
+import com.twitter.algebird.TopK
 import org.apache.lucene.document.Document
 import org.apache.spark._
 import org.apache.spark.rdd.RDD

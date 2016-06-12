@@ -23,7 +23,6 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.LuceneRDD
-import org.zouzias.spark.lucenerdd.analyzers.WSAnalyzer
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
@@ -35,7 +34,6 @@ private[lucenerdd] class LuceneRDDPartition[T]
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
-  with WSAnalyzer
   with IndexWithTaxonomyWriter
   with Logging {
 

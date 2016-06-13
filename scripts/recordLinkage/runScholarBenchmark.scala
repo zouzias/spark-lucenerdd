@@ -33,7 +33,7 @@ val dblp = LuceneRDD(dblpDF.map( row => (row.get(0).toString, row.getString(1), 
 val linker: (String, String, String) => String = {
   case (_, title, authors) => {
     val titleTokens = title.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 3).mkString(" OR ")
-    val authorsTerms = authors.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "").filter(_.length > 2).mkString(" OR ")
+    val authorsTerms = authors.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 2).mkString(" OR ")
 
     if (titleTokens.nonEmpty && authorsTerms.nonEmpty) {
       s"(_2:(${titleTokens}) OR _3:(${authorsTerms}))"
@@ -41,11 +41,11 @@ val linker: (String, String, String) => String = {
     else if (titleTokens.nonEmpty){
       s"_2:(${titleTokens})"
     }
-    if (authorsTerms.nonEmpty){
+    else if (authorsTerms.nonEmpty){
       s"_3:(${authorsTerms})"
     }
     else {
-      s"*:*"
+      "*:*"
     }
   }
 }

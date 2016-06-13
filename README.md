@@ -34,7 +34,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.0.12"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.0.XX"
 ```
 
 Using Maven:
@@ -43,7 +43,7 @@ Using Maven:
 <dependency>
     <groupId>org.zouzias</groupId>
     <artifactId>spark-lucenerdd_2.11</artifactId>
-    <version>0.0.12</version>
+    <version>0.0.XX</version>
 </dependency>
 ```
 
@@ -85,7 +85,7 @@ To make the spark-lucenerdd available, you have to assembly the project and add 
 
 ### Example usage
 
-Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit rLucene's flexible query language.
+Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial, `lucene-spatial` and `jts` is required.
 
 * [Text Search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
 * [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)

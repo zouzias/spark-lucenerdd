@@ -39,6 +39,7 @@ javacOptions ++= Seq("-Xlint")
 resolvers += Resolver.jcenterRepo
 
 releaseCrossBuild := true
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 publishMavenStyle := true
 

@@ -83,7 +83,7 @@ The above will create an assembly jar containing spark-lucenerdd functionality u
 
 To make the spark-lucenerdd available, you have to assembly the project and add the JAR on you Spark shell or submit scripts.
 
-### Example usage
+### Examples
 
 Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial, `lucene-spatial` and `jts` is required.
 

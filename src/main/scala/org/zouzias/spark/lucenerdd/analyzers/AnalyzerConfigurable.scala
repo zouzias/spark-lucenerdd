@@ -50,11 +50,13 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tr.TurkishAnalyzer
 import org.zouzias.spark.lucenerdd.config.Configurable
 
+/**
+ * Lucene Analyzer loader via configuration
+ */
 trait AnalyzerConfigurable extends Configurable {
 
   val AnalyzerConfigKey = "lucenerdd.analyzer.name"
 
-  /** Default value for topK queries */
   protected val Analyzer: Analyzer = {
     if (config.hasPath(AnalyzerConfigKey)) {
       val analyzerName = config.getString(AnalyzerConfigKey)

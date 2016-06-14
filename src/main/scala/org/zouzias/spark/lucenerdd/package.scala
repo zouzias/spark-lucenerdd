@@ -208,4 +208,51 @@ package object lucenerdd {
     doc
   }
 
+
+  implicit def tuple9ToDocument[T1: ClassTag,
+  T2: ClassTag,
+  T3: ClassTag,
+  T4: ClassTag,
+  T5: ClassTag,
+  T6: ClassTag,
+  T7: ClassTag,
+  T8: ClassTag,
+  T9: ClassTag](s: (T1, T2, T3, T4, T5, T6, T7, T8, T9)): Document = {
+    val doc = new Document
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T5](doc, 5, s._5)
+    tupleTypeToDocument[T6](doc, 6, s._6)
+    tupleTypeToDocument[T7](doc, 7, s._7)
+    tupleTypeToDocument[T8](doc, 8, s._8)
+    tupleTypeToDocument[T9](doc, 9, s._9)
+    doc
+  }
+
+  implicit def tuple10ToDocument[T1: ClassTag,
+  T2: ClassTag,
+  T3: ClassTag,
+  T4: ClassTag,
+  T5: ClassTag,
+  T6: ClassTag,
+  T7: ClassTag,
+  T8: ClassTag,
+  T9: ClassTag,
+  T10: ClassTag](s: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)): Document = {
+    val doc = new Document
+    tupleTypeToDocument[T1](doc, 1, s._1)
+    tupleTypeToDocument[T2](doc, 2, s._2)
+    tupleTypeToDocument[T3](doc, 3, s._3)
+    tupleTypeToDocument[T4](doc, 4, s._4)
+    tupleTypeToDocument[T5](doc, 5, s._5)
+    tupleTypeToDocument[T6](doc, 6, s._6)
+    tupleTypeToDocument[T7](doc, 7, s._7)
+    tupleTypeToDocument[T8](doc, 8, s._8)
+    tupleTypeToDocument[T9](doc, 9, s._9)
+    tupleTypeToDocument[T10](doc, 10, s._10)
+    doc
+  }
+
 }

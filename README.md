@@ -66,6 +66,27 @@ Currently the Lucene index is only stored in memory.
 Implicit conversions for tuples of size up to 10 with primitive types (Int, Float, Double, Long, String) are supported.
 Most implicits are for tuples and the field names are by default set to "_1", "_2", "_3", etc following Scala's naming conventions for tuples.
 
+### Custom Case Classes
+
+If you want to use your own custom class with `LuceneRDD` you require to provide an implicit conversion from your case class to a Lucene Document
+
+```
+case class Person(name: String, age: Int, email: String)
+
+object Person extends Serializable {
+  implicit def personToDocument(person: Person): Document = {
+    val doc = new Document
+    typeToDocument(doc, "name", person.name)
+    typeToDocument(doc, "age", person.age)
+    typeToDocument(doc, "email", person.email)
+    doc
+  }
+}
+```
+
+For more details, see `LuceneRDDCustomcaseClassImplicits` under the tests directory.
+
+
 ## Requirements
 
 This library requires Spark 1.4+ and Java 7+.

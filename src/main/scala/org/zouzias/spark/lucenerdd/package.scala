@@ -72,7 +72,7 @@ package object lucenerdd {
     typeToDocument(doc, s"_${index}", s)
   }
 
-  private def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
+  def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
     s match {
       case x: String =>
         doc.add(new TextField(fieldName, x, Stored))

@@ -68,7 +68,7 @@ Most implicits are for tuples and the field names are by default set to "_1", "_
 
 ### Custom Case Classes
 
-If you want to use your own custom class with `LuceneRDD` you require to provide an implicit conversion from your case class to a Lucene Document
+If you want to use your own custom class with `LuceneRDD` you must provide an implicit conversion from your class to a Lucene Document
 
 ```
 case class Person(name: String, age: Int, email: String)

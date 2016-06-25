@@ -18,7 +18,8 @@
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.LuceneRDD
-val df = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").load("src/test/resources/h1bvisa-2014.csv")
-val words = df.select("lca_case_employer_name", "lca_case_job_title").map( row => (row.getString(0).toLowerCase, row.getString(1).toLowerCase))
+val df = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").load("src/test/resources/h1bvisa.csv")
+val words = df.select("lca_case_employer_name", "lca_case_job_title", "lca_case_employer_city", "lca_case_employer_state", "lca_case_employer_postal_code")
+  .map( row => (row.getString(0).toLowerCase, row.getString(1).toLowerCase, row.getString(2).toLowerCase, row.getString(3).toLowerCase, row.getString(4).toLowerCase))
 val luceneRDD = LuceneRDD(words)
 luceneRDD.count

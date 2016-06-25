@@ -16,17 +16,58 @@
  */
 package org.zouzias.spark.lucenerdd.store
 
+import java.io.File
+import java.nio.file.{Path, Paths}
+
 import org.apache.lucene.facet.FacetsConfig
-import org.apache.lucene.store.RAMDirectory
+import org.apache.lucene.store._
+import org.zouzias.spark.lucenerdd.config.Configurable
 
 /**
  * In memory lucene index
  */
-trait IndexStorable {
-
-  protected lazy val IndexDir = new RAMDirectory()
-
-  protected lazy val TaxonomyDir = new RAMDirectory()
+trait IndexStorable extends Configurable
+  with AutoCloseable {
 
   protected lazy val FacetsConfig = new FacetsConfig()
+
+  private val IndexStoreKey = "lucenerdd.index.store.mode"
+
+
+  private val indexDirName = s"indexDirectory-${System.currentTimeMillis()}"
+  private val indexDir = Paths.get(indexDirName)
+
+  private val taxonomyDirName = s"taxonomyDirectory-${System.currentTimeMillis()}"
+  private val taxonomyDir = Paths.get(taxonomyDirName)
+
+  private val lockFactory = new SingleInstanceLockFactory
+
+
+  protected def storageMode(directoryPath: Path): Directory = {
+    if (config.hasPath(IndexStoreKey)) {
+      val storageMode = config.getString(IndexStoreKey)
+
+      storageMode match {
+        case "disk" => new MMapDirectory(directoryPath, lockFactory)
+        case _ => new RAMDirectory()
+      }
+    }
+    else {
+      new RAMDirectory()
+    }
+  }
+
+  /**
+   * There is an issue that multiple workers are using the same directory.
+   */
+
+  protected val IndexDir = storageMode(indexDir)
+
+  protected val TaxonomyDir = storageMode(taxonomyDir)
+
+
+  override def close(): Unit = {
+    IndexDir.close()
+    TaxonomyDir.close()
+  }
 }

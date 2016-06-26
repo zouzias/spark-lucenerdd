@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.spatial.shape
 
 import com.spatial4j.core.shape.{Point, Shape}
+import com.twitter.algebird.TopK
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
@@ -25,6 +26,7 @@ import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContex
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
+
 import scala.reflect.ClassTag
 
 
@@ -57,7 +59,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
    *
    * TODO: Move to aggregations
- *
+   *
    * @param f
    * @return
    */
@@ -68,9 +70,52 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
   }
 
+  /**
+   * Link entities based on k-nearest neighbors (Knn)
+   *
+   * Links this and that based on nearest neighbors, returns Knn
+   *
+   * @param that An RDD of entities to be linked
+   * @param pointFunctor Function that generates a point from each element of other
+   * @tparam T A type
+   * @return an RDD of Tuple2 that contains the linked results
+   *
+   * Note: Currently the query coordinates of the other RDD are collected to the driver and
+   * broadcast to the workers.
+   */
+  def linkByKnn[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
+                           topK: Int = DefaultTopK)
+  : RDD[(T, List[SparkScoreDoc])] = {
+    val queries = that.map(pointFunctor).collect()
+    val queriesB = partitionsRDD.context.broadcast(queries)
+
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
+      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
+        val results = partition.knnSearch(queryPoint, topK).reverse.map(SparkDocTopKMonoid.build(_))
+        if (results.nonEmpty) {
+          index.toLong -> results.reduce(SparkDocTopKMonoid.plus(_, _))
+        }
+        else {
+          index.toLong -> SparkDocTopKMonoid.zero
+        }
+      }
+    }
+
+    val results = resultsByPart.reduceByKey( (x, y) => SparkDocTopKMonoid.plus(x, y))
+    that.zipWithIndex.map(_.swap).join(results)
+      .map{ case (_, joined) => (joined._1, joined._2.items.reverse.take(topK))}
+  }
+
+  /**
+   * K-nearest neighbors search
+   *
+   * @param queryPoint query point
+   * @param k number of nearest neighbor points to return
+   * @return
+   */
   def knnSearch(queryPoint: Point, k: Int): Iterable[SparkScoreDoc] = {
-    val x = queryPoint.getX()
-    val y = queryPoint.getY()
+    val x = queryPoint.getX
+    val y = queryPoint.getY
     knnSearch((x, y), k)
   }
 
@@ -78,7 +123,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * K-nearest neighbors search
    *
    * @param queryPoint query point
-   * @param k number of nearest points to return
+   * @param k number of nearest neighbor points to return
    * @return
    */
   def knnSearch(queryPoint: (Double, Double), k: Int): Iterable[SparkScoreDoc] = {

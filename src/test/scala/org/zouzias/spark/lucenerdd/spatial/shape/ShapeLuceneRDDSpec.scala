@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
-import java.io.StringWriter
+import java.io.{Serializable, StringWriter}
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import com.spatial4j.core.distance.DistanceUtils
@@ -64,6 +64,31 @@ class ShapeLuceneRDDSpec extends FlatSpec
     // Distances must be sorted
     val revertedDists = results.map(_.score).toList.reverse
     sortedDesc(revertedDists) should equal(true)
+  }
+
+  "ShapeLuceneRDD.linkByKnn" should "link correctly k-nearest neighbors (knn)" in {
+
+    val citiesRDD = sc.parallelize(cities)
+    pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
+
+    val linker = (x: ((Double, Double), String)) => x._1
+
+    val linkage = pointLuceneRDD.linkByKnn(citiesRDD, linker, k)
+
+    linkage.count() should equal(cities.size)
+
+    linkage.collect().foreach{ case (city, knnResults) =>
+
+      // top result should be query result
+      city._2 should equal(knnResults.head.doc.textField("_1").get.head)
+
+      // Return only k results
+      knnResults.length should be <=(k)
+
+      // Distances must be sorted
+      val revertedDists = knnResults.map(_.score).reverse
+      sortedDesc(revertedDists) should equal(true)
+    }
   }
 
   private def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {

@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.testing
 
+import org.zouzias.spark.lucenerdd.models.SparkDoc
+
 trait LuceneRDDTestUtils {
 
   val Bern = ( (7.45, 46.95), "Bern")
@@ -48,6 +50,15 @@ trait LuceneRDDTestUtils {
     val coords = Array((x - width, y - width), (x - width, y + width),
       (x + width, y + width), (x + width, y - width), (x - width, y - width))
     (coords, city._2)
+  }
+
+  protected def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {
+    doc.textField(fieldName).forall(_.contains(fieldValue))
+  }
+
+  // Check if sequence is sorted in descending order
+  protected def sortedDesc(seq : Seq[Float]) : Boolean = {
+    if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
 }

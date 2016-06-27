@@ -21,7 +21,6 @@ import java.io.{Serializable, StringWriter}
 import com.holdenkarau.spark.testing.SharedSparkContext
 import com.spatial4j.core.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.models.SparkDoc
 import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
@@ -43,17 +42,12 @@ class ShapeLuceneRDDSpec extends FlatSpec
     pointLuceneRDD.close()
   }
 
-  // Check if sequence is sorted in descending order
-  def sortedDesc(seq : Seq[Float]) : Boolean = {
-    if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
-  }
-
   "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (knn)" in {
 
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k)
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "*:*")
 
     results.size should equal(k)
 
@@ -64,35 +58,6 @@ class ShapeLuceneRDDSpec extends FlatSpec
     // Distances must be sorted
     val revertedDists = results.map(_.score).toList.reverse
     sortedDesc(revertedDists) should equal(true)
-  }
-
-  "ShapeLuceneRDD.linkByKnn" should "link correctly k-nearest neighbors (knn)" in {
-
-    val citiesRDD = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
-
-    val linker = (x: ((Double, Double), String)) => x._1
-
-    val linkage = pointLuceneRDD.linkByKnn(citiesRDD, linker, k)
-
-    linkage.count() should equal(cities.size)
-
-    linkage.collect().foreach{ case (city, knnResults) =>
-
-      // top result should be query result
-      city._2 should equal(knnResults.head.doc.textField("_1").get.head)
-
-      // Return only k results
-      knnResults.length should be <=(k)
-
-      // Distances must be sorted
-      val revertedDists = knnResults.map(_.score).reverse
-      sortedDesc(revertedDists) should equal(true)
-    }
-  }
-
-  private def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {
-    doc.textField(fieldName).forall(_.contains(fieldValue))
   }
 
   "ShapeLuceneRDD.circleSearch" should "return correct results" in {

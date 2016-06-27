@@ -35,6 +35,7 @@ import scala.collection.JavaConverters._
 object LuceneQueryHelpers extends Serializable {
 
   lazy val MatchAllDocs = new MatchAllDocsQuery()
+  lazy val MatchAllDocsString = "*:*"
   private val QueryParserDefaultField = "text"
 
   /**
@@ -53,6 +54,19 @@ object LuceneQueryHelpers extends Serializable {
   }
 
   /**
+   * Parse a Query string
+   *
+   * @param searchString
+   * @param analyzer
+   * @return
+   */
+  def parseQueryString(searchString: String)
+                      (implicit analyzer: Analyzer): Query = {
+    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
+    queryParser.parse(searchString)
+  }
+
+  /**
    * Lucene query parser
    *
    * @param indexSearcher Index searcher
@@ -65,8 +79,7 @@ object LuceneQueryHelpers extends Serializable {
                    searchString: String,
                    topK: Int)(implicit analyzer: Analyzer)
   : Seq[SparkScoreDoc] = {
-    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
-    val q: Query = queryParser.parse(searchString)
+    val q = parseQueryString(searchString)(analyzer)
     indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 

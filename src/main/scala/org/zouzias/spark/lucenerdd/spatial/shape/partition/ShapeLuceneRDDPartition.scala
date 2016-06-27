@@ -119,7 +119,8 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
-  override def knnSearch(point: (Double, Double), k: Int): List[SparkScoreDoc] = {
+  override def knnSearch(point: (Double, Double), k: Int, searchString: String)
+  : List[SparkScoreDoc] = {
 
     // Match all, order by distance ascending
     val pt = ctx.makePoint(point._1, point._2)
@@ -130,7 +131,8 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     // false = ascending dist
     val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
 
-    val docs = indexSearcher.search(LuceneQueryHelpers.MatchAllDocs, k, distSort)
+    val query = LuceneQueryHelpers.parseQueryString(searchString)(Analyzer)
+    val docs = indexSearcher.search(query, k, distSort)
 
     // To get the distance, we could compute from stored values like earlier.
     // However in this example we sorted on it, and the distance will get

@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
-import java.io.{Serializable, StringWriter}
+import java.io.StringWriter
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import com.spatial4j.core.distance.DistanceUtils

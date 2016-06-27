@@ -24,7 +24,6 @@ import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 // Required for implicit Document conversion
 import org.zouzias.spark.lucenerdd._
 
-
 class ShapeLuceneRDDLinkageSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
@@ -59,7 +58,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       city._2 should equal(knnResults.head.doc.textField("_1").get.head)
 
       // Return only k results
-      knnResults.length should be <=(k)
+      knnResults.length should be <= k
 
       // Distances must be sorted
       val revertedDists = knnResults.map(_.score).reverse

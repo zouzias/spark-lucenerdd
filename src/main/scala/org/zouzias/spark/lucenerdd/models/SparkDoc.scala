@@ -24,7 +24,7 @@ import scala.collection.JavaConverters._
 /**
  * Wrapper around Lucene document
  *
- * If [[Document]] were serializable, this class would not be required.
+ * If [[Document]] were serializable, this class would not exist.
  * @param doc
  */
 class SparkDoc(doc: Document) extends Serializable {
@@ -50,15 +50,15 @@ class SparkDoc(doc: Document) extends Serializable {
     }
   ).reduce(numberMonoid.plus)
 
-  def getFields(): Set[String] = {
-    getTextFields() ++ getNumericFields()
+  def getFields: Set[String] = {
+    getTextFields ++ getNumericFields
   }
 
-  def getTextFields(): Set[String] = {
+  def getTextFields: Set[String] = {
     stringFields.keySet
   }
 
-  def getNumericFields(): Set[String] = {
+  def getNumericFields: Set[String] = {
     numberFields.keySet
   }
 
@@ -70,15 +70,15 @@ class SparkDoc(doc: Document) extends Serializable {
     numberFields.get(fieldName)
   }
 
-  override def toString(): String = {
+  override def toString: String = {
     val builder = new StringBuilder
     if ( numberFields.nonEmpty) builder.append("Numeric fields:")
     numberFields.foreach { case (name, values) =>
-      builder.append(s"${name}:[${values.mkString(",")}]")
+      builder.append(s"$name:[${values.mkString(",")}]")
     }
     if (stringFields.nonEmpty) builder.append("Text fields:")
     stringFields.foreach { case (name, values) =>
-      builder.append(s"${name}:[${values.mkString(",")}]")
+      builder.append(s"$name:[${values.mkString(",")}]")
     }
     builder.result()
   }

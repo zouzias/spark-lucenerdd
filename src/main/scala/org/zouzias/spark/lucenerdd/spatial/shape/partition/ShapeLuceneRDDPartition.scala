@@ -97,7 +97,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
 
   private def docLocation(scoreDoc: ScoreDoc): Option[Shape] = {
     val shapeString = indexReader.document(scoreDoc.doc)
-                  .getField(strategy.getFieldName())
+                  .getField(strategy.getFieldName)
                   .stringValue()
 
    try{

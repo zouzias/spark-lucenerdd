@@ -169,9 +169,9 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
-        val results = partition.query(qr, topK).map(SparkDocTopKMonoid.build(_))
+        val results = partition.query(qr, topK).map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          index.toLong -> results.reduce(SparkDocTopKMonoid.plus(_, _))
+          index.toLong -> results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y))
         }
         else {
           index.toLong -> SparkDocTopKMonoid.zero

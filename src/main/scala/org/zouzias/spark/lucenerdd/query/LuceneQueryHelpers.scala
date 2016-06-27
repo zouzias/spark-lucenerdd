@@ -28,8 +28,9 @@ import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.collection.JavaConverters._
+
 /**
- * Helpers for lucene queries
+ * Helper methods for Lucene queries, i.e., term, fuzzy, prefix query
  */
 object LuceneQueryHelpers extends Serializable {
 
@@ -38,7 +39,8 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Return all field names
-   * @param indexSearcher
+   *
+   * @param indexSearcher Index searcher
    * @return
    */
   def fields(indexSearcher: IndexSearcher): Set[String] = {
@@ -52,10 +54,11 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Lucene query parser
-   * @param indexSearcher
-   * @param searchString
-   * @param topK
-   * @param analyzer
+   *
+   * @param indexSearcher Index searcher
+   * @param searchString Lucene search query string
+   * @param topK Number of returned documents
+   * @param analyzer Lucene Analyzer
    * @return
    */
   def searchParser(indexSearcher: IndexSearcher,
@@ -69,11 +72,12 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
-   * @param indexSearcher
+   *
+   * @param indexSearcher Index searcher
    * @param taxoReader taxonomy reader used for faceted search
-   * @param searchString
-   * @param facetField
-   * @param topK
+   * @param searchString Lucene search query string
+   * @param facetField Facet field name
+   * @param topK Number of returned documents
    * @return
    */
   def facetedTextSearch(indexSearcher: IndexSearcher,
@@ -100,7 +104,8 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Returns total number of lucene documents
-   * @param indexSearcher
+   *
+   * @param indexSearcher Index searcher
    * @return
    */
   def totalDocs(indexSearcher: IndexSearcher): Long = {
@@ -109,33 +114,36 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Search top-k documents
-   * @param indexSearcher
-   * @param query
-   * @param k
+   *
+   * @param indexSearcher Index searcher
+   * @param query Lucene Query object
+   * @param topK Number of returned documents
    * @return
    */
-  def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[Document] = {
-    val topDocs = indexSearcher.search(query, k)
+  def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, topK: Int): Seq[Document] = {
+    val topDocs = indexSearcher.search(query, topK)
     topDocs.scoreDocs.map(_.doc).map(x => indexSearcher.doc(x))
   }
 
   /**
    * Search top-k documents given a query
-   * @param indexSearcher
-   * @param query
-   * @param k
+   *
+   * @param indexSearcher Index searcher
+   * @param query Lucene Query object
+   * @param topK Number of returned documents
    * @return
    */
-  def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[SparkScoreDoc] = {
-   indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  def searchTopK(indexSearcher: IndexSearcher, query: Query, topK: Int): Seq[SparkScoreDoc] = {
+   indexSearcher.search(query, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   /**
    * Term query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param topK Number of returned documents
    * @return
    */
   def termQuery(indexSearcher: IndexSearcher,
@@ -149,10 +157,11 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Prefix query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param topK Number of returned documents
    * @return
    */
   def prefixQuery(indexSearcher: IndexSearcher,
@@ -166,11 +175,12 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Fuzzy query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param maxEdits
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param maxEdits Edit distance
+   * @param topK Number of returned documents
    * @return
    */
   def fuzzyQuery(indexSearcher: IndexSearcher,
@@ -185,10 +195,11 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Phrase query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param topK Number of returned documents
    * @return
    */
   def phraseQuery(indexSearcher: IndexSearcher,
@@ -203,9 +214,10 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Multi term search
-   * @param indexSearcher
-   * @param docMap
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param docMap Query as map
+   * @param topK Number of returned documents
    * @return
    */
   def multiTermQuery(indexSearcher: IndexSearcher,

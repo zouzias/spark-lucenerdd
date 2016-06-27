@@ -23,7 +23,9 @@ import org.apache.lucene.store.RAMDirectory
  * In memory lucene index
  */
 trait IndexStorable {
+
   protected lazy val IndexDir = new RAMDirectory()
+
   protected lazy val TaxonomyDir = new RAMDirectory()
 
   protected lazy val FacetsConfig = new FacetsConfig()

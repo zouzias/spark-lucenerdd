@@ -91,9 +91,10 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = partition.knnSearch(queryPoint, topK).reverse.map(SparkDocTopKMonoid.build(_))
+        val results = partition.knnSearch(queryPoint, topK)
+          .reverse.map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          index.toLong -> results.reduce(SparkDocTopKMonoid.plus(_, _))
+          index.toLong -> results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y))
         }
         else {
           index.toLong -> SparkDocTopKMonoid.zero

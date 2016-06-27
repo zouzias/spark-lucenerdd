@@ -66,6 +66,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
 
   /**
    * Spatial search with point
+   *
    * @param point
    * @param k
    * @param operationName
@@ -88,6 +89,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
 
   /**
    * Bounding box search with lower left and upper right corners
+   *
    * @param lowerLeft
    * @param upperRight
    * @param k
@@ -100,7 +102,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
   /**
    * Restricts the entries to those satisfying a predicate
    *
-   * @param pred
+   * @param pred Predicate
    * @return
    */
   def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V]

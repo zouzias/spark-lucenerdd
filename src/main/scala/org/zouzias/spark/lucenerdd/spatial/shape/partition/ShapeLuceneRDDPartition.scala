@@ -119,7 +119,8 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
-  override def knnSearch(point: (Double, Double), k: Int): List[SparkScoreDoc] = {
+  override def knnSearch(point: (Double, Double), k: Int, searchString: String)
+  : List[SparkScoreDoc] = {
 
     // Match all, order by distance ascending
     val pt = ctx.makePoint(point._1, point._2)
@@ -130,7 +131,8 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     // false = ascending dist
     val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
 
-    val docs = indexSearcher.search(LuceneQueryHelpers.MatchAllDocs, k, distSort)
+    val query = LuceneQueryHelpers.parseQueryString(searchString)(Analyzer)
+    val docs = indexSearcher.search(query, k, distSort)
 
     // To get the distance, we could compute from stored values like earlier.
     // However in this example we sorted on it, and the distance will get
@@ -138,11 +140,14 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     // search results then that's not a big deal. Alternatively, try wrapping
     // the ValueSource with CachingDoubleValueSource then retrieve the value
     // from the ValueSource now. See LUCENE-4541 for an example.
-    docs.scoreDocs.flatMap { case scoreDoc => {
+    docs.scoreDocs.map { case scoreDoc => {
         val location = docLocation(scoreDoc)
-        location.map { case shape =>
+        location match {
+          case Some(shape) =>
           SparkScoreDoc(indexSearcher, scoreDoc,
             ctx.calcDistance(pt, shape.getCenter).toFloat)
+          case None =>
+            SparkScoreDoc(indexSearcher, scoreDoc, -1F)
         }
       }
     }.toList

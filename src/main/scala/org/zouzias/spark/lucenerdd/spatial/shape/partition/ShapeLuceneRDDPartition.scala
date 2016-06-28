@@ -140,11 +140,14 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     // search results then that's not a big deal. Alternatively, try wrapping
     // the ValueSource with CachingDoubleValueSource then retrieve the value
     // from the ValueSource now. See LUCENE-4541 for an example.
-    docs.scoreDocs.flatMap { case scoreDoc => {
+    docs.scoreDocs.map { case scoreDoc => {
         val location = docLocation(scoreDoc)
-        location.map { case shape =>
+        location match {
+          case Some(shape) =>
           SparkScoreDoc(indexSearcher, scoreDoc,
             ctx.calcDistance(pt, shape.getCenter).toFloat)
+          case None =>
+            SparkScoreDoc(indexSearcher, scoreDoc, -1F)
         }
       }
     }.toList

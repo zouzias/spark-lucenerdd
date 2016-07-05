@@ -32,7 +32,6 @@ object Person extends Serializable {
   }
 }
 
-
 class LuceneRDDCustomcaseClassImplicits extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
@@ -46,19 +45,17 @@ class LuceneRDDCustomcaseClassImplicits extends FlatSpec
 
   import Person._
 
-  def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
-
-  val people = (1 to 24).map(randomString(_))
+  val elem = Array("fear", "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) => Person(str, index, s"${str}@gmail.com")}
 
   "LuceneRDD(case class).count" should "return correct number of elements" in {
-    val rdd = sc.parallelize(people)
+    val rdd = sc.parallelize(elem)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should equal (people.size)
+    luceneRDD.count should equal (elem.size)
   }
 
   "LuceneRDD(case class).fields" should "return all fields" in {
-    val rdd = sc.parallelize(people)
+    val rdd = sc.parallelize(elem)
     luceneRDD = LuceneRDD(rdd)
 
     luceneRDD.fields().size should equal(3)
@@ -68,11 +65,10 @@ class LuceneRDDCustomcaseClassImplicits extends FlatSpec
   }
 
   "LuceneRDD(case class).termQuery" should "correctly search with TermQueries" in {
-    val rdd = sc.parallelize(people)
+    val rdd = sc.parallelize(elem)
     luceneRDD = LuceneRDD(rdd)
-    val results = luceneRDD.termQuery("name",
-      people(scala.util.Random.nextInt(people.size)).name)
-    results.size should equal (1)
-  }
 
+    val results = luceneRDD.termQuery("name", "water")
+    results.size shouldBe >= (1)
+  }
 }

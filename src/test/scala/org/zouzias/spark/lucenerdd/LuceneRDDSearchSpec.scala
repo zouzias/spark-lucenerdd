@@ -32,8 +32,7 @@ class LuceneRDDSearchSpec extends FlatSpec
 
   val First = "_1"
 
-  def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
-  val array = (1 to 24).map(randomString(_))
+  val array = List("fear", "death", " apologies", "romance", "tree", "fashion", "fascism")
 
   "LuceneRDD.query" should "use phrase query syntax" in {
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
@@ -71,24 +70,22 @@ class LuceneRDDSearchSpec extends FlatSpec
   }
 
   "LuceneRDD.fuzzyQuery" should "correctly search with FuzzyQuery" in {
-    val prefices = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
-    val rdd = sc.parallelize(prefices)
+    val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.fuzzyQuery(First, "aaaaa", 1).size should equal (4)
-    luceneRDD.fuzzyQuery(First, "qwert", 1).size should equal(1)
-    luceneRDD.fuzzyQuery(First, "werty", 1).size should equal (1)
+    luceneRDD.fuzzyQuery(First, "fear", 1).size should equal (1)
+    luceneRDD.fuzzyQuery(First, "fascsm", 1).size should equal(1)
+    luceneRDD.fuzzyQuery(First, "dath", 1).size should equal (1)
+    luceneRDD.fuzzyQuery(First, "tree", 1).size should equal (1)
   }
 
   "LuceneRDD.phraseQuery" should "correctly search with PhraseQuery" in {
-    val phrases = Array("hello world", "how are you", "my name is Tassos")
+    val phrases = Array("hello world", "the company name was", "highlight lucene")
     val rdd = sc.parallelize(phrases)
     luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.phraseQuery(First, "how are", 10).size should equal (1)
-    luceneRDD.phraseQuery(First, "name is", 10).size should equal (1)
+    luceneRDD.phraseQuery(First, "company name", 10).size should equal (1)
     luceneRDD.phraseQuery(First, "hello world", 10).size should equal (1)
-    luceneRDD.phraseQuery(First, "are", 10).size should equal(1)
-    luceneRDD.phraseQuery(First, "not", 10).size should equal (0)
+    luceneRDD.phraseQuery(First, "highlight lucene", 10).size should equal(1)
   }
 }

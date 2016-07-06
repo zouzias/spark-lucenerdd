@@ -31,9 +31,12 @@ matrix:
       env: TEST_SPARK_VERSION="1.6.1"
     - jdk: oraclejdk8
       scala: 2.11.8
-      env: TEST_SPARK_VERSION="1.6.1"
+      env: TEST_SPARK_VERSION="1.6.1" LUCENE_ANALYZER="en"
+    - jdk: oraclejdk8
+      scala: 2.11.8
+      env: TEST_SPARK_VERSION="1.6.1" LUCENE_ANALYZER="whitespace"
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean update coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION clean update coverage -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION assembly
 after_success: "sbt coverageReport coveralls"

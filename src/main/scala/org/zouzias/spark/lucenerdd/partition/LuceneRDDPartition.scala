@@ -113,7 +113,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def phraseQuery(fieldName: String, fieldText: String,
                            topK: Int): Iterable[SparkScoreDoc] = {
-    LuceneQueryHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)
+    LuceneQueryHelpers.phraseQuery(indexSearcher, fieldName, fieldText, topK)(Analyzer)
   }
 
   override def facetQuery(searchString: String,

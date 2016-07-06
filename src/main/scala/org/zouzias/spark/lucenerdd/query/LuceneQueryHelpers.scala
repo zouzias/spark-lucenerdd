@@ -16,7 +16,10 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
+import java.io.StringReader
+
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
 import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
@@ -28,6 +31,7 @@ import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 
 /**
  * Helper methods for Lucene queries, i.e., term, fuzzy, prefix query
@@ -37,6 +41,25 @@ object LuceneQueryHelpers extends Serializable {
   lazy val MatchAllDocs = new MatchAllDocsQuery()
   lazy val MatchAllDocsString = "*:*"
   private val QueryParserDefaultField = "text"
+
+  /**
+   * Extract list of terms for a given analyzer
+   * @param text Text to analyze
+   * @param analyzer Analyzer to utilize
+   * @return
+   */
+  private def analyzeTerms(text: String)(implicit analyzer: Analyzer): List[String] = {
+    val stream = analyzer.tokenStream(null, new StringReader(text))
+    val cattr = stream.addAttribute(classOf[CharTermAttribute])
+    stream.reset()
+    val buffer = ListBuffer.empty[String]
+    while (stream.incrementToken()) {
+      buffer.append(cattr.toString())
+    }
+    stream.end()
+    stream.close()
+    buffer.toList
+  }
 
   /**
    * Return all field names
@@ -218,10 +241,11 @@ object LuceneQueryHelpers extends Serializable {
   def phraseQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,
-                  topK: Int,
-                  phraseSeparator: String = " "): Seq[SparkScoreDoc] = {
+                  topK: Int)
+                 (implicit analyzer: Analyzer): Seq[SparkScoreDoc] = {
     val builder = new PhraseQuery.Builder()
-    fieldText.split(phraseSeparator).foreach( token => builder.add(new Term(fieldName, token)))
+    val terms = analyzeTerms(fieldText)
+    terms.foreach( token => builder.add(new Term(fieldName, token)))
     LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
   }
 

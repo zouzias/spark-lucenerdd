@@ -84,6 +84,8 @@ class LuceneQueryHelpersSpec extends FlatSpec
     val greece = "greece"
     val topDocs = LuceneQueryHelpers.termQuery(indexSearcher, "_1", greece, 100)
 
+    topDocs.size should equal(1)
+
     topDocs.exists(doc => doc.doc.textField("_1").forall(x =>
       x.toString().toLowerCase().contains(greece))) should equal(true)
   }

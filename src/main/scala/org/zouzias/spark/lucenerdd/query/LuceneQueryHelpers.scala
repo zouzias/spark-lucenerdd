@@ -44,6 +44,7 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Extract list of terms for a given analyzer
+   *
    * @param text Text to analyze
    * @param analyzer Analyzer to utilize
    * @return
@@ -86,6 +87,11 @@ object LuceneQueryHelpers extends Serializable {
   def parseQueryString(searchString: String)
                       (implicit analyzer: Analyzer): Query = {
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
+
+    // See http://goo.gl/L8sbrB
+    if (analyzer.getClass.getCanonicalName.toLowerCase().contains("whitespace")) {
+      queryParser.setLowercaseExpandedTerms(false)
+    }
     queryParser.parse(searchString)
   }
 

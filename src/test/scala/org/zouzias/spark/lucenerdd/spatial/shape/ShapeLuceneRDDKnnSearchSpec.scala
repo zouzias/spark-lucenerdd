@@ -48,6 +48,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val results = pointLuceneRDD.knnSearch(Bern._1, k, "*:*")
 
     results.size should equal(k)
+    results.size should be > 0
 
     // Closest is Bern and fartherst is Toronto
     docTextFieldEq(results.head.doc, "_1", Bern._2) should equal(true)
@@ -63,9 +64,10 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:mil*")
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Mil*")
 
     results.size should be <= k
+    results.size should be > 0
 
     // Closest is Bern and farthest is Toronto
     docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
@@ -80,9 +82,10 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:milan~1")
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Miln~1")
 
     results.size should be <= k
+    results.size should be > 0
 
     // Closest is Bern and farthest is Toronto
     docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
@@ -100,6 +103,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Milan")
 
     results.size should be <= k
+    results.size should be > 0
 
     // Closest is Milan (due to filtering)
     docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)

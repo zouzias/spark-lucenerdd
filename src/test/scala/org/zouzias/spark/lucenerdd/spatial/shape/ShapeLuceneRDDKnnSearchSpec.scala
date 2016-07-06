@@ -58,26 +58,39 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     sortedDesc(revertedDists) should equal(true)
   }
 
-  /** THIS DOES NOT WORK, DUE TO THE WHITESPACE ANALYZER
-  "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (prefix)" in {
+  "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (prefix search)" in {
 
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:ber*")
-
-    results.foreach(println)
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:mil*")
 
     results.size should be <= k
 
-    // Closest is Bern and fartherst is Toronto
-    docTextFieldEq(results.head.doc, "_1", Bern._2) should equal(true)
+    // Closest is Bern and farthest is Toronto
+    docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
     val revertedDists = results.map(_.score).toList.reverse
     sortedDesc(revertedDists) should equal(true)
   }
-   */
+
+  "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (fuzzy search)" in {
+
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = ShapeLuceneRDD(rdd)
+
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:milan~1")
+
+    results.size should be <= k
+
+    // Closest is Bern and farthest is Toronto
+    docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
+
+    // Distances must be sorted
+    val revertedDists = results.map(_.score).toList.reverse
+    sortedDesc(revertedDists) should equal(true)
+  }
 
   "ShapeLuceneRDD.knnSearch" should "return k-nearest neighbors (term query)" in {
 

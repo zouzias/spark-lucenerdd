@@ -52,8 +52,7 @@ class LuceneRDDSearchSpec extends FlatSpec
   "LuceneRDD.termQuery" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    val results = luceneRDD.termQuery(First,
-      array(scala.util.Random.nextInt(array.size)))
+    val results = luceneRDD.termQuery(First, array(1))
     results.size should equal (1)
   }
 

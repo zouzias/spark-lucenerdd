@@ -24,6 +24,7 @@ import scala.reflect.ClassTag
 
 /**
  * LuceneRDD partition.
+ *
  * @tparam T the type associated with each entry in the set.
  */
 private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializable {

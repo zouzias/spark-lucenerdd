@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
-import com.spatial4j.core.shape.{Point, Shape}
+import com.spatial4j.core.shape.Shape
 import com.twitter.algebird.TopK
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
@@ -25,11 +25,18 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
 
 import scala.reflect.ClassTag
 
-
+/**
+ * ShapeLuceneRDD for geospatial and full-text search queries
+ *
+ * @param partitionsRDD
+ * @tparam K Type containing the geospatial information (must be implicitly convertet to [[Shape]])
+ * @tparam V Type containing remaining information (must be implicitly converted to [[Document]])
+ */
 class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   (private val partitionsRDD: RDD[AbstractShapeLuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
@@ -66,8 +73,8 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   private def docResultsAggregator
   (f: AbstractShapeLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
   : List[SparkScoreDoc] = {
-    val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
-    parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
+    val parts = partitionsRDD.map(f(_)).map(x => SparkDocTopKMonoid.build(x))
+    parts.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y)).items
   }
 
   /**
@@ -91,9 +98,10 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = partition.knnSearch(queryPoint, topK).reverse.map(SparkDocTopKMonoid.build(_))
+        val results = partition.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString)
+          .reverse.map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          index.toLong -> results.reduce(SparkDocTopKMonoid.plus(_, _))
+          index.toLong -> results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y))
         }
         else {
           index.toLong -> SparkDocTopKMonoid.zero
@@ -109,25 +117,15 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   /**
    * K-nearest neighbors search
    *
-   * @param queryPoint query point
+   * @param queryPoint query point (X, Y)
    * @param k number of nearest neighbor points to return
+   * @param searchString Lucene query string
    * @return
    */
-  def knnSearch(queryPoint: Point, k: Int): Iterable[SparkScoreDoc] = {
-    val x = queryPoint.getX
-    val y = queryPoint.getY
-    knnSearch((x, y), k)
-  }
-
-  /**
-   * K-nearest neighbors search
-   *
-   * @param queryPoint query point
-   * @param k number of nearest neighbor points to return
-   * @return
-   */
-  def knnSearch(queryPoint: (Double, Double), k: Int): Iterable[SparkScoreDoc] = {
-    docResultsAggregator(_.knnSearch(queryPoint, k).reverse).reverse.take(k)
+  def knnSearch(queryPoint: (Double, Double), k: Int,
+                searchString: String = LuceneQueryHelpers.MatchAllDocsString)
+  : Iterable[SparkScoreDoc] = {
+    docResultsAggregator(_.knnSearch(queryPoint, k, searchString).reverse).reverse.take(k)
   }
 
   /**

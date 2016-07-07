@@ -16,7 +16,10 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
+import java.io.StringReader
+
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
 import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
@@ -28,17 +31,41 @@ import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
+
 /**
- * Helpers for lucene queries
+ * Helper methods for Lucene queries, i.e., term, fuzzy, prefix query
  */
 object LuceneQueryHelpers extends Serializable {
 
   lazy val MatchAllDocs = new MatchAllDocsQuery()
+  lazy val MatchAllDocsString = "*:*"
   private val QueryParserDefaultField = "text"
 
   /**
+   * Extract list of terms for a given analyzer
+   *
+   * @param text Text to analyze
+   * @param analyzer Analyzer to utilize
+   * @return
+   */
+  private def analyzeTerms(text: String)(implicit analyzer: Analyzer): List[String] = {
+    val stream = analyzer.tokenStream(null, new StringReader(text))
+    val cattr = stream.addAttribute(classOf[CharTermAttribute])
+    stream.reset()
+    val buffer = ListBuffer.empty[String]
+    while (stream.incrementToken()) {
+      buffer.append(cattr.toString())
+    }
+    stream.end()
+    stream.close()
+    buffer.toList
+  }
+
+  /**
    * Return all field names
-   * @param indexSearcher
+   *
+   * @param indexSearcher Index searcher
    * @return
    */
   def fields(indexSearcher: IndexSearcher): Set[String] = {
@@ -51,29 +78,48 @@ object LuceneQueryHelpers extends Serializable {
   }
 
   /**
-   * Lucene query parser
-   * @param indexSearcher
+   * Parse a Query string
+   *
    * @param searchString
-   * @param topK
    * @param analyzer
+   * @return
+   */
+  def parseQueryString(searchString: String)
+                      (implicit analyzer: Analyzer): Query = {
+    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
+
+    // See http://goo.gl/L8sbrB
+    if (analyzer.getClass.getCanonicalName.toLowerCase().contains("whitespace")) {
+      queryParser.setLowercaseExpandedTerms(false)
+    }
+    queryParser.parse(searchString)
+  }
+
+  /**
+   * Lucene query parser
+   *
+   * @param indexSearcher Index searcher
+   * @param searchString Lucene search query string
+   * @param topK Number of returned documents
+   * @param analyzer Lucene Analyzer
    * @return
    */
   def searchParser(indexSearcher: IndexSearcher,
                    searchString: String,
                    topK: Int)(implicit analyzer: Analyzer)
   : Seq[SparkScoreDoc] = {
-    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
-    val q: Query = queryParser.parse(searchString)
+    val q = parseQueryString(searchString)(analyzer)
     indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
-   * @param indexSearcher
+   *
+   * @param indexSearcher Index searcher
    * @param taxoReader taxonomy reader used for faceted search
-   * @param searchString
-   * @param facetField
-   * @param topK
+   * @param searchString Lucene search query string
+   * @param facetField Facet field name
+   * @param topK Number of returned documents
    * @return
    */
   def facetedTextSearch(indexSearcher: IndexSearcher,
@@ -100,7 +146,8 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Returns total number of lucene documents
-   * @param indexSearcher
+   *
+   * @param indexSearcher Index searcher
    * @return
    */
   def totalDocs(indexSearcher: IndexSearcher): Long = {
@@ -109,33 +156,36 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Search top-k documents
-   * @param indexSearcher
-   * @param query
-   * @param k
+   *
+   * @param indexSearcher Index searcher
+   * @param query Lucene Query object
+   * @param topK Number of returned documents
    * @return
    */
-  def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[Document] = {
-    val topDocs = indexSearcher.search(query, k)
+  def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, topK: Int): Seq[Document] = {
+    val topDocs = indexSearcher.search(query, topK)
     topDocs.scoreDocs.map(_.doc).map(x => indexSearcher.doc(x))
   }
 
   /**
    * Search top-k documents given a query
-   * @param indexSearcher
-   * @param query
-   * @param k
+   *
+   * @param indexSearcher Index searcher
+   * @param query Lucene Query object
+   * @param topK Number of returned documents
    * @return
    */
-  def searchTopK(indexSearcher: IndexSearcher, query: Query, k: Int): Seq[SparkScoreDoc] = {
-   indexSearcher.search(query, k).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  def searchTopK(indexSearcher: IndexSearcher, query: Query, topK: Int): Seq[SparkScoreDoc] = {
+   indexSearcher.search(query, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   /**
    * Term query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param topK Number of returned documents
    * @return
    */
   def termQuery(indexSearcher: IndexSearcher,
@@ -149,10 +199,11 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Prefix query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param topK Number of returned documents
    * @return
    */
   def prefixQuery(indexSearcher: IndexSearcher,
@@ -166,11 +217,12 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Fuzzy query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param maxEdits
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param maxEdits Edit distance
+   * @param topK Number of returned documents
    * @return
    */
   def fuzzyQuery(indexSearcher: IndexSearcher,
@@ -185,27 +237,30 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
    * Phrase query
-   * @param indexSearcher
-   * @param fieldName
-   * @param fieldText
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param topK Number of returned documents
    * @return
    */
   def phraseQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,
-                  topK: Int,
-                  phraseSeparator: String = " "): Seq[SparkScoreDoc] = {
+                  topK: Int)
+                 (implicit analyzer: Analyzer): Seq[SparkScoreDoc] = {
     val builder = new PhraseQuery.Builder()
-    fieldText.split(phraseSeparator).foreach( token => builder.add(new Term(fieldName, token)))
+    val terms = analyzeTerms(fieldText)
+    terms.foreach( token => builder.add(new Term(fieldName, token)))
     LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
   }
 
   /**
    * Multi term search
-   * @param indexSearcher
-   * @param docMap
-   * @param topK
+   *
+   * @param indexSearcher Index searcher
+   * @param docMap Query as map
+   * @param topK Number of returned documents
    * @return
    */
   def multiTermQuery(indexSearcher: IndexSearcher,

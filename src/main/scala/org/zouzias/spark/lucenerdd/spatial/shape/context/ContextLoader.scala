@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial
+package org.zouzias.spark.lucenerdd.spatial.shape.context
 
 import java.io.{StringReader, StringWriter}
 
@@ -26,8 +26,9 @@ trait ContextLoader extends ShapeLuceneRDDConfigurable{
 
   protected val LocationDefaultField = getLocationFieldName
 
-  protected lazy val shapeReader = ctx.getFormats().getReader(getShapeFormat)
-  protected lazy val shapeWriter = ctx.getFormats().getWriter(getShapeFormat)
+  protected lazy val shapeReader = ctx.getFormats.getReader(getShapeFormat)
+
+  protected lazy val shapeWriter = ctx.getFormats.getWriter(getShapeFormat)
 
   protected def shapeToString(shape: Shape): String = {
     val writer = new StringWriter()

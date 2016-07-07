@@ -16,17 +16,15 @@
  */
 package org.zouzias.spark.lucenerdd.models
 
-import org.apache.lucene.document.Document
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
 
-import scala.collection.JavaConverters._
-
 /**
- * A serialized scored lucene document
- * @param score
- * @param docId
- * @param shardIndex
- * @param doc
+ * A scored [[SparkDoc]]
+ *
+ * @param score Score of document
+ * @param docId Document id
+ * @param shardIndex Shard index
+ * @param doc Serialized Lucene document
  */
 case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: SparkDoc)
 
@@ -49,12 +47,6 @@ object SparkScoreDoc extends Serializable {
     override def compare(x: SparkScoreDoc, y: SparkScoreDoc): Int = {
       if ( x.score > y.score) -1 else if (x.score == y.score) 0 else 1
     }
-  }
-
-  private def convert(doc: Document): Map[String, String] = {
-    doc.getFields.asScala.map( field =>
-      field.name() -> field.stringValue()
-    ).toMap[String, String]
   }
 }
 

@@ -38,9 +38,11 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    *
    * @param point query point
    * @param k number of neighbors to return
+   * @param searchString Lucene Query string
    * @return
    */
-  def knnSearch(point: (Double, Double), k: Int): List[SparkScoreDoc]
+  def knnSearch(point: (Double, Double), k: Int,
+                searchString: String): List[SparkScoreDoc]
 
   /**
    * Search for points within a circle
@@ -50,7 +52,8 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param k number of points to return
    * @return
    */
-  def circleSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  def circleSearch(center: (Double, Double),
+                   radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc]
 
   /**
@@ -66,6 +69,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
 
   /**
    * Spatial search with point
+   *
    * @param point
    * @param k
    * @param operationName
@@ -83,24 +87,27 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param operationName
    * @return
    */
-  def bboxSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  def bboxSearch(center: (Double, Double),
+                 radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc]
 
   /**
    * Bounding box search with lower left and upper right corners
+   *
    * @param lowerLeft
    * @param upperRight
    * @param k
    * @param operationName
    * @return
    */
-  def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
+  def bboxSearch(lowerLeft: (Double, Double),
+                 upperRight: (Double, Double), k: Int,
                  operationName: String) : Iterable[SparkScoreDoc]
 
   /**
    * Restricts the entries to those satisfying a predicate
    *
-   * @param pred
+   * @param pred Predicate
    * @return
    */
   def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V]

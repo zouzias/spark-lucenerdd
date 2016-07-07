@@ -14,21 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.strategies
+package org.zouzias.spark.lucenerdd.spatial.shape.grids
 
-import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy
-import org.zouzias.spark.lucenerdd.spatial.grids.GridLoader
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree
+import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
-trait SpatialStrategy extends GridLoader {
 
-  /**
-   * The Lucene spatial {@link SpatialStrategy} encapsulates an approach to
-   * indexing and searching shapes, and providing distance values for them.
-   * It's a simple API to unify different approaches. You might use more than
-   * one strategy for a shape as each strategy has its strengths and weaknesses.
-   * <p />
-   * Note that these are initialized with a field name.
-   */
-  protected val strategy = new RecursivePrefixTreeStrategy(grid,
-    LocationDefaultField)
+trait GridLoader extends ContextLoader
+  with ShapeLuceneRDDConfigurable {
+
+  // results in sub-meter precision for geohash
+  protected val maxLevels = getGridMaxLevel
+
+  // This can also be constructed from SpatialPrefixTreeFactory
+  protected val grid = new GeohashPrefixTree(ctx, maxLevels)
 }

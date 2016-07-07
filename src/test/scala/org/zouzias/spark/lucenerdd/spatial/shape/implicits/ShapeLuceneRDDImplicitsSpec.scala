@@ -14,15 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.implicits
+package org.zouzias.spark.lucenerdd.spatial.shape.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.spatial.ContextLoader
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape._
+import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
 class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   with Matchers

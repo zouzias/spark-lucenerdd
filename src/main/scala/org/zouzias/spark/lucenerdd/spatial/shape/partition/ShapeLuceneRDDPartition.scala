@@ -25,8 +25,8 @@ import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
-import org.zouzias.spark.lucenerdd.spatial.grids.GridLoader
-import org.zouzias.spark.lucenerdd.spatial.strategies.SpatialStrategy
+import org.zouzias.spark.lucenerdd.spatial.shape.grids.GridLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._

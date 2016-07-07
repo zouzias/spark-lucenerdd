@@ -22,7 +22,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import com.spatial4j.core.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.spatial.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec

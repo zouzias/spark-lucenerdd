@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
-import com.spatial4j.core.shape.{Point, Shape}
+import com.spatial4j.core.shape.Shape
 import com.twitter.algebird.TopK
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
@@ -30,7 +30,13 @@ import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneR
 
 import scala.reflect.ClassTag
 
-
+/**
+ * ShapeLuceneRDD for geospatial and full-text search queries
+ *
+ * @param partitionsRDD
+ * @tparam K Type containing the geospatial information (must be implicitly convertet to [[Shape]])
+ * @tparam V Type containing remaining information (must be implicitly converted to [[Document]])
+ */
 class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   (private val partitionsRDD: RDD[AbstractShapeLuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
@@ -111,29 +117,13 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   /**
    * K-nearest neighbors search
    *
-   * @param queryPoint query point
-   * @param k number of nearest neighbor points to return
-   * @param searchString Lucene query string
-   * @return
-   */
-  def knnSearch(queryPoint: Point, k: Int,
-                searchString: String = LuceneQueryHelpers.MatchAllDocsString)
-  : Iterable[SparkScoreDoc] = {
-    val x = queryPoint.getX
-    val y = queryPoint.getY
-    knnSearch((x, y), k, searchString)
-  }
-
-  /**
-   * K-nearest neighbors search
-   *
-   * @param queryPoint query point
+   * @param queryPoint query point (X, Y)
    * @param k number of nearest neighbor points to return
    * @param searchString Lucene query string
    * @return
    */
   def knnSearch(queryPoint: (Double, Double), k: Int,
-                searchString: String)
+                searchString: String = LuceneQueryHelpers.MatchAllDocsString)
   : Iterable[SparkScoreDoc] = {
     docResultsAggregator(_.knnSearch(queryPoint, k, searchString).reverse).reverse.take(k)
   }

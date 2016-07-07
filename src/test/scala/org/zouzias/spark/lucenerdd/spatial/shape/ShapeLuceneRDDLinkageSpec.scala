@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.spatial.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 // Required for implicit Document conversion

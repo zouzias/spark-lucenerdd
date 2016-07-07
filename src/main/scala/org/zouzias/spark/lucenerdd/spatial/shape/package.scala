@@ -18,6 +18,7 @@ package org.zouzias.spark.lucenerdd.spatial
 
 import com.spatial4j.core.shape.Shape
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
+import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
 
 package object shape extends ContextLoader{

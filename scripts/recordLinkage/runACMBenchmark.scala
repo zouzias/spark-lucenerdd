@@ -29,7 +29,7 @@ val acm = acmDF.map( row => (row.get(0).toString, row.getString(1), row.getStrin
 val dblp2 = LuceneRDD(dblp2DF.map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3), row.get(4).toString)))
 
 
-
+// Link is the author tokens or title tokens match. Compile all tokens by an OR clause
 val linker: (String, String, String, String, String) => String = {
   case (_, title, authors, _, year) => {
     val titleTokens = title.split(" ").map(_.replaceAll("[^a-zA-Z0-9]", "")).filter(_.length > 3).mkString(" OR ")

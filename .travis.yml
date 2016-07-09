@@ -25,16 +25,16 @@ matrix:
     # Spark 1.6.1
     - jdk: openjdk7
       scala: 2.10.6
-      env: TEST_SPARK_VERSION="1.6.1" LUCENE_ANALYZER="en"
+      env: TEST_SPARK_VERSION="1.6.2" LUCENE_ANALYZER="en"
     - jdk: openjdk7
       scala: 2.11.8
-      env: TEST_SPARK_VERSION="1.6.1" LUCENE_ANALYZER="en"
+      env: TEST_SPARK_VERSION="1.6.2" LUCENE_ANALYZER="en"
     - jdk: oraclejdk8
       scala: 2.11.8
-      env: TEST_SPARK_VERSION="1.6.1" LUCENE_ANALYZER="en"
+      env: TEST_SPARK_VERSION="1.6.2" LUCENE_ANALYZER="en"
     - jdk: oraclejdk8
       scala: 2.11.8
-      env: TEST_SPARK_VERSION="1.6.1" LUCENE_ANALYZER="whitespace"
+      env: TEST_SPARK_VERSION="1.6.2" LUCENE_ANALYZER="whitespace"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update coverage -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle

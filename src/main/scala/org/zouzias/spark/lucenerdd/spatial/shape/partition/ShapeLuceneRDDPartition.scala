@@ -51,7 +51,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
         doc.add(field)
       }
 
-      doc.add(new StoredField(strategy.getFieldName(), shapeToString(shape)))
+      doc.add(new StoredField(strategy.getFieldName, shapeToString(shape)))
     }
 
     doc
@@ -87,11 +87,6 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   }
 
   override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
-
-  override def close(): Unit = {
-    indexReader.close()
-    taxoReader.close()
-  }
 
   override def iterator: Iterator[(K, V)] = iterOriginal
 

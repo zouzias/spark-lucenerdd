@@ -24,7 +24,7 @@ import org.apache.lucene.store._
 import org.zouzias.spark.lucenerdd.config.Configurable
 
 /**
- * In memory lucene index
+ * Storage of a Lucene index Directory
  */
 trait IndexStorable extends Configurable
   with AutoCloseable {
@@ -33,18 +33,21 @@ trait IndexStorable extends Configurable
 
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
-
   private val indexDirName =
     s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
+
   private val indexDir = Paths.get(indexDirName)
 
   private val taxonomyDirName =
     s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
+
   private val taxonomyDir = Paths.get(taxonomyDirName)
 
-  private val lockFactory = new SingleInstanceLockFactory
-
-
+  /**
+   *
+   * @param directoryPath
+   * @return
+   */
   protected def storageMode(directoryPath: Path): Directory = {
     if (config.hasPath(IndexStoreKey)) {
       val storageMode = config.getString(IndexStoreKey)
@@ -60,14 +63,9 @@ trait IndexStorable extends Configurable
     }
   }
 
-  /**
-   * There is an issue that multiple workers are using the same directory.
-   */
-
   protected val IndexDir = storageMode(indexDir)
 
   protected val TaxonomyDir = storageMode(taxonomyDir)
-
 
   /**
    * Deletes Directory

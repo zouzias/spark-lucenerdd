@@ -35,6 +35,7 @@ trait IndexWithTaxonomyWriter extends IndexStorable
 
   protected def closeAllWriters(): Unit = {
     indexWriter.commit()
+    taxoWriter.commit()
     taxoWriter.close()
     indexWriter.close()
   }

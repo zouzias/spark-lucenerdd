@@ -34,10 +34,12 @@ trait IndexStorable extends Configurable
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
 
-  private val indexDirName = s"indexDirectory-${System.currentTimeMillis()}"
+  private val indexDirName =
+    s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
   private val indexDir = Paths.get(indexDirName)
 
-  private val taxonomyDirName = s"taxonomyDirectory-${System.currentTimeMillis()}"
+  private val taxonomyDirName =
+    s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
   private val taxonomyDir = Paths.get(taxonomyDirName)
 
   private val lockFactory = new SingleInstanceLockFactory
@@ -48,7 +50,8 @@ trait IndexStorable extends Configurable
       val storageMode = config.getString(IndexStoreKey)
 
       storageMode match {
-        case "disk" => new MMapDirectory(directoryPath, lockFactory)
+          // TODO: FIX: We create a single instance for each directory. Better lock handling
+        case "disk" => new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
         case _ => new RAMDirectory()
       }
     }
@@ -66,8 +69,25 @@ trait IndexStorable extends Configurable
   protected val TaxonomyDir = storageMode(taxonomyDir)
 
 
+  /**
+   * Deletes Directory
+   * @param dirName Directory name
+   * @return
+   */
+  def deleteLuceneDirectory(dirName: String): Boolean = {
+    try {
+      val f = new File(dirName)
+      f.delete()
+      true
+    } catch {
+      case e: Exception => false
+    }
+  }
+
   override def close(): Unit = {
     IndexDir.close()
+    deleteLuceneDirectory(indexDirName)
     TaxonomyDir.close()
+    deleteLuceneDirectory(taxonomyDirName)
   }
 }

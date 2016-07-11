@@ -56,11 +56,6 @@ private[lucenerdd] class LuceneRDDPartition[T]
     LuceneQueryHelpers.fields(indexSearcher)
   }
 
-  override def close(): Unit = {
-    indexReader.close()
-    taxoReader.close()
-  }
-
   override def size: Long = {
     LuceneQueryHelpers.totalDocs(indexSearcher)
   }

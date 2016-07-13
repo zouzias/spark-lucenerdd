@@ -16,8 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.store
 
-import java.io.File
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path}
 
 import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store._
@@ -33,15 +32,21 @@ trait IndexStorable extends Configurable
 
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
+  private val tmpJavaDir = System.getProperty("java.io.tmpdir")
+
+  // scalastyle:off println
+  // println(tmpJavaDir)
+  // scalastyle:on println
+
   private val indexDirName =
     s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
 
-  private val indexDir = Paths.get(indexDirName)
+  private val indexDir = Files.createTempDirectory(indexDirName)
 
   private val taxonomyDirName =
     s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
 
-  private val taxonomyDir = Paths.get(taxonomyDirName)
+  private val taxonomyDir = Files.createTempDirectory(taxonomyDirName)
 
   /**
    *
@@ -54,7 +59,10 @@ trait IndexStorable extends Configurable
 
       storageMode match {
           // TODO: FIX: We create a single instance for each directory. Better lock handling
-        case "disk" => new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
+        case "disk" => {
+          directoryPath.toFile.deleteOnExit() // Delete on exit
+          new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
+        }
         case _ => new RAMDirectory()
       }
     }
@@ -67,25 +75,8 @@ trait IndexStorable extends Configurable
 
   protected val TaxonomyDir = storageMode(taxonomyDir)
 
-  /**
-   * Deletes Directory
-   * @param dirName Directory name
-   * @return
-   */
-  def deleteLuceneDirectory(dirName: String): Boolean = {
-    try {
-      val f = new File(dirName)
-      f.delete()
-      true
-    } catch {
-      case e: Exception => false
-    }
-  }
-
   override def close(): Unit = {
     IndexDir.close()
-    deleteLuceneDirectory(indexDirName)
     TaxonomyDir.close()
-    deleteLuceneDirectory(taxonomyDirName)
   }
 }

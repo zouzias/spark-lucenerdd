@@ -27,7 +27,8 @@ import scala.reflect.ClassTag
  *
  * @tparam T the type associated with each entry in the set.
  */
-private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializable {
+private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializable
+  with AutoCloseable {
 
   protected implicit def kTag: ClassTag[T]
 
@@ -36,8 +37,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def iterator: Iterator[T]
 
   def isDefined(key: T): Boolean
-
-  def close(): Unit
 
   def fields(): Set[String]
 

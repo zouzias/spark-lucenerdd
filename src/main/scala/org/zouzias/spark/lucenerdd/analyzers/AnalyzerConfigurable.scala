@@ -55,7 +55,7 @@ import org.zouzias.spark.lucenerdd.config.Configurable
  */
 trait AnalyzerConfigurable extends Configurable {
 
-  val AnalyzerConfigKey = "lucenerdd.analyzer.name"
+  private val AnalyzerConfigKey = "lucenerdd.analyzer.name"
 
   protected val Analyzer: Analyzer = {
     if (config.hasPath(AnalyzerConfigKey)) {

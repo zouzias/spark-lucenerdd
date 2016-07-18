@@ -22,16 +22,6 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 case class Person(name: String, age: Int, email: String)
 
-object Person extends Serializable {
-  implicit def personToDocument(person: Person): Document = {
-    val doc = new Document
-    typeToDocument(doc, "name", person.name)
-    typeToDocument(doc, "age", person.age)
-    typeToDocument(doc, "email", person.email)
-    doc
-  }
-}
-
 class LuceneRDDCustomcaseClassImplicits extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
@@ -42,8 +32,6 @@ class LuceneRDDCustomcaseClassImplicits extends FlatSpec
   override def afterEach() {
     luceneRDD.close()
   }
-
-  import Person._
 
   val elem = Array("fear", "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) => Person(str, index, s"${str}@gmail.com")}

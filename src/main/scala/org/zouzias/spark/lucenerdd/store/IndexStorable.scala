@@ -20,23 +20,26 @@ import java.nio.file.{Files, Path}
 
 import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store._
+import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.config.Configurable
 
 /**
  * Storage of a Lucene index Directory
+ *
+ * Currently, the following storage methods are supported:
+ *
+ * 1) "lucenerdd.index.store.mode=disk" : MMapStorage on temp disk
+ * 2) Otherwise, memory storage using [[RAMDirectory]]
  */
 trait IndexStorable extends Configurable
-  with AutoCloseable {
+  with AutoCloseable
+  with Logging {
 
   protected lazy val FacetsConfig = new FacetsConfig()
 
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
   private val tmpJavaDir = System.getProperty("java.io.tmpdir")
-
-  // scalastyle:off println
-  // println(tmpJavaDir)
-  // scalastyle:on println
 
   private val indexDirName =
     s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
@@ -48,9 +51,13 @@ trait IndexStorable extends Configurable
 
   private val taxonomyDir = Files.createTempDirectory(taxonomyDirName)
 
+  protected val IndexDir = storageMode(indexDir)
+
+  protected val TaxonomyDir = storageMode(taxonomyDir)
+
   /**
-   *
-   * @param directoryPath
+   * Select Lucene index storage implementation based on config
+   * @param directoryPath Directory in disk to store index
    * @return
    */
   protected def storageMode(directoryPath: Path): Directory = {
@@ -58,22 +65,27 @@ trait IndexStorable extends Configurable
       val storageMode = config.getString(IndexStoreKey)
 
       storageMode match {
-          // TODO: FIX: We create a single instance for each directory. Better lock handling
+          // TODO: FIX: Currently there is a single lock instance for each directory.
+          // TODO: Implement better lock handling here
         case "disk" => {
+          logInfo(s"Config parameter ${IndexStoreKey} is set to 'disk'")
+          logInfo("Lucene index will be storage in disk")
+          logInfo(s"Index disk location ${tmpJavaDir}")
           directoryPath.toFile.deleteOnExit() // Delete on exit
           new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
         }
-        case _ => new RAMDirectory()
+        case ow =>
+          logInfo(s"Config parameter ${IndexStoreKey} is set to ${ow}")
+          logInfo("Lucene index will be storage in memory (default)")
+          new RAMDirectory()
       }
     }
     else {
+      logInfo(s"Config parameter ${IndexStoreKey} is not set")
+      logInfo("Lucene index will be storage in memory")
       new RAMDirectory()
     }
   }
-
-  protected val IndexDir = storageMode(indexDir)
-
-  protected val TaxonomyDir = storageMode(taxonomyDir)
 
   override def close(): Unit = {
     IndexDir.close()

@@ -28,6 +28,15 @@ For more information on using Lucene's query parser, see [Query Parser](https://
 For example, using the query parser you can perform prefix queries on the field named textField and prefix query 
 `spar` as `LuceneRDD.query("textField:spar*", 10)`.
 
+### Examples
+
+Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial, `lucene-spatial` and `jts` is required.
+
+* [Text Search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
+* [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
+* [Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)
+
+For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki)
 
 ## Linking
 
@@ -91,13 +100,3 @@ sbt compile assembly
 The above will create an assembly jar containing spark-lucenerdd functionality under `target/scala-*/spark-lucenerdd-assembly-*.jar`
 
 To make the spark-lucenerdd available, you have to assembly the project and add the JAR on you Spark shell or submit scripts.
-
-### Examples
-
-Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial, `lucene-spatial` and `jts` is required.
-
-* [Text Search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
-* [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
-* [Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)
-
-For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki)

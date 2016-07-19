@@ -30,13 +30,13 @@ For example, using the query parser you can perform prefix queries on the field 
 
 ### Examples
 
-Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial search, `lucene-spatial` and `jts` is required.
+Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial search, `lucene-spatial` and `jts` are required.
 
 * [Text Search](https://github.com/zouzias/spark-lucenerdd/wiki/Text-search-with-LuceneRDD)
 * [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search-using-ShapeLuceneRDD)
 * [Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)
 
-For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki)
+For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki).
 
 ## Linking
 

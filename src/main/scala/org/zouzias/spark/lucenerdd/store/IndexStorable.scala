@@ -71,7 +71,7 @@ trait IndexStorable extends Configurable
           logInfo(s"Config parameter ${IndexStoreKey} is set to 'disk'")
           logInfo("Lucene index will be storage in disk")
           logInfo(s"Index disk location ${tmpJavaDir}")
-          directoryPath.toFile.deleteOnExit() // Delete on exit
+          // directoryPath.toFile.deleteOnExit() // Delete on exit
           new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
         }
         case ow =>

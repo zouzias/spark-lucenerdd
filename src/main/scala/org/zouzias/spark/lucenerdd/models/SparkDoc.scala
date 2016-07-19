@@ -33,8 +33,8 @@ class SparkDoc(doc: Document) extends Serializable {
   private lazy val numberMonoid = new MapMonoid[String, List[Number]]()
 
   private val stringFields = doc.getFields().asScala.map( field =>
-    if (field.stringValue() != null) {
-      Map(field.name() -> List(field.stringValue()))
+    if (field.stringValue() != null && field.name().nonEmpty) {
+      Map((field.name(), List(field.stringValue())))
     }
     else {
       Map.empty[String, List[String]]
@@ -42,8 +42,8 @@ class SparkDoc(doc: Document) extends Serializable {
   ).reduce(stringMonoid.plus)
 
   private val numberFields = doc.getFields().asScala.map( field =>
-    if (field.numericValue() != null) {
-      Map(field.name() -> List(field.numericValue()))
+    if (field.numericValue() != null && field.name().nonEmpty) {
+      Map((field.name(), List(field.numericValue())))
     }
     else {
       Map.empty[String, List[Number]]

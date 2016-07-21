@@ -22,6 +22,7 @@ import org.apache.lucene.document.Document
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.lucene.search.Query
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.aggregate.{SparkFacetResultMonoid, SparkScoreDocAggregatable}
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
@@ -293,11 +294,12 @@ object LuceneRDD {
    * @tparam T Generic type
    * @return
    */
-  def apply[T <% Document : ClassTag](elems: RDD[T]): LuceneRDD[T] = {
+  def apply[T : ClassTag](elems: RDD[T])
+    (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
       iter => Iterator(LuceneRDDPartition(iter)),
       preservesPartitioning = true)
-    new LuceneRDD(partitions)
+    new LuceneRDD[T](partitions)
   }
 
   /**
@@ -308,8 +310,20 @@ object LuceneRDD {
    * @tparam T
    * @return
    */
-  def apply[T <% Document : ClassTag]
-  (elems: Iterable[T])(implicit sc: SparkContext): LuceneRDD[T] = {
+  def apply[T : ClassTag]
+  (elems: Iterable[T])(implicit sc: SparkContext, conv: T => Document)
+  : LuceneRDD[T] = {
     apply(sc.parallelize[T](elems.toSeq))
+  }
+
+  /**
+   * Instantiate a LuceneRDD with DataFrame
+   *
+   * @param dataFrame Spark DataFrame
+   * @return
+   */
+  def apply(dataFrame: DataFrame)
+  : LuceneRDD[Row] = {
+    apply(dataFrame.rdd)
   }
 }

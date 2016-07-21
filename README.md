@@ -6,7 +6,7 @@
 [![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.11:0.0.14.svg?color=yellowgreen)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.11/)
 
 
-Spark RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
+[Spark](http://spark.apache.org) RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
 The main abstraction is a special type of `RDD` called `LuceneRDD`, which instantiates a Lucene index on each Spark executor (a.k.a. worker).
 

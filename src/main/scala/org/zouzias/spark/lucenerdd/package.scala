@@ -18,6 +18,7 @@ package org.zouzias.spark
 
 import org.apache.lucene.document.{DoubleDocValuesField, _}
 import org.apache.lucene.facet.FacetField
+import org.apache.spark.sql.Row
 
 import scala.reflect.ClassTag
 
@@ -112,7 +113,7 @@ package object lucenerdd {
   }
 
   /**
-   * Implicit convertion for all product types, such as case classes and Tuples
+   * Implicit conversion for all product types, such as case classes and Tuples
    * @param s
    * @tparam T
    * @return
@@ -124,6 +125,23 @@ package object lucenerdd {
     val fieldValues = s.productIterator
     fieldValues.zip(fieldNames).foreach{ case (elem, fieldName) =>
       typeToDocument(doc, fieldName, elem)
+    }
+
+    doc
+  }
+
+  /**
+   * Implicit conversion for Spark Row: used for DataFrame
+   * @param row
+   * @return
+   */
+  implicit def sparkRowToDocument(row: Row): Document = {
+    val doc = new Document
+
+    val fieldNames = row.schema.fieldNames
+    fieldNames.foreach{ case fieldName =>
+      val index = row.fieldIndex(fieldName)
+      typeToDocument(doc, fieldName, row.get(index))
     }
 
     doc

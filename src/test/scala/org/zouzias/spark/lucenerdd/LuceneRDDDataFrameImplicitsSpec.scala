@@ -17,12 +17,13 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.apache.lucene.document.Document
+import org.apache.spark.sql.SQLContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
-case class Person(name: String, age: Int, email: String)
+case class FavoriteCaseClass(name: String, age: Int, myLong: Long, myFloat: Float, email: String)
 
-class LuceneRDDCustomcaseClassImplicits extends FlatSpec
+
+class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {
@@ -33,28 +34,42 @@ class LuceneRDDCustomcaseClassImplicits extends FlatSpec
     luceneRDD.close()
   }
 
+
   val elem = Array("fear", "death", "water", "fire", "house")
-    .zipWithIndex.map{ case (str, index) => Person(str, index, s"${str}@gmail.com")}
+    .zipWithIndex.map{ case (str, index) =>
+    FavoriteCaseClass(str, index, 10L, 12.3F, s"${str}@gmail.com")}
+
 
   "LuceneRDD(case class).count" should "return correct number of elements" in {
     val rdd = sc.parallelize(elem)
-    luceneRDD = LuceneRDD(rdd)
+    val sqlContext = new SQLContext(sc)
+    import sqlContext.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
     luceneRDD.count should equal (elem.size)
   }
 
   "LuceneRDD(case class).fields" should "return all fields" in {
     val rdd = sc.parallelize(elem)
-    luceneRDD = LuceneRDD(rdd)
+    val sqlContext = new SQLContext(sc)
+    import sqlContext.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
 
-    luceneRDD.fields().size should equal(3)
+    luceneRDD.fields().size should equal(5)
     luceneRDD.fields().contains("name") should equal(true)
     luceneRDD.fields().contains("age") should equal(true)
+    luceneRDD.fields().contains("myLong") should equal(true)
+    luceneRDD.fields().contains("myFloat") should equal(true)
     luceneRDD.fields().contains("email") should equal(true)
   }
 
   "LuceneRDD(case class).termQuery" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(elem)
-    luceneRDD = LuceneRDD(rdd)
+    val sqlContext = new SQLContext(sc)
+    import sqlContext.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
 
     val results = luceneRDD.termQuery("name", "water")
     results.size shouldBe >= (1)

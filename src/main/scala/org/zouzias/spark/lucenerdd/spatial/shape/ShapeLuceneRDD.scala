@@ -101,10 +101,10 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
         val results = partition.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString)
           .reverse.map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          index.toLong -> results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y))
+          (index.toLong, results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y)))
         }
         else {
-          index.toLong -> SparkDocTopKMonoid.zero
+          (index.toLong, SparkDocTopKMonoid.zero)
         }
       }
     }

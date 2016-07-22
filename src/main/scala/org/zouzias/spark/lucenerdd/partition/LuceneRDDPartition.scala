@@ -92,7 +92,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
   override def queries(searchStrings: Iterable[String],
                      topK: Int): Iterable[(String, Iterable[SparkScoreDoc])] = {
     searchStrings.map( searchString =>
-      searchString -> query(searchString, topK)
+      (searchString, query(searchString, topK))
     )
   }
 

@@ -147,7 +147,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   : (Iterable[SparkScoreDoc], Map[String, SparkFacetResult]) = {
     val aggrTopDocs = docResultsAggregator(_.query(searchString, topK))
     val aggrFacets = facetFields.map { case facetField =>
-      facetField -> facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum))
+      (facetField, facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum)))
     }.toMap[String, SparkFacetResult]
     (aggrTopDocs, aggrFacets)
   }
@@ -172,10 +172,10 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
       case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
         val results = partition.query(qr, topK).map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          index.toLong -> results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y))
+          (index.toLong, results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y)))
         }
         else {
-          index.toLong -> SparkDocTopKMonoid.zero
+          (index.toLong, SparkDocTopKMonoid.zero)
         }
       }
     }

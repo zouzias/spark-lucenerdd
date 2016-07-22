@@ -43,7 +43,7 @@ object SparkFacetResult extends Serializable {
     facetResultOpt match {
     case Some(fctResult) =>
       val map = fctResult.labelValues
-        .map(labelValue => labelValue.label -> labelValue.value.longValue())
+        .map(labelValue => (labelValue.label, labelValue.value.longValue()))
         .toMap[String, Long]
       SparkFacetResult(facetName, map)
       case _ => SparkFacetResult(facetName, Map.empty[String, Long])

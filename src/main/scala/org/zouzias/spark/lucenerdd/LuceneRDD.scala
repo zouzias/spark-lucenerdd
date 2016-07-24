@@ -54,10 +54,18 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
     this
   }
 
+  /** Set the name for the RDD; By default set to "LuceneRDD" */
   override def setName(_name: String): this.type = {
-    partitionsRDD.setName(_name)
+    if (partitionsRDD.name != null) {
+      partitionsRDD.setName(partitionsRDD.name + ", " + _name)
+    } else {
+      partitionsRDD.setName(_name)
+    }
     this
   }
+
+  setName("LuceneRDD")
+
 
   /**
    * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]

@@ -163,10 +163,23 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   /**
    * Entity linkage via Lucene query over all elements of an RDD.
    *
+   * @param other DataFrame to be linked
+   * @param searchQueryGen Function that generates a search query for each element of other
+   * @param topK
+   * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
+   */
+  def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
+  : RDD[(Row, List[SparkScoreDoc])] = {
+    link[Row](other.rdd, searchQueryGen, topK)
+  }
+
+  /**
+   * Entity linkage via Lucene query over all elements of an RDD.
+   *
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
    * @tparam T1 A type
-   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second
+   * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    *
    * Note: Currently the query strings of the other RDD are collected to the driver and
    * broadcast to the workers.

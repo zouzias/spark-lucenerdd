@@ -304,6 +304,8 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 
 object LuceneRDD {
 
+  @transient lazy val log = org.apache.log4j.LogManager.getLogger("LuceneRDD")
+
   /** All faceted fields are suffixed with _facet */
   val FacetTextFieldSuffix = "_facet"
   val FacetNumericFieldSuffix = "_numFacet"
@@ -317,6 +319,7 @@ object LuceneRDD {
    */
   def apply[T : ClassTag](elems: RDD[T])
     (implicit conv: T => Document): LuceneRDD[T] = {
+    log.info("LuceneRDD is created")
     val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
       iter => Iterator(LuceneRDDPartition(iter)),
       preservesPartitioning = true)

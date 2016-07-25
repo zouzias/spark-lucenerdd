@@ -38,6 +38,8 @@ import scala.collection.mutable.ListBuffer
  */
 object LuceneQueryHelpers extends Serializable {
 
+  @transient lazy val log = org.apache.log4j.LogManager.getLogger("LuceneQueryHelpers")
+
   lazy val MatchAllDocs = new MatchAllDocsQuery()
   lazy val MatchAllDocsString = "*:*"
   private val QueryParserDefaultField = "text"
@@ -163,6 +165,7 @@ object LuceneQueryHelpers extends Serializable {
    * @return
    */
   def searchTopKDocs(indexSearcher: IndexSearcher, query: Query, topK: Int): Seq[Document] = {
+    log.debug(s"searchTopKDocs with query ${query.toString()} and k = ${topK}")
     val topDocs = indexSearcher.search(query, topK)
     topDocs.scoreDocs.map(_.doc).map(x => indexSearcher.doc(x))
   }

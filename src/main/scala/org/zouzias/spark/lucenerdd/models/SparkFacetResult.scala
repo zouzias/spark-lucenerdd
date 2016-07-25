@@ -22,6 +22,7 @@ case class SparkFacetResult(facetName: String, facets: Map[String, Long]) {
 
   /**
    * Return facet counts sorted descending
+   *
    * @return Sequence of (facet value, facet counts)
    */
   def sortedFacets(): Seq[(String, Long)] = {
@@ -33,7 +34,9 @@ case class SparkFacetResult(facetName: String, facets: Map[String, Long]) {
 object SparkFacetResult extends Serializable {
 
   /**
-   * Convert [[FacetResult]] to [[SparkFacetResult]]
+   * Convert [[org.apache.lucene.facet.FacetResult]]
+   * to [[org.zouzias.spark.lucenerdd.models.SparkFacetResult]]
+   *
    * @param facetName name of facet
    * @param facetResult input facet results
    * @return

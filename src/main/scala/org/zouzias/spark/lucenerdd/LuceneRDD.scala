@@ -75,7 +75,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   private def docResultsAggregator(f: AbstractLuceneRDDPartition[T] => Iterable[SparkScoreDoc])
   : Iterable[SparkScoreDoc] = {
-    val parts = partitionsRDD.map(f(_)).map(SparkDocTopKMonoid.build(_))
+    val parts = partitionsRDD.map(f(_)).map(x => SparkDocTopKMonoid.build(x))
     parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
   }
 

@@ -20,7 +20,7 @@ import com.twitter.algebird.MapMonoid
 import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 
 /**
- * Monoid for [[SparkFacetResult]]
+ * Monoid for [[org.zouzias.spark.lucenerdd.models.SparkFacetResult]]
  *
  * Used to aggregate faceted results from the executors to the driver
  */

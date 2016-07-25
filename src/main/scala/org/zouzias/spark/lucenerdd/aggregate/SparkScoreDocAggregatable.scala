@@ -21,7 +21,7 @@ import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
- * TopK monoid to aggregate [[SparkScoreDoc]]
+ * TopK monoid to aggregate [[org.zouzias.spark.lucenerdd.models.SparkScoreDoc]]
  *
  * Used to aggregate the top-k documents from the executors to the driver
  */

@@ -37,9 +37,10 @@ import scala.reflect.ClassTag
  */
 class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
   extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-  with SparkScoreDocAggregatable {
+  with SparkScoreDocAggregatable
+  with Logging{
 
-override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
+  override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
   override protected def getPreferredLocations(s: Partition): Seq[String] =
     partitionsRDD.preferredLocations(s)
@@ -97,7 +98,8 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    * @return
    */
   def fields(): Set[String] = {
-    partitionsRDD.map(_.fields()).reduce(_ ++ _)
+    logDebug("Fields requested")
+    partitionsRDD.first().fields()
   }
 
   /**
@@ -170,6 +172,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
   : RDD[(Row, List[SparkScoreDoc])] = {
+    logDebug("LinkDataFrame requested")
     link[Row](other.rdd, searchQueryGen, topK)
   }
 
@@ -186,6 +189,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, List[SparkScoreDoc])] = {
+    logDebug("Linkage requested")
     val queries = other.map(searchQueryGen).collect()
     val queriesB = partitionsRDD.context.broadcast(queries)
 
@@ -217,6 +221,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
   def linkByQuery[T1: ClassTag](other: RDD[T1],
                                 searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
   : RDD[(T1, List[SparkScoreDoc])] = {
+    logDebug("LinkByQuery requested")
     def typeToQueryString = (input: T1) => {
       searchQueryGen(input).toString
     }
@@ -234,6 +239,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def termQuery(fieldName: String, query: String,
                 topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
+    logDebug("Term search requested")
     docResultsAggregator(_.termQuery(fieldName, query, topK))
   }
 
@@ -247,6 +253,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def prefixQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
+    logDebug("Prefix search requested")
     docResultsAggregator(_.prefixQuery(fieldName, query, topK))
   }
 
@@ -261,6 +268,7 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
+    logDebug("Fuzzy search requested")
     docResultsAggregator(_.fuzzyQuery(fieldName, query, maxEdits, topK))
   }
 
@@ -274,10 +282,12 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
    */
   def phraseQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
+    logDebug("Phrase query requested")
     docResultsAggregator(_.phraseQuery(fieldName, query, topK))
   }
 
   override def count(): Long = {
+    logDebug("Count action requested")
     partitionsRDD.map(_.size).reduce(_ + _)
   }
 
@@ -303,8 +313,6 @@ override protected def getPartitions: Array[Partition] = partitionsRDD.partition
 }
 
 object LuceneRDD {
-
-  @transient lazy val log = org.apache.log4j.LogManager.getLogger("LuceneRDD")
 
   /** All faceted fields are suffixed with _facet */
   val FacetTextFieldSuffix = "_facet"

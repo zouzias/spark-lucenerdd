@@ -40,6 +40,9 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   with SparkScoreDocAggregatable
   with Logging{
 
+  logInfo("Instance is created...")
+  logInfo(s"Number of partitions: ${partitionsRDD.count()}")
+
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
   override protected def getPreferredLocations(s: Partition): Seq[String] =
@@ -66,7 +69,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   }
 
   setName("LuceneRDD")
-
 
   /**
    * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
@@ -98,7 +100,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @return
    */
   def fields(): Set[String] = {
-    logDebug("Fields requested")
+    logInfo("Fields requested")
     partitionsRDD.first().fields()
   }
 
@@ -155,6 +157,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                  topK: Int = DefaultTopK,
                  facetNum: Int = DefaultFacetNum)
   : (Iterable[SparkScoreDoc], Map[String, SparkFacetResult]) = {
+    logInfo(s"Faceted query on facet fields ${facetFields.mkString(",")}...")
     val aggrTopDocs = docResultsAggregator(_.query(searchString, topK))
     val aggrFacets = facetFields.map { case facetField =>
       (facetField, facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum)))
@@ -172,7 +175,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
   : RDD[(Row, List[SparkScoreDoc])] = {
-    logDebug("LinkDataFrame requested")
+    logInfo("LinkDataFrame requested")
     link[Row](other.rdd, searchQueryGen, topK)
   }
 
@@ -189,7 +192,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, List[SparkScoreDoc])] = {
-    logDebug("Linkage requested")
+    logInfo("Linkage requested")
     val queries = other.map(searchQueryGen).collect()
     val queriesB = partitionsRDD.context.broadcast(queries)
 
@@ -221,7 +224,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def linkByQuery[T1: ClassTag](other: RDD[T1],
                                 searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
   : RDD[(T1, List[SparkScoreDoc])] = {
-    logDebug("LinkByQuery requested")
+    logInfo("LinkByQuery requested")
     def typeToQueryString = (input: T1) => {
       searchQueryGen(input).toString
     }
@@ -239,7 +242,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def termQuery(fieldName: String, query: String,
                 topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
-    logDebug("Term search requested")
+    logInfo(s"Term search on field ${fieldName} with query ${query}")
     docResultsAggregator(_.termQuery(fieldName, query, topK))
   }
 
@@ -253,7 +256,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def prefixQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
-    logDebug("Prefix search requested")
+    logInfo(s"Prefix search on field ${fieldName} with query ${query}")
     docResultsAggregator(_.prefixQuery(fieldName, query, topK))
   }
 
@@ -268,7 +271,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
-    logDebug("Fuzzy search requested")
+    logInfo(s"Fuzzy search on field ${fieldName} with query ${query}")
     docResultsAggregator(_.fuzzyQuery(fieldName, query, maxEdits, topK))
   }
 
@@ -282,12 +285,12 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def phraseQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): Iterable[SparkScoreDoc] = {
-    logDebug("Phrase query requested")
+    logInfo(s"Phrase search on field ${fieldName} with query ${query}")
     docResultsAggregator(_.phraseQuery(fieldName, query, topK))
   }
 
   override def count(): Long = {
-    logDebug("Count action requested")
+    logInfo("Count action requested")
     partitionsRDD.map(_.size).reduce(_ + _)
   }
 
@@ -308,6 +311,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   }
 
   def close(): Unit = {
+    logInfo("Closing LuceneRDD...")
     partitionsRDD.foreach(_.close())
   }
 }
@@ -327,7 +331,6 @@ object LuceneRDD {
    */
   def apply[T : ClassTag](elems: RDD[T])
     (implicit conv: T => Document): LuceneRDD[T] = {
-    log.info("LuceneRDD is created")
     val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
       iter => Iterator(LuceneRDDPartition(iter)),
       preservesPartitioning = true)

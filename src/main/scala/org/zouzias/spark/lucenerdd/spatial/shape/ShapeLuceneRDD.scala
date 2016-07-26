@@ -22,7 +22,7 @@ import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
+import org.apache.spark._
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
@@ -40,7 +40,10 @@ import scala.reflect.ClassTag
 class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   (private val partitionsRDD: RDD[AbstractShapeLuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-    with SparkScoreDocAggregatable {
+    with SparkScoreDocAggregatable
+    with Logging {
+
+  logInfo("Instance is created...")
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -58,9 +61,15 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   }
 
   override def setName(_name: String): this.type = {
-    partitionsRDD.setName(_name)
+    if (partitionsRDD.name != null) {
+      partitionsRDD.setName(partitionsRDD.name + ", " + _name)
+    } else {
+      partitionsRDD.setName(_name)
+    }
     this
   }
+
+  setName("ShapeLuceneRDD")
 
   /**
    * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
@@ -154,6 +163,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def spatialSearch(shapeWKT: String, k: Int,
                     operationName: String = SpatialOperation.Intersects.getName)
   : Iterable[SparkScoreDoc] = {
+    logInfo(s"Spatial search with shape ${shapeWKT} and operation ${operationName}")
     docResultsAggregator(_.spatialSearch(shapeWKT, k, operationName)).take(k)
   }
 
@@ -168,6 +178,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def spatialSearch(point: (Double, Double), k: Int,
                     operationName: String)
   : Iterable[SparkScoreDoc] = {
+    logInfo(s"Spatial search with point ${point} and operation ${operationName}")
     docResultsAggregator(_.spatialSearch(point, k, operationName)).take(k)
   }
 
@@ -183,24 +194,27 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def bboxSearch(center: (Double, Double), radius: Double, k: Int,
                     operationName: String = SpatialOperation.Intersects.getName)
   : Iterable[SparkScoreDoc] = {
+    logInfo(s"Bounding box with center ${center}, radius ${radius}, k = ${k}")
     docResultsAggregator(_.bboxSearch(center, radius, k, operationName)).take(k)
   }
 
   /**
-   * Bounding box search with
-   * @param lowerLeft
-   * @param upperRight
+   * Bounding box search with rectangle
+   * @param lowerLeft Lower left corner
+   * @param upperRight Upper right corner
    * @param k
-   * @param operationName
+   * @param operationName Intersect, contained, etc.
    * @return
    */
   def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
                  operationName: String)
   : Iterable[SparkScoreDoc] = {
+    logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
     docResultsAggregator(_.bboxSearch(lowerLeft, upperRight, k, operationName)).take(k)
   }
 
   override def count(): Long = {
+    logInfo("Count requested")
     partitionsRDD.map(_.size).reduce(_ + _)
   }
 
@@ -221,6 +235,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   }
 
   def close(): Unit = {
+    logInfo(s"Closing...")
     partitionsRDD.foreach(_.close())
   }
 }

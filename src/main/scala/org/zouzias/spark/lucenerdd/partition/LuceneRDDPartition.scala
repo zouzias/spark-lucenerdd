@@ -37,20 +37,29 @@ private[lucenerdd] class LuceneRDDPartition[T]
   with IndexWithTaxonomyWriter
   with Logging {
 
+  logInfo("Instance is created...")
+
   private val (iterOriginal, iterIndex) = iter.duplicate
 
+  logInfo("Indexing process initiated...")
   iterIndex.foreach { case elem =>
     // (implicitly) convert type T to Lucene document
     val doc = docConversion(elem)
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
   }
+  logInfo("Indexing process completed...")
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()
+  logDebug("Closing index writers...")
 
+
+  logDebug("Instantiating index/facet readers")
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
   private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
+  logDebug("Index readers instantiated successfully")
+  logInfo(s"Indexed ${size} documents")
 
   override def fields(): Set[String] = {
     LuceneQueryHelpers.fields(indexSearcher)

@@ -17,7 +17,7 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.11.8"
+scalaVersion := "2.10.6"
 crossScalaVersions := Seq("2.10.6", "2.11.8")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))

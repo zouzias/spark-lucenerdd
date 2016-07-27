@@ -29,9 +29,6 @@ import scala.collection.JavaConverters._
  */
 class SparkDoc(doc: Document) extends Serializable {
 
-  private lazy val stringMonoid = new MapMonoid[String, List[String]]()
-  private lazy val numberMonoid = new MapMonoid[String, List[Number]]()
-
   private val stringFields = doc.getFields().asScala.map( field =>
     if (field.stringValue() != null && field.name() != null) {
       Map((field.name(), List(field.stringValue())))
@@ -39,7 +36,7 @@ class SparkDoc(doc: Document) extends Serializable {
     else {
       Map.empty[String, List[String]]
     }
-  ).reduce(stringMonoid.plus)
+  ).reduce(SparkDoc.stringMonoid.plus)
 
   private val numberFields = doc.getFields().asScala.map( field =>
     if (field.numericValue() != null && field.name() != null) {
@@ -48,7 +45,7 @@ class SparkDoc(doc: Document) extends Serializable {
     else {
       Map.empty[String, List[Number]]
     }
-  ).reduce(numberMonoid.plus)
+  ).reduce(SparkDoc.numberMonoid.plus)
 
   def getFields: Set[String] = {
     getTextFields ++ getNumericFields
@@ -85,6 +82,10 @@ class SparkDoc(doc: Document) extends Serializable {
 }
 
 object SparkDoc extends Serializable {
+
+  private lazy val stringMonoid = new MapMonoid[String, List[String]]()
+  private lazy val numberMonoid = new MapMonoid[String, List[Number]]()
+
   def apply(doc: Document): SparkDoc = {
     new SparkDoc(doc)
   }

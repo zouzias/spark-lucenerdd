@@ -101,7 +101,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def fields(): Set[String] = {
     logInfo("Fields requested")
-    partitionsRDD.first().fields()
+    partitionsRDD.map(_.fields()).reduce(_ ++ _)
   }
 
   /**

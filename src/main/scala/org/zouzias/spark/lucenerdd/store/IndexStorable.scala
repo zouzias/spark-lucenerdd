@@ -20,8 +20,8 @@ import java.nio.file.{Files, Path}
 
 import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store._
-import org.apache.spark.Logging
 import org.zouzias.spark.lucenerdd.config.Configurable
+import org.zouzias.spark.lucenerdd.logging.Logging
 
 /**
  * Storage of a Lucene index Directory

@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.10.6"
-crossScalaVersions := Seq("2.10.6", "2.11.8")
+scalaVersion := "2.11.8"
+crossScalaVersions := Seq("2.11.8")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -75,9 +75,8 @@ pomExtra := (
 
 val luceneV = "5.5.2"
 
-
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "1.6.2"
+sparkVersion := "2.0.0"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql")
 spAppendScalaVersion := true
@@ -117,12 +116,14 @@ libraryDependencies ++= Seq(
   lucene_analyzers,
   lucene_expressions,
   lucene_query_parsers,
+  typesafe_config,
   lucene_spatial,
   jts,
   joda_time,
   joda_convert, // To avoid warning: Class org.joda.convert.ToString not found
   specs2_core,
-  scalatest
+  scalatest,
+  specs2_core
 )
 
 libraryDependencies ++= Seq(

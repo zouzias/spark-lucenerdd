@@ -23,8 +23,8 @@ import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
-import org.apache.spark.sql.{DataFrame, Row}
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
@@ -43,8 +43,7 @@ import scala.reflect.ClassTag
 class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   (private val partitionsRDD: RDD[AbstractShapeLuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-    with LuceneRDDConfigurable
-    with Logging {
+    with LuceneRDDConfigurable {
 
   logInfo("Instance is created...")
   logInfo(s"Number of partitions: ${partitionsRDD.count()}")
@@ -343,16 +342,28 @@ object ShapeLuceneRDD {
     new ShapeLuceneRDD(partitions)
   }
 
+  def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)])
+                                     (implicit shapeConv: K => Shape,
+                                      docConverter: V => Document)
+  : ShapeLuceneRDD[K, V] = {
+    val partitions = elems.rdd.mapPartitions[AbstractShapeLuceneRDDPartition[K, V]](
+      iter => Iterator(ShapeLuceneRDDPartition[K, V](iter)),
+      preservesPartitioning = true)
+    new ShapeLuceneRDD(partitions)
+  }
+
+
   /**
    * Instantiate a ShapeLuceneRDD with an iterable
    *
    * @param elems
    * @param sc
    * @return
-   */
+
   def apply[K: ClassTag, V: ClassTag]
   (elems: Iterable[(K, V)])(implicit sc: SparkContext, shapeConv: K => Shape,
                             docConverter: V => Document): ShapeLuceneRDD[K, V] = {
     apply(sc.parallelize[(K, V)](elems.toSeq))
   }
+  */
 }

@@ -18,8 +18,8 @@ package org.zouzias.spark.lucenerdd.spatial.shape.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SQLContext
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers, ShouldMatchers}
+import org.apache.spark.sql.SparkSession
+import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.{ShapeLuceneRDD, _}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
@@ -68,8 +68,9 @@ class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   }
 
   "ShapeLuceneRDDImplicits" should "implicitly convert POINTS from WKT" in {
-    val sqlContext = new SQLContext(sc)
-    val citiesDF = sqlContext.read.parquet("data/world-cities-points.parquet")
+    val sparkSession = SparkSession.builder().getOrCreate()
+    val citiesDF = sparkSession.read.parquet("data/world-cities-points.parquet")
+    import sparkSession.implicits._
     val citiesRDD = citiesDF.map(row =>
       (row.getString(2), (row.getString(0), row.getString(1))))
 
@@ -82,8 +83,9 @@ class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   }
 
   "ShapeLuceneRDDImplicits" should "implicitly convert BBOX from WKT" in {
-    val sqlContext = new SQLContext(sc)
-    val countriesDF = sqlContext.read.parquet("data/countries-bbox.parquet")
+    val sparkSession = SparkSession.builder().getOrCreate()
+    import sparkSession.implicits._
+    val countriesDF = sparkSession.read.parquet("data/countries-bbox.parquet")
     val citiesRDD = countriesDF.map(row =>
       (row.getString(2), (row.getString(0), row.getString(1))))
 

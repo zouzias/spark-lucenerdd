@@ -62,7 +62,7 @@ This library can also be added to Spark jobs launched through `spark-shell` or `
 For example, to include it when starting the spark shell:
 
 ```
-$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.0.XX
+$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.10:0.0.XX
 ```
 
 Unlike using `--jars`, using `--packages` ensures that this library and its dependencies will be added to the classpath.

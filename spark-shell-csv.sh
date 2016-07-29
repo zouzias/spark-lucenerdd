@@ -12,11 +12,11 @@ echo "==============================================="
 # Assumes that spark is installed under home directory
 HOME_DIR=`echo ~`
 #export SPARK_LOCAL_IP=localhost
-SPARK_HOME=${HOME_DIR}/spark-1.5.2-bin-2.6.0
+SPARK_HOME=${HOME_DIR}/spark-1.6.2-bin-hadoop2.6
 
 # spark-lucenerdd assembly JAR
-MAIN_JAR=${CURRENT_DIR}/target/scala-2.11/spark-lucenerdd-assembly-${SPARK_LUCENERDD_VERSION}.jar
-SPARK_CSV_JAR=${CURRENT_DIR}/spark-csv_2.11-1.4.0.jar
+MAIN_JAR=${CURRENT_DIR}/target/scala-2.10/spark-lucenerdd-assembly-${SPARK_LUCENERDD_VERSION}.jar
+SPARK_CSV_JAR=${CURRENT_DIR}/spark-csv_2.10-1.4.0.jar
 COMMON_CSV_JAR=${CURRENT_DIR}/commons-csv-1.1.jar
 
 # Run spark shell locally

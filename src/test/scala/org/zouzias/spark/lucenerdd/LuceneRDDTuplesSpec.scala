@@ -17,7 +17,8 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import org.scalatest.{ FlatSpec, Matchers }
+import org.apache.spark.SparkConf
+import org.scalatest.{FlatSpec, Matchers}
 
 class LuceneRDDTuplesSpec extends FlatSpec with Matchers with SharedSparkContext {
 
@@ -25,6 +26,13 @@ class LuceneRDDTuplesSpec extends FlatSpec with Matchers with SharedSparkContext
   val Second = "_2"
 
   val array = List("fear", "death", " apology", "romance", "tree", "fashion", "fascism")
+
+
+  override val conf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   "LuceneRDD" should "work with Tuple2" in {
     val rdd = sc.parallelize(array).map(x => (x, x))

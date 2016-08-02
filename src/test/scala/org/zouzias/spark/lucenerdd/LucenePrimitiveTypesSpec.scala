@@ -17,11 +17,18 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {
+
+  override val conf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
   val array = (1 to 24).map(randomString(_))

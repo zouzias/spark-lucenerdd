@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SQLContext
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
@@ -29,6 +30,13 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
   with SharedSparkContext {
 
   var luceneRDD: LuceneRDD[_] = _
+
+
+  override val conf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   override def afterEach() {
     luceneRDD.close()

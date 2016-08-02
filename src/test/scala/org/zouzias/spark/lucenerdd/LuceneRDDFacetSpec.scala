@@ -17,12 +17,19 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 class LuceneRDDFacetSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {
+
+  override val conf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   // Check if sequence is sorted in descending order
   def sortedDesc(seq : Seq[Long]) : Boolean = {

@@ -21,7 +21,8 @@ COMMON_CSV_JAR=${CURRENT_DIR}/commons-csv-1.1.jar
 
 # Run spark shell locally
 ${SPARK_HOME}/bin/spark-shell   --jars "${MAIN_JAR},${SPARK_CSV_JAR},${COMMON_CSV_JAR}" \
-				--conf "spark.executor.memory=512m" \
+				--conf "spark.executor.memory=1g" \
 				--conf "spark.driver.memory=512m" \
 				--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
-				--master local[2]
+				--conf "spark.kryoserializer.buffer=24mb" \
+				--master local[*]

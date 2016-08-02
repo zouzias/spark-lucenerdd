@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 case class Person(name: String, age: Int, email: String)
@@ -31,6 +32,12 @@ class LuceneRDDCustomCaseClassImplicitsSpec extends FlatSpec
   override def afterEach() {
     luceneRDD.close()
   }
+
+  override val conf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   val elem = Array("fear", "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) => Person(str, index, s"${str}@gmail.com")}

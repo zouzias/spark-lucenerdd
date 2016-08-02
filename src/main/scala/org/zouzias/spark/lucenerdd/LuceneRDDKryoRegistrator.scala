@@ -17,10 +17,22 @@
 package org.zouzias.spark.lucenerdd
 
 import com.twitter.algebird.TopK
+import com.twitter.chill.Kryo
 import org.apache.spark.SparkConf
-import org.apache.spark.serializer.KryoSerializer
+import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
+
+class LuceneRDDKryoRegistrator extends KryoRegistrator {
+  def registerClasses(kryo: Kryo): Unit = {
+    kryo.register(classOf[LuceneRDD[_]])
+    kryo.register(classOf[LuceneRDDPartition[_]])
+    kryo.register(classOf[SparkDoc])
+    kryo.register(classOf[SparkFacetResult])
+    kryo.register(classOf[SparkScoreDoc])
+    kryo.register(classOf[TopK[_]])
+  }
+}
 
 
 object LuceneRDDKryoRegistrator {
@@ -31,6 +43,6 @@ object LuceneRDDKryoRegistrator {
 
   def registerKryoClasses(conf: SparkConf): SparkConf = {
     conf.set("spark.serializer", classOf[KryoSerializer].getName)
-        .registerKryoClasses(allClasses.toArray)
+          .set("spark.kryo.registrator", classOf[LuceneRDDKryoRegistrator].getName)
   }
 }

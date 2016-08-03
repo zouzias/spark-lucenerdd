@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
@@ -32,6 +33,12 @@ class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   with LuceneRDDTestUtils {
 
   val Radius: Double = 5D
+
+  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   "ShapeLuceneRDDImplicits" should "implicitly convert to point" in {
 

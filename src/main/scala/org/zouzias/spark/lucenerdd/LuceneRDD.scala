@@ -41,7 +41,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   with Logging{
 
   logInfo("Instance is created...")
-  partitionsRDD.cache()
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 

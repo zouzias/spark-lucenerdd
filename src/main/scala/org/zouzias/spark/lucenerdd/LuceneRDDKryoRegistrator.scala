@@ -34,13 +34,10 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
   }
 }
 
-
+/**
+ * Decorator for LuceneRDD Kryo serialization
+ */
 object LuceneRDDKryoRegistrator {
-
-  val allClasses = List(classOf[LuceneRDD[_]], classOf[LuceneRDDPartition[_]],
-    classOf[SparkDoc], classOf[SparkFacetResult], classOf[SparkScoreDoc], classOf[TopK[_]])
-
-
   def registerKryoClasses(conf: SparkConf): SparkConf = {
     conf.set("spark.serializer", classOf[KryoSerializer].getName)
           .set("spark.kryo.registrator", classOf[LuceneRDDKryoRegistrator].getName)

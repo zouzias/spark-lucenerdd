@@ -18,6 +18,7 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
@@ -35,6 +36,12 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
   val Radius: Double = 5D
 
   var pointLuceneRDD: ShapeLuceneRDD[_, _] = _
+
+  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   override def afterEach() {
     pointLuceneRDD.close()

@@ -20,6 +20,7 @@ import java.io.StringWriter
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import com.spatial4j.core.distance.DistanceUtils
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
@@ -41,6 +42,12 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
   override def afterEach() {
     pointLuceneRDD.close()
   }
+
+  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+    setMaster("local[*]").
+    setAppName("test").
+    set("spark.ui.enabled", "false").
+    set("spark.app.id", appID))
 
   "ShapeLuceneRDD.spatialSearch(circle)" should "return correct results" in {
     val rdd = sc.parallelize(cities)

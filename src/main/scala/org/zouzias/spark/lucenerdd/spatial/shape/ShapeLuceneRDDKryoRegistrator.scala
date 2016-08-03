@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd
+package org.zouzias.spark.lucenerdd.spatial.shape
 
 import com.twitter.algebird.TopK
-import com.twitter.chill.Kryo
+import com.twitter.chill._
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
-import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
+import org.zouzias.spark.lucenerdd.spatial.shape.partition.ShapeLuceneRDDPartition
 
-class LuceneRDDKryoRegistrator extends KryoRegistrator {
+
+class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
-    kryo.register(classOf[LuceneRDD[_]])
-    kryo.register(classOf[LuceneRDDPartition[_]])
+    kryo.register(classOf[ShapeLuceneRDD[_, _]])
+    kryo.register(classOf[ShapeLuceneRDDPartition[_, _]])
     kryo.register(classOf[SparkDoc])
     kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])
@@ -35,11 +36,12 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
 }
 
 /**
- * Decorator for LuceneRDD Kryo serialization
+ * Decorator for [[ShapeLuceneRDD]] Kryo serialization
  */
-object LuceneRDDKryoRegistrator {
+object ShapeLuceneRDDKryoRegistrator {
   def registerKryoClasses(conf: SparkConf): SparkConf = {
     conf.set("spark.serializer", classOf[KryoSerializer].getName)
-          .set("spark.kryo.registrator", classOf[LuceneRDDKryoRegistrator].getName)
+      .set("spark.kryo.registrator", classOf[ShapeLuceneRDDKryoRegistrator].getName)
   }
 }
+

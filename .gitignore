@@ -1,5 +1,6 @@
 commons-csv-1.1.jar
 spark-csv_2.11-1.4.0.jar
+spark-csv_2.10-1.4.0.jar
 src/test/resources/h1bvisa-2014.csv
 
 NOTES.md

@@ -21,6 +21,7 @@ MAIN_JAR=${CURRENT_DIR}/target/scala-2.10/spark-lucenerdd-assembly-${SPARK_LUCEN
 ${SPARK_HOME}/bin/spark-shell   --jars "${MAIN_JAR}" \
 				--conf "spark.executor.memory=1g" \
 				--conf "spark.driver.memory=512m" \
+				--conf "spark.rdd.compress=true" \
 				--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
 				--conf "spark.kryoserializer.buffer=24mb" \
 				--master local[*]

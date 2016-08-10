@@ -23,6 +23,7 @@ import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
+import org.apache.spark.sql.{DataFrame, Row}
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
@@ -122,6 +123,24 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     val results = resultsByPart.reduceByKey( (x, y) => SparkDocTopKMonoid.plus(x, y))
     that.zipWithIndex.map(_.swap).join(results)
       .map{ case (_, joined) => (joined._1, joined._2.items.reverse.take(topK))}
+  }
+
+  /**
+   * Link with DataFrame based on k-nearest neighbors (Knn)
+   *
+   * Links this and that based on nearest neighbors, returns Knn
+   *
+   *
+   * @param other
+   * @param searchQueryGen
+   * @param topK
+   * @return
+   */
+  def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => (Double, Double),
+                         topK: Int = DefaultTopK)
+  : RDD[(Row, List[SparkScoreDoc])] = {
+    logInfo("LinkDataFrame requested")
+    linkByKnn[Row](other.rdd, searchQueryGen, topK)
   }
 
   /**

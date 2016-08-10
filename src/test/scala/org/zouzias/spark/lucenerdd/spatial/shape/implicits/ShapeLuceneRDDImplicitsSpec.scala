@@ -18,11 +18,11 @@ package org.zouzias.spark.lucenerdd.spatial.shape.implicits
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
+import org.apache.spark.sql.SQLContext
+import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers, ShouldMatchers}
+import org.zouzias.spark.lucenerdd.spatial.shape.{ShapeLuceneRDD, _}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.spatial.shape._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
 class ShapeLuceneRDDImplicitsSpec extends FlatSpec
@@ -65,6 +65,34 @@ class ShapeLuceneRDDImplicitsSpec extends FlatSpec
     val shapeRDD = ShapeLuceneRDD(rdd)
 
     shapeRDD.count should equal(rectangleCities.length)
+  }
+
+  "ShapeLuceneRDDImplicits" should "implicitly convert POINTS from WKT" in {
+    val sqlContext = new SQLContext(sc)
+    val citiesDF = sqlContext.read.parquet("data/world-cities-points.parquet")
+    val citiesRDD = citiesDF.map(row =>
+      (row.getString(2), (row.getString(0), row.getString(1))))
+
+    val total = citiesDF.count()
+    total > 0 should equal(true)
+
+    val shapeRDD = ShapeLuceneRDD(citiesRDD)
+
+    shapeRDD.count > 0 should equal(true)
+  }
+
+  "ShapeLuceneRDDImplicits" should "implicitly convert BBOX from WKT" in {
+    val sqlContext = new SQLContext(sc)
+    val countriesDF = sqlContext.read.parquet("data/countries-bbox.parquet")
+    val citiesRDD = countriesDF.map(row =>
+      (row.getString(2), (row.getString(0), row.getString(1))))
+
+    val total = countriesDF.count()
+    total > 0 should equal(true)
+
+    val shapeRDD = ShapeLuceneRDD(citiesRDD)
+
+    shapeRDD.count > 0 should equal(true)
   }
 
   "ShapeLuceneRDDImplicits" should "implicitly convert to polygon" in {

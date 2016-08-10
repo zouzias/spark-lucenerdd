@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.spatial
 
+import java.io.StringReader
+
 import com.spatial4j.core.shape.Shape
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
@@ -27,6 +29,23 @@ package object shape extends ContextLoader{
 
   implicit def convertToPoint(point: (Double, Double)): Shape = {
     ctx.makePoint(point._1, point._2)
+  }
+
+  /**
+   * ***Experimental***
+   *
+   * Implicitly convert shape from its string representation
+   *
+   * @param shapeAsString
+   * @return
+   */
+  implicit def WKTToShape(shapeAsString: String): Shape = {
+    try {
+      shapeReader.read(new StringReader(shapeAsString))
+    }
+    catch {
+      case e: Exception => ctx.makePoint(0.0, 0.0)
+    }
   }
 
   implicit def rectangleToShape(rect: (Double, Double, Double, Double)): Shape = {

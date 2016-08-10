@@ -79,7 +79,20 @@ class ShapeLuceneRDDImplicitsSpec extends FlatSpec
     val shapeRDD = ShapeLuceneRDD(citiesRDD)
 
     shapeRDD.count > 0 should equal(true)
+  }
 
+  "ShapeLuceneRDDImplicits" should "implicitly convert BBOX from WKT" in {
+    val sqlContext = new SQLContext(sc)
+    val citiesDF = sqlContext.read.parquet("data/countries-bbox.parquet")
+    val citiesRDD = citiesDF.map(row =>
+      (row.getString(2), (row.getString(0), row.getString(1))))
+
+    val total = citiesDF.count()
+    total > 0 should equal(true)
+
+    val shapeRDD = ShapeLuceneRDD(citiesRDD)
+
+    shapeRDD.count > 0 should equal(true)
   }
 
   "ShapeLuceneRDDImplicits" should "implicitly convert to polygon" in {

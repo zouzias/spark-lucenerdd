@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.spatial
 
 import java.io.StringReader
 
-import com.spatial4j.core.shape.{Point, Shape}
+import com.spatial4j.core.shape.Shape
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
@@ -32,9 +32,10 @@ package object shape extends ContextLoader{
   }
 
   /**
-   * Experimental
+   * ***Experimental***
    *
-   * Untested
+   * Implicitly convert shape from its string representation
+   *
    * @param shapeAsString
    * @return
    */

@@ -39,5 +39,6 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update coverage -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION assembly
+  - sbt ++$TRAVIS_SCALA_VERSION coverage test
 after_success: "sbt coverageReport coveralls"
 

@@ -135,3 +135,6 @@ compileScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).
 
 
 parallelExecution in Test := false
+
+// Skip tests during assembly
+test in assembly := {}

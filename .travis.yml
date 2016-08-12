@@ -40,5 +40,5 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION assembly
   - sbt ++$TRAVIS_SCALA_VERSION coverage test
-after_success: "sbt coverage test coverageReport coveralls"
+after_success: "sbt clean coverage test coverageReport coveralls"
 

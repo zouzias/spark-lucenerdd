@@ -1,7 +1,7 @@
 # spark-lucenerdd
 
 [![Master](https://travis-ci.org/zouzias/spark-lucenerdd.svg?branch=master)](https://travis-ci.org/zouzias/spark-lucenerdd)
-[![Coverage Status](https://coveralls.io/repos/github/zouzias/spark-lucenerdd/badge.svg?branch=master)](https://coveralls.io/github/zouzias/spark-lucenerdd?branch=master)
+[![codecov](https://codecov.io/gh/zouzias/spark-lucenerdd/branch/master/graph/badge.svg)](https://codecov.io/gh/zouzias/spark-lucenerdd)
 [![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
 [![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.11:0.0.14.svg?color=yellowgreen)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.11/)
 

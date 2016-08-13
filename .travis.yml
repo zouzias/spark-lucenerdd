@@ -36,9 +36,9 @@ matrix:
       scala: 2.11.8
       env: TEST_SPARK_VERSION="1.6.2" LUCENE_ANALYZER="whitespace"
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean update coverage -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
+  - sbt ++$TRAVIS_SCALA_VERSION clean update -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION assembly
-  - sbt ++$TRAVIS_SCALA_VERSION coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
 after_success:
   - bash <(curl -s https://codecov.io/bash)

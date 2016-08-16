@@ -57,11 +57,13 @@ trait AnalyzerConfigurable extends Configurable {
 
   private val AnalyzerConfigKey = "lucenerdd.analyzer.name"
 
-  protected val Analyzer: Analyzer = {
-    if (config.hasPath(AnalyzerConfigKey)) {
-      val analyzerName = config.getString(AnalyzerConfigKey)
+  protected val AnalyzerConfigName: Option[String] = if (config.hasPath(AnalyzerConfigKey)) {
+    Some(config.getString(AnalyzerConfigKey))} else None
 
-      analyzerName match {
+    protected val Analyzer: Analyzer = {
+
+      if (AnalyzerConfigName.isDefined) {
+        AnalyzerConfigName.get match {
         case "whitespace" => new WhitespaceAnalyzer()
         case "ar" => new ArabicAnalyzer()
         case "bg" => new BulgarianAnalyzer()

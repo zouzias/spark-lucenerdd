@@ -199,7 +199,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
       case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
         val results = partition.query(qr, topK).map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          (index.toLong, results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y)))
+          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
         }
         else {
           (index.toLong, SparkDocTopKMonoid.zero)
@@ -207,7 +207,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
       }
     }
 
-    val results = resultsByPart.reduceByKey( (x, y) => SparkDocTopKMonoid.plus(x, y))
+    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
     other.zipWithIndex.map(_.swap).join(results)
       .map{ case (_, joined) => (joined._1, joined._2.items)}
   }

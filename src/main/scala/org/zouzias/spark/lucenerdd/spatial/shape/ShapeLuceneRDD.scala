@@ -85,7 +85,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   (f: AbstractShapeLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
   : List[SparkScoreDoc] = {
     val parts = partitionsRDD.map(f(_)).map(x => SparkDocTopKMonoid.build(x))
-    parts.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y)).items
+    parts.reduce(SparkDocTopKMonoid.plus).items
   }
 
   /**
@@ -110,9 +110,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
         val results = partition.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString)
-          .reverse.map(x => SparkDocTopKMonoid.build(x))
+            .map(x => SparkDocTopKMonoid.build(x))
         if (results.nonEmpty) {
-          (index.toLong, results.reduce( (x, y) => SparkDocTopKMonoid.plus(x, y)))
+          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
         }
         else {
           (index.toLong, SparkDocTopKMonoid.zero)
@@ -120,9 +120,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
       }
     }
 
-    val results = resultsByPart.reduceByKey( (x, y) => SparkDocTopKMonoid.plus(x, y))
+    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
     that.zipWithIndex.map(_.swap).join(results)
-      .map{ case (_, joined) => (joined._1, joined._2.items.reverse.take(topK))}
+      .map{ case (_, joined) => (joined._1, joined._2.items)}
   }
 
   /**
@@ -154,7 +154,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def knnSearch(queryPoint: (Double, Double), k: Int,
                 searchString: String = LuceneQueryHelpers.MatchAllDocsString)
   : Iterable[SparkScoreDoc] = {
-    docResultsAggregator(_.knnSearch(queryPoint, k, searchString).reverse).reverse.take(k)
+    docResultsAggregator(_.knnSearch(queryPoint, k, searchString)).take(k)
   }
 
   /**

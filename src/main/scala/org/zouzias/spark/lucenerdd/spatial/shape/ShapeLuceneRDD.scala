@@ -104,6 +104,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def linkByKnn[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
                            topK: Int = DefaultTopK)
   : RDD[(T, List[SparkScoreDoc])] = {
+    logInfo("linkByKnn requested")
     val queries = that.map(pointFunctor).collect()
     val queriesB = partitionsRDD.context.broadcast(queries)
 
@@ -139,7 +140,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => (Double, Double),
                          topK: Int = DefaultTopK)
   : RDD[(Row, List[SparkScoreDoc])] = {
-    logInfo("LinkDataFrame requested")
+    logInfo("linkDataFrame requested")
     linkByKnn[Row](other.rdd, searchQueryGen, topK)
   }
 
@@ -154,6 +155,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def knnSearch(queryPoint: (Double, Double), k: Int,
                 searchString: String = LuceneQueryHelpers.MatchAllDocsString)
   : Iterable[SparkScoreDoc] = {
+    logInfo(s"Knn search with query ${queryPoint} and search string ${searchString}")
     docResultsAggregator(_.knnSearch(queryPoint, k, searchString)).take(k)
   }
 
@@ -167,6 +169,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def circleSearch(center: (Double, Double), radius: Double, k: Int)
   : Iterable[SparkScoreDoc] = {
+    logInfo(s"Circle search with center ${center} and radius ${radius}")
     // Points can only intersect
     docResultsAggregator(_.circleSearch(center, radius, k,
       SpatialOperation.Intersects.getName)).take(k)

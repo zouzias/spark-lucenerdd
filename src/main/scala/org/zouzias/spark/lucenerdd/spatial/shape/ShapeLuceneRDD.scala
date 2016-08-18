@@ -126,6 +126,33 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
       .map{ case (_, joined) => (joined._1, joined._2.items)}
   }
 
+  def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
+                                radius: Double, topK: Int = DefaultTopK)
+  : RDD[(T, List[SparkScoreDoc])] = {
+    logInfo("linkByKnn requested")
+    val queries = that.map(pointFunctor).collect()
+    val queriesB = partitionsRDD.context.broadcast(queries)
+
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
+      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
+        val results = partition.circleSearch(queryPoint, radius, topK,
+          SpatialOperation.Intersects.getName)
+          .map(x => SparkDocTopKMonoid.build(x))
+        if (results.nonEmpty) {
+          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
+        }
+        else {
+          (index.toLong, SparkDocTopKMonoid.zero)
+        }
+      }
+    }
+
+    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
+    that.zipWithIndex.map(_.swap).join(results)
+      .map{ case (_, joined) => (joined._1, joined._2.items)}
+  }
+
+
   /**
    * Link with DataFrame based on k-nearest neighbors (Knn)
    *

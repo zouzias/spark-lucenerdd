@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/zouzias/spark-lucenerdd/branch/master/graph/badge.svg)](https://codecov.io/gh/zouzias/spark-lucenerdd)
 [![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
 [![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.11:0.0.14.svg?color=yellowgreen)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.11/)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spark-lucenerdd/Lobby)
 
 
 [Spark](http://spark.apache.org) RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.

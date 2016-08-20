@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 
 import scala.reflect.ClassTag
 
@@ -41,8 +42,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param searchString Lucene Query string
    * @return
    */
-  def knnSearch(point: (Double, Double), k: Int,
-                searchString: String): List[SparkScoreDoc]
+  def knnSearch(point: PointType, k: Int, searchString: String): List[SparkScoreDoc]
 
   /**
    * Search for points within a circle
@@ -52,8 +52,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param k number of points to return
    * @return
    */
-  def circleSearch(center: (Double, Double),
-                   radius: Double, k: Int, operationName: String)
+  def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc]
 
   /**
@@ -75,7 +74,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param operationName
    * @return
    */
-  def spatialSearch(point: (Double, Double), k: Int, operationName: String)
+  def spatialSearch(point: PointType, k: Int, operationName: String)
   : Iterable[SparkScoreDoc]
 
   /**
@@ -87,8 +86,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param operationName
    * @return
    */
-  def bboxSearch(center: (Double, Double),
-                 radius: Double, k: Int, operationName: String)
+  def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc]
 
   /**
@@ -100,9 +98,8 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    * @param operationName
    * @return
    */
-  def bboxSearch(lowerLeft: (Double, Double),
-                 upperRight: (Double, Double), k: Int,
-                 operationName: String) : Iterable[SparkScoreDoc]
+  def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int, operationName: String)
+  : Iterable[SparkScoreDoc]
 
   /**
    * Restricts the entries to those satisfying a predicate

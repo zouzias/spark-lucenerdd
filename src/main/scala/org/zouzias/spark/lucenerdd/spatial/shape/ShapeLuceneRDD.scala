@@ -27,6 +27,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
 
 import scala.reflect.ClassTag
@@ -88,28 +89,18 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     parts.reduce(SparkDocTopKMonoid.plus).items
   }
 
-  def partitionMapper(partition: AbstractShapeLuceneRDDPartition[K, V],
-    queryPoint: (Double, Double),
-    f: ((Double, Double), AbstractShapeLuceneRDDPartition[K, V]) =>
-      Iterable[SparkScoreDoc]): TopK[SparkScoreDoc] = {
-    f(queryPoint, partition).map(x => SparkDocTopKMonoid.build(x)).reduce(SparkDocTopKMonoid.plus)
-  }
-
-  def linker[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
-    mapper: ( (Double, Double), AbstractShapeLuceneRDDPartition[K, V]) =>
+  def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
+    mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
                             Iterable[SparkScoreDoc]): RDD[(T, List[SparkScoreDoc])] = {
     val queries = that.map(pointFunctor).collect()
     val queriesB = partitionsRDD.context.broadcast(queries)
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = mapper(queryPoint, partition)
-        if (results.nonEmpty) {
-          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
-        }
-        else {
-          (index.toLong, SparkDocTopKMonoid.zero)
-        }
+        val results = mapper(queryPoint, partition).map(x => SparkDocTopKMonoid.build(x))
+          .reduceOption(SparkDocTopKMonoid.plus).getOrElse(SparkDocTopKMonoid.zero)
+
+        (index.toLong, results)
       }
     }
 
@@ -123,6 +114,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    *
    * Links this and that based on nearest neighbors, returns Knn
    *
+   *
    * @param that An RDD of entities to be linked
    * @param pointFunctor Function that generates a point from each element of other
    * @tparam T A type
@@ -131,7 +123,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkByKnn[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
+  def linkByKnn[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
                            topK: Int = DefaultTopK)
   : RDD[(T, List[SparkScoreDoc])] = {
     logInfo("linkByKnn requested")
@@ -152,7 +144,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
+  def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
                                 radius: Double, topK: Int = DefaultTopK)
   : RDD[(T, List[SparkScoreDoc])] = {
     logInfo("linkByRadius requested")
@@ -172,7 +164,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param topK
    * @return
    */
-  def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => (Double, Double),
+  def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => PointType,
                          topK: Int = DefaultTopK)
   : RDD[(Row, List[SparkScoreDoc])] = {
     logInfo("linkDataFrame requested")
@@ -187,7 +179,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param searchString Lucene query string
    * @return
    */
-  def knnSearch(queryPoint: (Double, Double), k: Int,
+  def knnSearch(queryPoint: PointType, k: Int,
                 searchString: String = LuceneQueryHelpers.MatchAllDocsString)
   : Iterable[SparkScoreDoc] = {
     logInfo(s"Knn search with query ${queryPoint} and search string ${searchString}")
@@ -202,7 +194,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param k number of points to return
    * @return
    */
-  def circleSearch(center: (Double, Double), radius: Double, k: Int)
+  def circleSearch(center: PointType, radius: Double, k: Int)
   : Iterable[SparkScoreDoc] = {
     logInfo(s"Circle search with center ${center} and radius ${radius}")
     // Points can only intersect
@@ -233,7 +225,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param operationName
    * @return
    */
-  def spatialSearch(point: (Double, Double), k: Int,
+  def spatialSearch(point: PointType, k: Int,
                     operationName: String)
   : Iterable[SparkScoreDoc] = {
     logInfo(s"Spatial search with point ${point} and operation ${operationName}")
@@ -249,7 +241,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param operationName
    * @return
    */
-  def bboxSearch(center: (Double, Double), radius: Double, k: Int,
+  def bboxSearch(center: PointType, radius: Double, k: Int,
                     operationName: String = SpatialOperation.Intersects.getName)
   : Iterable[SparkScoreDoc] = {
     logInfo(s"Bounding box with center ${center}, radius ${radius}, k = ${k}")
@@ -260,11 +252,11 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * Bounding box search with rectangle
    * @param lowerLeft Lower left corner
    * @param upperRight Upper right corner
-   * @param k
+   * @param k Number of results
    * @param operationName Intersect, contained, etc.
    * @return
    */
-  def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
+  def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int,
                  operationName: String)
   : Iterable[SparkScoreDoc] = {
     logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
@@ -299,6 +291,8 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 }
 
 object ShapeLuceneRDD {
+
+  type PointType = (Double, Double)
 
   /**
    * Instantiate a ShapeLuceneRDD given an RDD[T]

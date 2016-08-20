@@ -25,6 +25,7 @@ import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.grids.GridLoader
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
@@ -103,7 +104,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     }
   }
 
-  override def circleSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc] = {
     val args = new SpatialArgs(SpatialOperation.get(operationName),
         ctx.makeCircle(center._1, center._2,
@@ -114,7 +115,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
-  override def knnSearch(point: (Double, Double), k: Int, searchString: String)
+  override def knnSearch(point: PointType, k: Int, searchString: String)
   : List[SparkScoreDoc] = {
 
     // Match all, order by distance ascending
@@ -162,13 +163,13 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
-  override def spatialSearch(point: (Double, Double), k: Int, operationName: String)
+  override def spatialSearch(point: PointType, k: Int, operationName: String)
   : Iterable[SparkScoreDoc] = {
     val shape = ctx.makePoint(point._1, point._2)
     spatialSearch(shape, k, operationName)
   }
 
-  override def bboxSearch(center: (Double, Double), radius: Double, k: Int, operationName: String)
+  override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : Iterable[SparkScoreDoc] = {
     val x = center._1
     val y = center._2
@@ -177,21 +178,20 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     spatialSearch(shape, k, operationName)
   }
 
-  override def bboxSearch(lowerLeft: (Double, Double), upperRight: (Double, Double), k: Int,
-                          operationName: String): Iterable[SparkScoreDoc] = {
+  override def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int, opName: String)
+  : Iterable[SparkScoreDoc] = {
     val lowerLeftPt = ctx.makePoint(lowerLeft._1, lowerLeft._2)
     val upperRightPt = ctx.makePoint(upperRight._1, upperRight._2)
     val shape = ctx.makeRectangle(lowerLeftPt, upperRightPt)
-    spatialSearch(shape, k, operationName)
+    spatialSearch(shape, k, opName)
   }
 }
 
 object ShapeLuceneRDDPartition {
 
-  def apply[K: ClassTag, V: ClassTag]
-  (iter: Iterator[(K, V)])
-  (implicit shapeConv: K => Shape,
-   docConv: V => Document): ShapeLuceneRDDPartition[K, V] = {
+  def apply[K: ClassTag, V: ClassTag](iter: Iterator[(K, V)])
+  (implicit shapeConv: K => Shape, docConv: V => Document)
+  : ShapeLuceneRDDPartition[K, V] = {
     new ShapeLuceneRDDPartition[K, V](iter) (classTag[K], classTag[V]) (shapeConv, docConv)
   }
 }

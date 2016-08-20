@@ -12,6 +12,7 @@ import org.zouzias.spark.lucenerdd.LuceneRDD
 
 import scala.reflect.ClassTag
 
+sc.setLogLevel("INFO")
 
 // Load all countries
 val allCountries = sqlContext.read.parquet("data/countries-poly.parquet").select("name", "shape").map(row => (row.getString(1), row.getString(0)))
@@ -32,7 +33,7 @@ val shapes = ShapeLuceneRDD(allCountries)
 shapes.cache
 
 
-val linked = shapes.linkByRadius(capitals, coords, 75, 10)
+val linked = shapes.linkByRadius(capitals, coords, 50, 10)
 linked.cache
 
 linked.map(x => (x._1, x._2.map(_.doc.textField("_1")))).foreach(println)

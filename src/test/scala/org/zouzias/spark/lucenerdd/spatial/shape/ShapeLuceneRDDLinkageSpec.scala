@@ -76,6 +76,40 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     }
   }
 
+  "ShapeLuceneRDD.linkByRadius" should "link correctly countries with capitals" in {
+
+    val Radius = 50
+    val sqlContext = new SQLContext(sc)
+    import sqlContext.implicits._
+    val countriesRDD = sqlContext.read.parquet("data/countries-poly.parquet")
+      .select("name", "shape")
+      .map(row => (row.getString(1), row.getString(0)))
+
+    pointLuceneRDD = ShapeLuceneRDD(countriesRDD)
+
+    val capitals = sqlContext.read.parquet("data/capitals.parquet")
+      .select("name", "shape")
+      .map(row => (row.getString(1), row.getString(0)))
+
+    def parseDouble(s: String): Double = try { s.toDouble } catch { case _: Throwable => 0.0 }
+
+    def coords(city: (String, String)): (Double, Double) = {
+      val str = city._1
+      val nums = str.dropWhile(x => x.compareTo('(') != 0).drop(1).dropRight(1)
+      val coords = nums.split(" ").map(_.trim)
+      (parseDouble(coords(0)), parseDouble(coords(1)))
+    }
+
+
+    val linkage = pointLuceneRDD.linkByRadius(capitals, coords, Radius)
+
+    linkage.count() should equal(capitals.count)
+
+   // val results = linkage.filter{case (cap, results) => cap._2.compareToIgnoreCase("Bern") == 0}.first()._2
+
+  }
+
+
   "ShapeLuceneRDD.linkDataFrameByKnn" should "link correctly k-nearest neighbors (knn)" in {
 
     val sqlContext = new SQLContext(sc)

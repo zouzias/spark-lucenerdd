@@ -89,7 +89,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     parts.reduce(SparkDocTopKMonoid.plus).items
   }
 
-  def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
+  private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
     mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
                             Iterable[SparkScoreDoc]): RDD[(T, List[SparkScoreDoc])] = {
     val queries = that.map(pointFunctor).collect()
@@ -144,12 +144,12 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
-                                radius: Double, topK: Int = DefaultTopK)
+  def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => PointType, radius: Double,
+    topK: Int = DefaultTopK, spatialOp: String = SpatialOperation.Intersects.getName)
   : RDD[(T, List[SparkScoreDoc])] = {
     logInfo("linkByRadius requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
-      part.circleSearch(queryPoint, radius, topK, LuceneQueryHelpers.MatchAllDocsString))
+      part.circleSearch(queryPoint, radius, topK, spatialOp))
   }
 
 

@@ -59,12 +59,12 @@ class SparkDoc(doc: Document) extends Serializable {
     numberFields.keySet
   }
 
-  def textField(fieldName: String): Option[List[String]] = {
-    stringFields.get(fieldName)
+  def textField(fieldName: String): List[String] = {
+    stringFields.getOrElse(fieldName, List.empty[String])
   }
 
-  def numericField(fieldName: String): Option[List[Number]] = {
-    numberFields.get(fieldName)
+  def numericField(fieldName: String): List[Number] = {
+    numberFields.getOrElse(fieldName, List.empty[Number])
   }
 
   override def toString: String = {

@@ -47,13 +47,19 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   override protected def getPreferredLocations(s: Partition): Seq[String] =
     partitionsRDD.preferredLocations(s)
 
+  override def cache(): LuceneRDD.this.type = {
+    this.persist(StorageLevel.MEMORY_ONLY)
+  }
+
   override def persist(newLevel: StorageLevel): this.type = {
     partitionsRDD.persist(newLevel)
+    super.persist(newLevel)
     this
   }
 
   override def unpersist(blocking: Boolean = true): this.type = {
     partitionsRDD.unpersist(blocking)
+    super.unpersist(blocking)
     this
   }
 
@@ -198,12 +204,9 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
         val results = partition.query(qr, topK).map(x => SparkDocTopKMonoid.build(x))
-        if (results.nonEmpty) {
-          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
-        }
-        else {
-          (index.toLong, SparkDocTopKMonoid.zero)
-        }
+
+        (index.toLong, results.reduceOption(SparkDocTopKMonoid.plus)
+          .getOrElse(SparkDocTopKMonoid.zero))
       }
     }
 

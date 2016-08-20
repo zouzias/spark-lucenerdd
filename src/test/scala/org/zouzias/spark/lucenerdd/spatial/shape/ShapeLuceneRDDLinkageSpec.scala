@@ -65,7 +65,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     linkage.collect().foreach{ case (city, knnResults) =>
 
       // top result should be linked with its query result
-      city._2 should equal(knnResults.head.doc.textField("_1").get.head)
+      city._2 should equal(knnResults.head.doc.textField("_1").head)
 
       // Must return only at most k results
       knnResults.length should be <= k
@@ -93,7 +93,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     linkage.collect().foreach { case (city, knnResults) =>
 
       // top result should be linked with its query result
-      city.getString(0) should equal(knnResults.head.doc.textField("_1").get.head)
+      city.getString(0) should equal(knnResults.head.doc.textField("_1").head)
 
       // Must return only at most k results
       knnResults.length should be <= k

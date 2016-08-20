@@ -88,6 +88,36 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     parts.reduce(SparkDocTopKMonoid.plus).items
   }
 
+  def partitionMapper(partition: AbstractShapeLuceneRDDPartition[K, V],
+    queryPoint: (Double, Double),
+    f: ((Double, Double), AbstractShapeLuceneRDDPartition[K, V]) =>
+      Iterable[SparkScoreDoc]): TopK[SparkScoreDoc] = {
+    f(queryPoint, partition).map(x => SparkDocTopKMonoid.build(x)).reduce(SparkDocTopKMonoid.plus)
+  }
+
+  def linker[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
+    mapper: ( (Double, Double), AbstractShapeLuceneRDDPartition[K, V]) =>
+                            Iterable[SparkScoreDoc]): RDD[(T, List[SparkScoreDoc])] = {
+    val queries = that.map(pointFunctor).collect()
+    val queriesB = partitionsRDD.context.broadcast(queries)
+
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
+      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
+        val results = mapper(queryPoint, partition)
+        if (results.nonEmpty) {
+          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
+        }
+        else {
+          (index.toLong, SparkDocTopKMonoid.zero)
+        }
+      }
+    }
+
+    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
+    that.zipWithIndex.map(_.swap).join(results)
+      .map{ case (_, joined) => (joined._1, joined._2.items)}
+  }
+
   /**
    * Link entities based on k-nearest neighbors (Knn)
    *
@@ -105,51 +135,29 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                            topK: Int = DefaultTopK)
   : RDD[(T, List[SparkScoreDoc])] = {
     logInfo("linkByKnn requested")
-    val queries = that.map(pointFunctor).collect()
-    val queriesB = partitionsRDD.context.broadcast(queries)
-
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = partition.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString)
-            .map(x => SparkDocTopKMonoid.build(x))
-        if (results.nonEmpty) {
-          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
-        }
-        else {
-          (index.toLong, SparkDocTopKMonoid.zero)
-        }
-      }
-    }
-
-    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
-    that.zipWithIndex.map(_.swap).join(results)
-      .map{ case (_, joined) => (joined._1, joined._2.items)}
+    linker[T](that, pointFunctor, (queryPoint, part) =>
+      part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString))
   }
 
+  /**
+   * Link entities if their shapes are within a distance in kilometers (km)
+   *
+   * Links this and that based on distance threshold
+   *
+   * @param that An RDD of entities to be linked
+   * @param pointFunctor Function that generates a point from each element of other
+   * @tparam T A type
+   * @return an RDD of Tuple2 that contains the linked results
+   *
+   * Note: Currently the query coordinates of the other RDD are collected to the driver and
+   * broadcast to the workers.
+   */
   def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => (Double, Double),
                                 radius: Double, topK: Int = DefaultTopK)
   : RDD[(T, List[SparkScoreDoc])] = {
-    logInfo("linkByKnn requested")
-    val queries = that.map(pointFunctor).collect()
-    val queriesB = partitionsRDD.context.broadcast(queries)
-
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = partition.circleSearch(queryPoint, radius, topK,
-          SpatialOperation.Intersects.getName)
-          .map(x => SparkDocTopKMonoid.build(x))
-        if (results.nonEmpty) {
-          (index.toLong, results.reduce(SparkDocTopKMonoid.plus))
-        }
-        else {
-          (index.toLong, SparkDocTopKMonoid.zero)
-        }
-      }
-    }
-
-    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
-    that.zipWithIndex.map(_.swap).join(results)
-      .map{ case (_, joined) => (joined._1, joined._2.items)}
+    logInfo("linkByRadius requested")
+    linker[T](that, pointFunctor, (queryPoint, part) =>
+      part.circleSearch(queryPoint, radius, topK, LuceneQueryHelpers.MatchAllDocsString))
   }
 
 

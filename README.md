@@ -79,7 +79,7 @@ Implicit conversions for the primitive types (Int, Float, Double, Long, String) 
 
 ### Custom Case Classes
 
-If you want to use your own custom class with `LuceneRDD` you can do it provided that your class member types are one of the above primitive types (Int, Float, Double, Long, String).
+If you want to use your own custom class with `LuceneRDD` you can do it provided that your class member types are one of the primitive types (Int, Float, Double, Long, String).
 
 For more details, see `LuceneRDDCustomcaseClassImplicits` under the tests directory.
 

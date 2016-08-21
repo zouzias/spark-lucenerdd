@@ -92,9 +92,16 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
     mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
                             Iterable[SparkScoreDoc]): RDD[(T, List[SparkScoreDoc])] = {
-    val queries = that.map(pointFunctor).collect()
-    val queriesB = partitionsRDD.context.broadcast(queries)
+    logDebug("Linker requested")
 
+    logDebug("Collecting query points to driver")
+    val queries = that.map(pointFunctor).collect()
+    logDebug("Query points collected to driver successfully")
+    logDebug("Broadcasting query points")
+    val queriesB = partitionsRDD.context.broadcast(queries)
+    logDebug("Query points broadcasting was successfully")
+
+    logDebug("Compute topK linkage per partition")
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
         val results = mapper(queryPoint, partition).map(x => SparkDocTopKMonoid.build(x))
@@ -104,6 +111,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
       }
     }
 
+    logDebug("Merge topK linkage results")
     val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
     that.zipWithIndex.map(_.swap).join(results)
       .map{ case (_, joined) => (joined._1, joined._2.items)}
@@ -167,8 +175,28 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => PointType,
                          topK: Int = DefaultTopK)
   : RDD[(Row, List[SparkScoreDoc])] = {
-    logInfo("linkDataFrame requested")
+    logInfo("linkDataFrameByKnn requested")
     linkByKnn[Row](other.rdd, searchQueryGen, topK)
+  }
+
+  /**
+   * Link entities if their shapes are within a distance in kilometers (km)
+   *
+   * Links this and that based on distance threshold
+   *
+   * @param other DataFrame of entities to be linked
+   * @param pointFunctor Function that generates a point from each element of other
+   * @return an RDD of Tuple2 that contains the linked results
+   *
+   * Note: Currently the query coordinates of the other RDD are collected to the driver and
+   * broadcast to the workers.
+   */
+  def linkDataFrameByRadius(other: DataFrame, pointFunctor: Row => PointType,
+                            radius: Double, topK: Int = DefaultTopK,
+                            spatialOp: String = SpatialOperation.Intersects.getName)
+  : RDD[(Row, List[SparkScoreDoc])] = {
+    logInfo("linkDataFrameByRadius requested")
+    linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp)
   }
 
   /**

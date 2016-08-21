@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.testing
 
-import org.zouzias.spark.lucenerdd.models.SparkDoc
+import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkScoreDoc}
 
 trait LuceneRDDTestUtils {
 
@@ -54,6 +54,11 @@ trait LuceneRDDTestUtils {
 
   protected def docTextFieldEq(doc: SparkDoc, fieldName: String, fieldValue: String): Boolean = {
     doc.textField(fieldName).forall(_.contains(fieldValue))
+  }
+
+  protected def docTextFieldEq(docs: List[SparkScoreDoc], fieldName: String, fieldValue: String)
+  : Boolean = {
+    docs.exists(x => x.doc.textField(fieldName).forall(_.contains(fieldValue)))
   }
 
   // Check if sequence is sorted in descending order

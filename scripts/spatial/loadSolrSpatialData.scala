@@ -12,12 +12,13 @@ import org.zouzias.spark.lucenerdd.LuceneRDD
 
 import scala.reflect.ClassTag
 
+sc.setLogLevel("INFO")
 
 // Load all countries
 val allCountries = sqlContext.read.parquet("data/countries-poly.parquet").select("name", "shape").map(row => (row.getString(1), row.getString(0)))
 
 // Load all cities
-val citiesPoint = sqlContext.read.parquet("data/world-cities-points.parquet").select("city", "shape").map(row => (row.getString(1), row.getString(0)))
+val capitals = sqlContext.read.parquet("data/capitals.parquet").select("name", "shape").map(row => (row.getString(1), row.getString(0)))
 
 def parseDouble(s: String): Double = try { s.toDouble } catch { case _: Throwable => 0.0 }
 
@@ -32,7 +33,7 @@ val shapes = ShapeLuceneRDD(allCountries)
 shapes.cache
 
 
-val linked = shapes.linkByKnn(citiesPoint, coords, 3)
+val linked = shapes.linkByRadius(capitals, coords, 50, 10)
 linked.cache
 
-linked.map(x => (x._1, x._2.head.doc.textField("_1"))).foreach(println)
+linked.map(x => (x._1, x._2.map(_.doc.textField("_1")))).foreach(println)

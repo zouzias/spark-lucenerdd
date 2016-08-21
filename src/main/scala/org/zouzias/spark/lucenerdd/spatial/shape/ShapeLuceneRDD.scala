@@ -52,13 +52,19 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   override protected def getPreferredLocations(s: Partition): Seq[String] =
     partitionsRDD.preferredLocations(s)
 
+  override def cache(): this.type = {
+    this.persist(StorageLevel.MEMORY_ONLY)
+  }
+
   override def persist(newLevel: StorageLevel): this.type = {
     partitionsRDD.persist(newLevel)
+    super.persist(newLevel)
     this
   }
 
   override def unpersist(blocking: Boolean = true): this.type = {
     partitionsRDD.unpersist(blocking)
+    super.unpersist(blocking)
     this
   }
 

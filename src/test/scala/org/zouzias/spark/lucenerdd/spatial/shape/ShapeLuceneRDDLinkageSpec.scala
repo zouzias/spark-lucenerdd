@@ -78,7 +78,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
   "ShapeLuceneRDD.linkByRadius" should "link correctly countries with capitals" in {
 
-    val Radius = 50
+    val Radius = 50.0
     val sqlContext = new SQLContext(sc)
     import sqlContext.implicits._
     val countriesRDD = sqlContext.read.parquet("data/countries-poly.parquet")
@@ -91,21 +91,25 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       .select("name", "shape")
       .map(row => (row.getString(1), row.getString(0)))
 
-    def parseDouble(s: String): Double = try { s.toDouble } catch { case _: Throwable => 0.0 }
-
     def coords(city: (String, String)): (Double, Double) = {
       val str = city._1
       val nums = str.dropWhile(x => x.compareTo('(') != 0).drop(1).dropRight(1)
       val coords = nums.split(" ").map(_.trim)
-      (parseDouble(coords(0)), parseDouble(coords(1)))
+      (coords(0).toDouble, coords(1).toDouble)
     }
 
+    val linkage = pointLuceneRDD.linkByRadius(capitals, coords, Radius).collect()
 
-    val linkage = pointLuceneRDD.linkByRadius(capitals, coords, Radius)
+    linkage.size should equal(capitals.count)
 
-    linkage.count() should equal(capitals.count)
-
-   // val results = linkage.filter{case (cap, results) => cap._2.compareToIgnoreCase("Bern") == 0}.first()._2
+    linkage.exists{case (cap, results) =>
+      cap._2 == "Bern" && docTextFieldEq(results, "_1", "Switzerland")} should equal(true)
+    linkage.exists{case (cap, results) =>
+      cap._2 == "Berlin" && docTextFieldEq(results, "_1", "Germany")} should equal(true)
+    linkage.exists{case (cap, results) =>
+      cap._2 == "Ottawa" && docTextFieldEq(results, "_1", "Canada")} should equal(true)
+    linkage.exists{case (cap, results) =>
+      cap._2 == "Paris" && docTextFieldEq(results, "_1", "France")} should equal(true)
 
   }
 
@@ -127,7 +131,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     linkage.collect().foreach { case (city, knnResults) =>
 
       // top result should be linked with its query result
-      city.getString(0) should equal(knnResults.head.doc.textField("_1").head)
+      docTextFieldEq(knnResults, "_1", city.getString(0)) should equal(true)
 
       // Must return only at most k results
       knnResults.length should be <= k

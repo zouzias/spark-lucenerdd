@@ -91,6 +91,11 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       .select("name", "shape")
       .map(row => (row.getString(1), row.getString(0)))
 
+    /**
+     * Convert WKT Point to (Double, Double)
+     * @param city
+     * @return
+     */
     def coords(city: (String, String)): (Double, Double) = {
       val str = city._1
       val nums = str.dropWhile(x => x.compareTo('(') != 0).drop(1).dropRight(1)

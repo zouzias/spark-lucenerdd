@@ -55,6 +55,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
     val citiesRDD = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
+    pointLuceneRDD.cache()
 
     val linker = (x: ((Double, Double), String)) => x._1
 
@@ -86,6 +87,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       .map(row => (row.getString(1), row.getString(0)))
 
     pointLuceneRDD = ShapeLuceneRDD(countriesRDD)
+    pointLuceneRDD.cache()
 
     val capitals = sqlContext.read.parquet("data/capitals.parquet")
       .select("name", "shape")
@@ -128,6 +130,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       .map(row => (row.getString(1), row.getString(0)))
 
     pointLuceneRDD = ShapeLuceneRDD(countriesRDD)
+    pointLuceneRDD.cache()
 
     val capitals = sqlContext.read.parquet("data/capitals.parquet").select("name", "shape")
 
@@ -166,6 +169,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     import sqlContext.implicits._
     val citiesRDD = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
+    pointLuceneRDD.cache()
 
     val citiesDF = citiesRDD.map(x => City(x._2, x._1._1, x._1._2)).toDF
     val linker = (x: Row) => (x.getDouble(1), x.getDouble(2))

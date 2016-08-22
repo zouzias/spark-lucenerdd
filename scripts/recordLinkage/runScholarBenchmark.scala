@@ -55,7 +55,7 @@ val linkedResults = dblp.link(scholar, linker.tupled, 3)
 
 import sqlContext.implicits._
 
-val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (scholar, topDocs) => (topDocs.head.doc.textField("_1").get.head, scholar._1)}.toDF("idDBLP", "idScholar")
+val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (scholar, topDocs) => (topDocs.head.doc.textField("_1").head, scholar._1)}.toDF("idDBLP", "idScholar")
 
 val correctHits: Double = linkageResults.join(groundTruthDF, groundTruthDF.col("idDBLP").equalTo(linkageResults("idDBLP")) &&  groundTruthDF.col("idScholar").equalTo(linkageResults("idScholar"))).count
 val total: Double = groundTruthDF.count

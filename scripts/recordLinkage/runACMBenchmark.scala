@@ -27,7 +27,7 @@ val groundTruthDF = sqlContext.read.format("com.databricks.spark.csv").option("h
 
 val acm = acmDF.map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3), row.get(4).toString))
 val dblp2 = LuceneRDD(dblp2DF.map( row => (row.get(0).toString, row.getString(1), row.getString(2), row.getString(3), row.get(4).toString)))
-
+dblp2.cache()
 
 // Link is the author tokens or title tokens match. Combine all tokens by an OR clause
 val linker: (String, String, String, String, String) => String = {
@@ -45,11 +45,11 @@ val linker: (String, String, String, String, String) => String = {
 }
 
 
-val linkedResults = dblp2.link(acm, linker.tupled, 3)
+val linkedResults = dblp2.link(acm, linker.tupled, 10)
 
 import sqlContext.implicits._
 
-val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (acm, topDocs) => (topDocs.head.doc.textField("_1").get.head, acm._1.toInt)}.toDF("idDBLP", "idACM")
+val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (acm, topDocs) => (topDocs.head.doc.textField("_1").head, acm._1.toInt)}.toDF("idDBLP", "idACM")
 
 val correctHits: Double = linkageResults.join(groundTruthDF, groundTruthDF.col("idDBLP").equalTo(linkageResults("idDBLP")) &&  groundTruthDF.col("idACM").equalTo(linkageResults("idACM"))).count
 val total: Double = groundTruthDF.count

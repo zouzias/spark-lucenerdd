@@ -58,7 +58,7 @@ val linkedResults = googleLuceneRDD.link(amazon, linker.tupled, 3)
 
 import sqlContext.implicits._
 
-val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (left, topDocs) => (topDocs.head.doc.textField("_1").get.head, left._1)}.toDF("idGoogleBase", "idAmazon")
+val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (left, topDocs) => (topDocs.head.doc.textField("_1").head, left._1)}.toDF("idGoogleBase", "idAmazon")
 
 val correctHits: Double = linkageResults.join(groundTruthDF, groundTruthDF.col("idAmazon").equalTo(linkageResults("idAmazon")) &&  groundTruthDF.col("idGoogleBase").equalTo(linkageResults("idGoogleBase"))).count
 val total: Double = groundTruthDF.count

@@ -49,7 +49,7 @@ val linkedResults = buy.link(abt, linker.tupled, 3)
 
 import sqlContext.implicits._
 
-val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (abtId, topDocs) => (topDocs.head.doc.textField("_1").get.head, abtId._1.toInt)}.toDF("idBuy", "idAbt")
+val linkageResults = linkedResults.filter(_._2.nonEmpty).map{ case (abtId, topDocs) => (topDocs.head.doc.textField("_1").head, abtId._1.toInt)}.toDF("idBuy", "idAbt")
 
 val correctHits: Double = linkageResults.join(groundTruthDF, groundTruthDF.col("idAbt").equalTo(linkageResults("idAbt")) &&  groundTruthDF.col("idBuy").equalTo(linkageResults("idBuy"))).count
 val total: Double = groundTruthDF.count

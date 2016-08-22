@@ -83,8 +83,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   private def docResultsAggregator(f: AbstractLuceneRDDPartition[T] => Iterable[SparkScoreDoc])
   : Iterable[SparkScoreDoc] = {
-    val parts = partitionsRDD.map(f(_)).map(x => SparkDocTopKMonoid.build(x))
-    parts.reduce(SparkDocTopKMonoid.plus(_, _)).items
+    val parts = partitionsRDD.map(f).map(x => SparkDocTopKMonoid.build(x))
+    parts.reduce(SparkDocTopKMonoid.plus).items
   }
 
   /**
@@ -95,7 +95,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   private def facetResultsAggregator(f: AbstractLuceneRDDPartition[T] => SparkFacetResult)
   : SparkFacetResult = {
-    partitionsRDD.map(f(_)).reduce( (x, y) => SparkFacetResultMonoid.plus(x, y))
+    partitionsRDD.map(f(_)).reduce(SparkFacetResultMonoid.plus)
   }
 
 

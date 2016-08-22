@@ -23,13 +23,14 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 // Step 1: Query prefixes of countries
 // Shooting for Greece, Germany, Spain and Italy
-val leftCountries = Array("gree", "germa", "spa", "ita")
+val leftCountries = Array("gree", "germa", "belgi", "ita")
 val leftCountriesRDD: RDD[String] = sc.parallelize(leftCountries)
 
 // Step 2: Load all country names
 val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
   .map(_.toLowerCase()).toSeq)
 val luceneRDD = LuceneRDD(countries)
+luceneRDD.cache()
 
 // Step 3: Define you linkage function (prefix)
 def fuzzyLinker(country: String): String = {

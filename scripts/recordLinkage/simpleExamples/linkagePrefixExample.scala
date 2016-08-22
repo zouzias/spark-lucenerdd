@@ -23,7 +23,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 // Step 1: Query prefixes of countries
 // Shooting for Greece, Russian, Argentina and Belgium
-val leftCountries = Array("gre", "ru", "ar", "be")
+val leftCountries = Array("gre", "ru", "ar", "bel")
 val leftCountriesRDD: RDD[String] = sc.parallelize(leftCountries)
 
 // Step 2: Load all country names

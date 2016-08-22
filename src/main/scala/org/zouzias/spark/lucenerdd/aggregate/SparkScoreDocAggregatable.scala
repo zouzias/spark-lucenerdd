@@ -27,5 +27,5 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
  */
 trait SparkScoreDocAggregatable extends LuceneRDDConfigurable {
 
-  protected val SparkDocTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)
+  protected val SparkDocAscendingTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)
 }

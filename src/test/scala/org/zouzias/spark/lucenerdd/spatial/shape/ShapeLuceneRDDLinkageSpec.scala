@@ -61,7 +61,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
     val linkage = pointLuceneRDD.linkByKnn(citiesRDD, linker, k)
 
-    linkage.count() should equal(cities.size)
+    linkage.count() should equal(cities.length)
 
     linkage.collect().foreach{ case (city, knnResults) =>
 
@@ -120,6 +120,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
   }
 
+  /*
   "ShapeLuceneRDD.linkDataFrameByRadius" should "link correctly countries with capitals" in {
 
     val Radius = 50.0
@@ -134,11 +135,6 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
     val capitals = sqlContext.read.parquet("data/capitals.parquet").select("name", "shape")
 
-    /**
-     * Convert Row to (Double, Double)
-     * @param row
-     * @return
-     */
     def rowToCoords(row: Row): (Double, Double) = {
       val str = row.getString(1)
       val nums = str.dropWhile(x => x.compareTo('(') != 0).drop(1).dropRight(1)
@@ -161,6 +157,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       cap.getString(cap.fieldIndex("name")) == "Paris" && docTextFieldEq(results, "_1", "France")} should equal(true)
     // scalastyle: on
   }
+  */
 
 
   "ShapeLuceneRDD.linkDataFrameByKnn" should "link correctly k-nearest neighbors (knn)" in {

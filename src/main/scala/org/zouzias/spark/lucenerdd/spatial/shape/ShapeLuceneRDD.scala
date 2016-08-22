@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
  * ShapeLuceneRDD for geospatial and full-text search queries
  *
  * @param partitionsRDD
- * @tparam K Type containing the geospatial information (must be implicitly convertet to [[Shape]])
+ * @tparam K Type containing the geospatial information (must be implicitly converted to [[Shape]])
  * @tparam V Type containing remaining information (must be implicitly converted to [[Document]])
  */
 class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
@@ -81,7 +81,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   setName("ShapeLuceneRDD")
 
   /**
-   * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocTopKMonoid]]
+   * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocAscendingTopKMonoid]]
    *
    * TODO: Move to aggregations
    *
@@ -91,8 +91,8 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   private def docResultsAggregator
   (f: AbstractShapeLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
   : List[SparkScoreDoc] = {
-    val parts = partitionsRDD.map(f(_)).map(x => SparkDocTopKMonoid.build(x))
-    parts.reduce(SparkDocTopKMonoid.plus).items
+    val parts = partitionsRDD.map(f(_)).map(x => SparkDocAscendingTopKMonoid.build(x))
+    parts.reduce(SparkDocAscendingTopKMonoid.plus).items
   }
 
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
@@ -110,15 +110,16 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     logDebug("Compute topK linkage per partition")
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = mapper(queryPoint, partition).map(x => SparkDocTopKMonoid.build(x))
-          .reduceOption(SparkDocTopKMonoid.plus).getOrElse(SparkDocTopKMonoid.zero)
+        val results = mapper(queryPoint, partition).map(x => SparkDocAscendingTopKMonoid.build(x))
+          .reduceOption(SparkDocAscendingTopKMonoid.plus)
+          .getOrElse(SparkDocAscendingTopKMonoid.zero)
 
         (index.toLong, results)
       }
     }
 
     logDebug("Merge topK linkage results")
-    val results = resultsByPart.reduceByKey(SparkDocTopKMonoid.plus)
+    val results = resultsByPart.reduceByKey(SparkDocAscendingTopKMonoid.plus)
     that.zipWithIndex.map(_.swap).join(results)
       .map{ case (_, joined) => (joined._1, joined._2.items)}
   }

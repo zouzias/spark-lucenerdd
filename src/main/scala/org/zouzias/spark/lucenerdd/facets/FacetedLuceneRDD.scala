@@ -96,7 +96,7 @@ object FacetedLuceneRDD {
   val FacetNumericFieldSuffix = "_numFacet"
 
   /**
-   * Instantiate a LuceneRDD given an RDD[T]
+   * Instantiate a FacetedLuceneRDD given an RDD[T]
    *
    * @param elems RDD of type T
    * @tparam T Generic type
@@ -111,7 +111,7 @@ object FacetedLuceneRDD {
   }
 
   /**
-   * Instantiate a LuceneRDD with an iterable
+   * Instantiate a FacetedLuceneRDD with an iterable
    *
    * @param elems
    * @param sc

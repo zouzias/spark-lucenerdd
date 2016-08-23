@@ -73,7 +73,7 @@ pomExtra := (
   </developers>
 )
 
-val luceneV = "5.5.1"
+val luceneV = "5.5.2"
 
 
 spName := "zouzias/spark-lucenerdd"

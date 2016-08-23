@@ -13,15 +13,15 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 
 |Operation| Syntax| Description |
 |-------|---------------------|----------|
-|Term query     | `LuceneRDD.termQuery(field, query, topK)`| Exact term search |
-|Fuzzy query | `LuceneRDD.fuzzyQuery(field, query, maxEdits, topK)`| Fuzzy term search |
-|Phrase query | `LuceneRDD.phraseQuery(field, query, topK)` | Phrase search |
-|Prefix query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
-|Query parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
-|Faceted search| `FacetedLuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
-|[Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)| `LuceneRDD.link(otherEntity: RDD[T], linkageFunction: T => searchQuery, topK)`| Record linkage via Lucene queries|
-|Circle search| `ShapeLuceneRDD.circleSearch((x,y), radius, topK)` | Search within radius |
-|Bbox search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |
+|Term Query     | `LuceneRDD.termQuery(field, query, topK)`| Exact term search |
+|Fuzzy Query | `LuceneRDD.fuzzyQuery(field, query, maxEdits, topK)`| Fuzzy term search |
+|Phrase Query | `LuceneRDD.phraseQuery(field, query, topK)` | Phrase search |
+|Prefix Query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
+|Query Parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
+|Faceted Search| `FacetedLuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
+|[Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)| `LuceneRDD.link(otherEntity: RDD[T], linkageFct: T => searchQuery, topK)`| Record linkage via Lucene queries|
+|Circle Search| `ShapeLuceneRDD.circleSearch((x,y), radius, topK)` | Search within radius |
+|Bbox Search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |
 |Spatial Linkage| `ShapeLuceneRDD.linkByRadius(RDD[T], linkage: T => (x,y), radius, topK)` | Spatial radius linkage|
 
 Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc. 

@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd
+package org.zouzias.spark.lucenerdd.facets
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.zouzias.spark.lucenerdd.LuceneRDDKryoRegistrator
 
-class LuceneRDDFacetSpec extends FlatSpec
+class FacetedLuceneRDDFacetSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {
@@ -39,7 +40,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.facetQuery" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
     val facetResults = luceneRDD.facetQuery("*:*", "_1")._2
 
     facetResults.facets.size should equal (3)
@@ -53,7 +54,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.facetQuery" should "compute facets correctly with ints" in {
     val words = Array(10, 10, 10, 10, 22, 22, 22, 33, 33)
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
     val facetResults = luceneRDD.facetQuery("*:*", "_1")._2
 
     facetResults.facets.size should equal (3)
@@ -69,7 +70,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.facetQuery" should "compute facets correctly with doubles" in {
     val words = Array(10.5D, 10.5D, 10.5D, 10.5D, 22.2D, 22.2D, 22.2D, 33.2D, 33.2D)
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
     val facetResults = luceneRDD.facetQuery("*:*", "_1")._2
 
     facetResults.facets.size should equal (3)
@@ -85,7 +86,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.facetQueries" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
 
     val facetResults = luceneRDD.facetQueries("*:*", Seq("_1"))._2
 
@@ -100,7 +101,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.sortedFacets" should "return facets sorted by decreasing order" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
 
     val sortedFacetCounts = luceneRDD.facetQuery("*:*", "_1")._2.sortedFacets().map(_._2)
     sortedDesc(sortedFacetCounts) should equal(true)
@@ -111,7 +112,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.facetQuery" should "compute facets with prefix search" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
     val results = luceneRDD.facetQuery("_1:aa*", "_1")
     val facetResults = results._2
 
@@ -126,7 +127,7 @@ class LuceneRDDFacetSpec extends FlatSpec
   "LuceneRDD.facetQuery" should "compute facets with term search" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "aaaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
     val results = luceneRDD.facetQuery("_1:aaa", "_1")
     val facetResults = results._2
 
@@ -149,7 +150,7 @@ class LuceneRDDFacetSpec extends FlatSpec
     val words = Array(("aaa", "aaa1"), ("aaa", "aaa2"), ("aaa", "aaa3"), ("aaa", "aaa3"),
       ("aaaa", "aaa3"), ("bb", "cc1"), ("bb", "cc1"), ("bb", "cc1"), ("cc", "cc2"), ("cc", "cc2"))
     val rdd = sc.parallelize(words)
-    val luceneRDD = LuceneRDD(rdd)
+    val luceneRDD = FacetedLuceneRDD(rdd)
     val results = luceneRDD.facetQuery("_1:aaa", "_2")
     val facetResults = results._2
 

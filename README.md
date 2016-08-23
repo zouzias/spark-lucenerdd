@@ -18,8 +18,11 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 |Phrase query | `LuceneRDD.phraseQuery(field, query, topK)` | Phrase search |
 |Prefix query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
 |Query parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
-|Faceted search| `LuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
+|Faceted search| `FacetedLuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
 |[Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)| `LuceneRDD.link(otherEntity: RDD[T], linkageFunction: T => searchQuery, topK)`| Record linkage via Lucene queries|
+|Circle search| `ShapeLuceneRDD.circleSearch((x,y), radius, topK)` | Search within radius |
+|Bbox search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |
+|Spatial Linkage| `ShapeLuceneRDD.linkByRadius(RDD[T], linkage: T => (x,y), radius, topK)` | Spatial radius linkage|
 
 Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc. 
 For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). 

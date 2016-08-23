@@ -82,21 +82,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @param k number of documents to return
    * @return
    */
-  private def resultsAggregator(f: AbstractLuceneRDDPartition[T] => Iterable[SparkScoreDoc],
+  protected def resultsAggregator(f: AbstractLuceneRDDPartition[T] => Iterable[SparkScoreDoc],
     k: Int): Iterable[SparkScoreDoc] = {
     val parts = partitionsRDD.map(f).map(x => SparkDocAscendingTopKMonoid.build(x))
     parts.reduce(SparkDocAscendingTopKMonoid.plus).items.reverse.take(k)
-  }
-
-  /**
-   * Aggregates faceted search results using monoidal structure [[SparkFacetResultMonoid]]
-   *
-   * @param f a function that computes faceted search results per partition
-   * @return faceted search results
-   */
-  private def facetResultsAggregator(f: AbstractLuceneRDDPartition[T] => SparkFacetResult)
-  : SparkFacetResult = {
-    partitionsRDD.map(f(_)).reduce(SparkFacetResultMonoid.plus)
   }
 
 
@@ -132,44 +121,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     resultsAggregator(_.query(searchString, topK), topK)
   }
 
-  /**
-   * Faceted query
-   *
-   * @param searchString
-   * @param facetField
-   * @param topK
-   * @return
-   */
-  def facetQuery(searchString: String,
-                 facetField: String,
-                 topK: Int = DefaultTopK,
-                 facetNum: Int = DefaultFacetNum
-  ): (Iterable[SparkScoreDoc], SparkFacetResult) = {
-    val aggrTopDocs = resultsAggregator(_.query(searchString, topK), topK)
-    val aggrFacets = facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum))
-    (aggrTopDocs, aggrFacets)
-  }
-
-  /**
-   * Faceted query with multiple facets
-   *
-   * @param searchString
-   * @param facetFields
-   * @param topK
-   * @return
-   */
-  def facetQueries(searchString: String,
-                 facetFields: Seq[String],
-                 topK: Int = DefaultTopK,
-                 facetNum: Int = DefaultFacetNum)
-  : (Iterable[SparkScoreDoc], Map[String, SparkFacetResult]) = {
-    logInfo(s"Faceted query on facet fields ${facetFields.mkString(",")}...")
-    val aggrTopDocs = resultsAggregator(_.query(searchString, topK), topK)
-    val aggrFacets = facetFields.map { case facetField =>
-      (facetField, facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum)))
-    }.toMap[String, SparkFacetResult]
-    (aggrTopDocs, aggrFacets)
-  }
 
   /**
    * Entity linkage via Lucene query over all elements of an RDD.

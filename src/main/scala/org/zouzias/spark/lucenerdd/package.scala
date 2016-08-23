@@ -27,45 +27,33 @@ package object lucenerdd {
   private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
 
-  private def addTextFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
-    if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
-      doc.add(new FacetField(s"${fieldName}${LuceneRDD.FacetTextFieldSuffix}",
-        fieldValue))
-    }
-  }
-
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
     doc.add(new IntField(DefaultFieldName, v, Stored))
-    addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
     doc.add(new LongField(DefaultFieldName, v, Stored))
-    addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
     doc.add(new DoubleField(DefaultFieldName, v, Stored))
-    addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
     doc.add(new FloatField(DefaultFieldName, v, Stored))
-    addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
     doc.add(new TextField(DefaultFieldName, s, Stored))
-    addTextFacetField(doc, DefaultFieldName, s)
     doc
   }
 
@@ -77,23 +65,14 @@ package object lucenerdd {
     s match {
       case x: String =>
         doc.add(new TextField(fieldName, x, Stored))
-        addTextFacetField(doc, fieldName, x)
       case x: Long =>
         doc.add(new LongField(fieldName, x, Stored))
-        doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
-          x))
       case x: Int =>
         doc.add(new IntField(fieldName, x, Stored))
-        doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
-          x.toLong))
       case x: Float =>
         doc.add(new FloatField(fieldName, x, Stored))
-        doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
-          x))
       case x: Double =>
         doc.add(new DoubleField(fieldName, x, Stored))
-        doc.add(new DoubleDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
-          x))
     }
     doc
   }

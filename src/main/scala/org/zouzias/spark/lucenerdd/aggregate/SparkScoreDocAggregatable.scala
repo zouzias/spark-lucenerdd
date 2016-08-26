@@ -21,11 +21,11 @@ import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
- * TopK monoid to aggregate [[org.zouzias.spark.lucenerdd.models.SparkScoreDoc]]
+ * TopK monoid to aggregate the top-k documents [[SparkScoreDoc]] from the executors to the driver
  *
- * Used to aggregate the top-k documents from the executors to the driver
  */
 trait SparkScoreDocAggregatable extends LuceneRDDConfigurable {
 
   protected val SparkDocAscendingTopKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)
+
 }

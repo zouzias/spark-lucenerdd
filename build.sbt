@@ -91,11 +91,11 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val specs2_core               = "org.specs2"                     %% "specs2-core"             % "2.3.11" % "test"
+val specs2_core               = "org.specs2"                     %% "specs2-core"             % "2.3.13" % "test"
 val scala_check               = "org.scalacheck"                 %% "scalacheck"              % "1.12.2" % "test"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6" % "test"
 
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.0"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.1"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 
@@ -124,7 +124,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.3.3"
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.4.4"
     % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )

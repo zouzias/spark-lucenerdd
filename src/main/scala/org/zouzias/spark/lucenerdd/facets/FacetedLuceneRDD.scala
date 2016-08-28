@@ -20,6 +20,7 @@ import org.apache.lucene.document.Document
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
@@ -35,6 +36,22 @@ class FacetedLuceneRDD[T: ClassTag]
   extends LuceneRDD[T](partitionsRDD) {
 
   setName("FacetedLuceneRDD")
+
+  override def cache(): this.type = {
+    this.persist(StorageLevel.MEMORY_ONLY)
+  }
+
+  override def persist(newLevel: StorageLevel): this.type = {
+    partitionsRDD.persist(newLevel)
+    super.persist(newLevel)
+    this
+  }
+
+  override def unpersist(blocking: Boolean = true): this.type = {
+    partitionsRDD.unpersist(blocking)
+    super.unpersist(blocking)
+    this
+  }
 
   /**
    * Aggregates faceted search results using monoidal structure [[SparkFacetResultMonoid]]

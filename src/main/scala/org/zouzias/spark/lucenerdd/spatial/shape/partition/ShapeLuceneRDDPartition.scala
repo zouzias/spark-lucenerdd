@@ -23,6 +23,7 @@ import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
+import org.joda.time.DateTime
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
@@ -60,6 +61,8 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
+  private val startTime = new DateTime(System.currentTimeMillis())
+  logInfo(s"Indexing process initiated at ${startTime}...")
   iterIndex.foreach { case (key, value) =>
     // (implicitly) convert type K to Shape and V to a Lucene document
     val doc = docConversion(value)
@@ -67,6 +70,9 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     val docWithLocation = decorateWithLocation(doc, Seq(shape))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
   }
+  private val endTime = new DateTime(System.currentTimeMillis())
+  logInfo(s"Indexing process completed at ${endTime}...")
+  logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()

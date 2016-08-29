@@ -17,11 +17,14 @@
 
 package org.zouzias.spark.lucenerdd.partition
 
+import java.util.Date
+
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search._
 import org.apache.spark.Logging
+import org.joda.time.DateTime
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
@@ -41,13 +44,16 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
-  logInfo("Indexing process initiated...")
+  private val startTime = new DateTime(System.currentTimeMillis())
+  logInfo(s"Indexing process initiated at ${startTime}...")
   iterIndex.foreach { case elem =>
     // (implicitly) convert type T to Lucene document
     val doc = docConversion(elem)
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
   }
-  logInfo("Indexing process completed...")
+  private val endTime = new DateTime(System.currentTimeMillis())
+  logInfo(s"Indexing process completed at ${endTime}...")
+  logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()

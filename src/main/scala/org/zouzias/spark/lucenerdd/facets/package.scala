@@ -30,7 +30,7 @@ package object facets {
 
   private def addTextFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
     if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
-      doc.add(new FacetField(s"${fieldName}${LuceneRDD.FacetTextFieldSuffix}",
+      doc.add(new FacetField(s"${fieldName}${FacetedLuceneRDD.FacetTextFieldSuffix}",
         fieldValue))
     }
   }
@@ -74,26 +74,26 @@ package object facets {
     typeToDocument(doc, s"_${index}", s)
   }
 
-  def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
+  def typeToDocument[T: ClassTag](doc: Document, fName: String, s: T): Document = {
     s match {
       case x: String =>
-        doc.add(new TextField(fieldName, x, Stored))
-        addTextFacetField(doc, fieldName, x)
+        doc.add(new TextField(fName, x, Stored))
+        addTextFacetField(doc, fName, x)
       case x: Long =>
-        doc.add(new LongField(fieldName, x, Stored))
-        doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
+        doc.add(new LongField(fName, x, Stored))
+        doc.add(new NumericDocValuesField(s"${fName} ${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x))
       case x: Int =>
-        doc.add(new IntField(fieldName, x, Stored))
-        doc.add(new NumericDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
+        doc.add(new IntField(fName, x, Stored))
+        doc.add(new NumericDocValuesField(s"${fName}${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x.toLong))
       case x: Float =>
-        doc.add(new FloatField(fieldName, x, Stored))
-        doc.add(new FloatDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
+        doc.add(new FloatField(fName, x, Stored))
+        doc.add(new FloatDocValuesField(s"${fName}${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x))
       case x: Double =>
-        doc.add(new DoubleField(fieldName, x, Stored))
-        doc.add(new DoubleDocValuesField(s"${fieldName}${LuceneRDD.FacetNumericFieldSuffix}",
+        doc.add(new DoubleField(fName, x, Stored))
+        doc.add(new DoubleDocValuesField(s"${fName}${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x))
     }
     doc

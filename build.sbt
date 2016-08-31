@@ -96,6 +96,7 @@ val scala_check               = "org.scalacheck"                 %% "scalacheck"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.4"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.1"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
@@ -119,6 +120,7 @@ libraryDependencies ++= Seq(
   lucene_spatial,
   jts,
   joda_time,
+  joda_convert, // To avoid warning: Class org.joda.convert.ToString not found
   specs2_core,
   scalatest
 )

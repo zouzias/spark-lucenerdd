@@ -33,6 +33,7 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])
     kryo.register(classOf[TopK[_]])
+    ()
   }
 }
 

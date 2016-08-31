@@ -17,15 +17,13 @@
 
 package org.zouzias.spark.lucenerdd.partition
 
-import java.util.Date
-
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search._
 import org.apache.spark.Logging
 import org.joda.time.DateTime
-import org.zouzias.spark.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
@@ -131,7 +129,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
                           topK: Int): SparkFacetResult = {
     LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader, FacetsConfig,
       searchString,
-      facetField + LuceneRDD.FacetTextFieldSuffix,
+      facetField + FacetedLuceneRDD.FacetTextFieldSuffix,
       topK)(Analyzer)
   }
 }

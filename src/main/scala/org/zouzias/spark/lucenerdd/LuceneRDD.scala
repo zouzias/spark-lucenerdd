@@ -272,10 +272,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
 object LuceneRDD {
 
-  /** All faceted fields are suffixed with _facet */
-  val FacetTextFieldSuffix = "_facet"
-  val FacetNumericFieldSuffix = "_numFacet"
-
   /**
    * Instantiate a LuceneRDD given an RDD[T]
    *

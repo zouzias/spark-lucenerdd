@@ -28,4 +28,14 @@ val luceneRDD = LuceneRDD(rdd)
 luceneRDD.cache
 luceneRDD.count
 
+println("=" * 20)
 luceneRDD.termQuery("_1", "toronto")
+
+println("=" * 20)
+luceneRDD.termQuery("_1", "athens")
+
+println("=" * 20)
+luceneRDD.termQuery("_1", "bern")
+
+println("=" * 20)
+luceneRDD.termQuery("_1", "madrid")

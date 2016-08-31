@@ -20,6 +20,7 @@ import com.twitter.algebird.TopK
 import com.twitter.chill.Kryo
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
+import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
 
@@ -27,6 +28,7 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
     kryo.register(classOf[LuceneRDD[_]])
     kryo.register(classOf[LuceneRDDPartition[_]])
+    kryo.register(classOf[FacetedLuceneRDD[_]])
     kryo.register(classOf[SparkDoc])
     kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])

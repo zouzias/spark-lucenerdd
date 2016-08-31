@@ -24,6 +24,7 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.io.Source
@@ -53,12 +54,12 @@ class LuceneQueryHelpersSpec extends FlatSpec
   private lazy val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
 
 
-  private lazy val TestFacetName = s"_2${LuceneRDD.FacetTextFieldSuffix}"
+  private lazy val TestFacetName = s"_2${FacetedLuceneRDD.FacetTextFieldSuffix}"
 
   def convertToDoc(pos: Int, text: String): Document = {
     val doc = new Document()
     doc.add(new StringField("_1", text, Store.YES))
-    doc.add(new FacetField(s"_1${LuceneRDD.FacetTextFieldSuffix}", text))
+    doc.add(new FacetField(s"_1${FacetedLuceneRDD.FacetTextFieldSuffix}", text))
     doc.add(new IntField("_2", pos, Store.YES))
     doc.add(new FacetField(TestFacetName, pos.toString))
     doc

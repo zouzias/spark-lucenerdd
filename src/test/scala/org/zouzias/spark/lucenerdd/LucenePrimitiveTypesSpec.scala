@@ -104,4 +104,12 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
     luceneRDD.prefixQuery("b", "wor").nonEmpty should equal (true)
     luceneRDD.prefixQuery("a", "no").nonEmpty should equal (false)
   }
+
+  "LuceneRDD" should "work with RDD[String] and ignore null values" in {
+    val array = Array("aaa", null, "ccc", null, "eee")
+    val rdd = sc.parallelize(array)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should be (array.size)
+  }
+
 }

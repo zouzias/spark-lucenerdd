@@ -42,6 +42,14 @@ class LuceneRDDCustomCaseClassImplicitsSpec extends FlatSpec
   val elem = Array("fear", "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) => Person(str, index, s"${str}@gmail.com")}
 
+  "LuceneRDD(case class).count" should "handle nulls properly" in {
+    val elemsWithNulls = Array("fear", "death", "water", "fire", "house")
+      .zipWithIndex.map{ case (str, index) => Person(str, index, null)}
+    val rdd = sc.parallelize(elemsWithNulls)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should equal (elemsWithNulls.size)
+  }
+
   "LuceneRDD(case class).count" should "return correct number of elements" in {
     val rdd = sc.parallelize(elem)
     luceneRDD = LuceneRDD(rdd)

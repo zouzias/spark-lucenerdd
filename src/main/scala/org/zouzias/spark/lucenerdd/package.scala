@@ -85,8 +85,8 @@ package object lucenerdd {
 
   implicit def mapToDocument[T: ClassTag](map: Map[String, T]): Document = {
     val doc = new Document
-    map.keys.foreach{ case key =>
-      typeToDocument(doc, key, map(key))
+    map.foreach{ case (key, value) =>
+      typeToDocument(doc, key, value)
     }
     doc
   }

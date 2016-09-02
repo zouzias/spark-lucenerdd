@@ -16,8 +16,7 @@
  */
 package org.zouzias.spark
 
-import org.apache.lucene.document.{DoubleDocValuesField, _}
-import org.apache.lucene.facet.FacetField
+import org.apache.lucene.document._
 import org.apache.spark.sql.Row
 
 import scala.reflect.ClassTag
@@ -29,31 +28,31 @@ package object lucenerdd {
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    doc.add(new IntField(DefaultFieldName, v, Stored))
+    if (v != null) doc.add(new IntField(DefaultFieldName, v, Stored))
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
-    doc.add(new LongField(DefaultFieldName, v, Stored))
+    if (v != null) doc.add(new LongField(DefaultFieldName, v, Stored))
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
-    doc.add(new DoubleField(DefaultFieldName, v, Stored))
+    if (v != null)  doc.add(new DoubleField(DefaultFieldName, v, Stored))
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
-    doc.add(new FloatField(DefaultFieldName, v, Stored))
+    if (v != null) doc.add(new FloatField(DefaultFieldName, v, Stored))
     doc
   }
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
-    doc.add(new TextField(DefaultFieldName, s, Stored))
+    if (s != null) doc.add(new TextField(DefaultFieldName, s, Stored))
     doc
   }
 
@@ -63,16 +62,17 @@ package object lucenerdd {
 
   def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
     s match {
-      case x: String =>
+      case x: String if x != null =>
         doc.add(new TextField(fieldName, x, Stored))
-      case x: Long =>
+      case x: Long if x != null =>
         doc.add(new LongField(fieldName, x, Stored))
-      case x: Int =>
+      case x: Int if x != null =>
         doc.add(new IntField(fieldName, x, Stored))
-      case x: Float =>
+      case x: Float if x != null =>
         doc.add(new FloatField(fieldName, x, Stored))
-      case x: Double =>
+      case x: Double if x != null =>
         doc.add(new DoubleField(fieldName, x, Stored))
+      case _ => Unit
     }
     doc
   }
@@ -85,8 +85,8 @@ package object lucenerdd {
 
   implicit def mapToDocument[T: ClassTag](map: Map[String, T]): Document = {
     val doc = new Document
-    map.keys.foreach{ case key =>
-      typeToDocument(doc, key, map.get(key).get)
+    map.foreach{ case (key, value) =>
+      typeToDocument(doc, key, value)
     }
     doc
   }

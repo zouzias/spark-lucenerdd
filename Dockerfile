@@ -1,4 +1,2 @@
 FROM gettyimages/spark
 
-
-

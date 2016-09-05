@@ -30,8 +30,6 @@ class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartit
   extends RDD[SparkScoreDoc](partitionsRDD.context,
     List(new OneToOneDependency(partitionsRDD))) {
 
-  logInfo("Instance is created...")
-
   @DeveloperApi
   override def compute(split: Partition, context: TaskContext)
   : Iterator[SparkScoreDoc] = {

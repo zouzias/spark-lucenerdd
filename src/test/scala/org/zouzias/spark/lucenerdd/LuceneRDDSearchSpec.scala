@@ -46,9 +46,9 @@ class LuceneRDDSearchSpec extends FlatSpec
     val words = Array("aabaa", "aaacaa", "aadaa", "aaaa", "qwerty")
     val rdd = sc.parallelize(words)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.query("_1:aadaa").nonEmpty should equal (true)
-    luceneRDD.query("_1:aa*").size should equal (4)
-    luceneRDD.query("_1:q*").size should equal (1)
+    luceneRDD.query("_1:aadaa").isEmpty() should equal (false)
+    luceneRDD.query("_1:aa*").count() should equal (4)
+    luceneRDD.query("_1:q*").count() should equal (1)
   }
 
   "LuceneRDD.count" should "return correct number of elements" in {
@@ -61,7 +61,7 @@ class LuceneRDDSearchSpec extends FlatSpec
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(First, array(1))
-    results.size should equal (1)
+    results.count() should equal (1)
   }
 
   "LuceneRDD.prefixQuery" should "correctly search with PrefixQueries" in {
@@ -70,20 +70,20 @@ class LuceneRDDSearchSpec extends FlatSpec
     val rdd = sc.parallelize(prefices)
     luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.prefixQuery(First, "a").size should equal (4)
-    luceneRDD.prefixQuery(First, "aa").size should equal(3)
-    luceneRDD.prefixQuery(First, "aaa").size should equal (2)
-    luceneRDD.prefixQuery(First, "aaaa").size should equal (1)
+    luceneRDD.prefixQuery(First, "a").count() should equal (4)
+    luceneRDD.prefixQuery(First, "aa").count() should equal(3)
+    luceneRDD.prefixQuery(First, "aaa").count() should equal (2)
+    luceneRDD.prefixQuery(First, "aaaa").count() should equal (1)
   }
 
   "LuceneRDD.fuzzyQuery" should "correctly search with FuzzyQuery" in {
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.fuzzyQuery(First, "fear", 1).size should equal (1)
-    luceneRDD.fuzzyQuery(First, "fascsm", 1).size should equal(1)
-    luceneRDD.fuzzyQuery(First, "dath", 1).size should equal (1)
-    luceneRDD.fuzzyQuery(First, "tree", 1).size should equal (1)
+    luceneRDD.fuzzyQuery(First, "fear", 1).count() should equal (1)
+    luceneRDD.fuzzyQuery(First, "fascsm", 1).count() should equal(1)
+    luceneRDD.fuzzyQuery(First, "dath", 1).count() should equal (1)
+    luceneRDD.fuzzyQuery(First, "tree", 1).count() should equal (1)
   }
 
   "LuceneRDD.phraseQuery" should "correctly search with PhraseQuery" in {
@@ -91,8 +91,8 @@ class LuceneRDDSearchSpec extends FlatSpec
     val rdd = sc.parallelize(phrases)
     luceneRDD = LuceneRDD(rdd)
 
-    luceneRDD.phraseQuery(First, "company name", 10).size should equal (1)
-    luceneRDD.phraseQuery(First, "hello world", 10).size should equal (1)
-    luceneRDD.phraseQuery(First, "highlight lucene", 10).size should equal(1)
+    luceneRDD.phraseQuery(First, "company name", 10).count() should equal (1)
+    luceneRDD.phraseQuery(First, "hello world", 10).count() should equal (1)
+    luceneRDD.phraseQuery(First, "highlight lucene", 10).count() should equal(1)
   }
 }

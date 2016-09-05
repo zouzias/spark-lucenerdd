@@ -80,6 +80,6 @@ class FacetedLuceneRDDImplicitsSpec  extends FlatSpec
     luceneRDD = FacetedLuceneRDD(df)
 
     val results = luceneRDD.termQuery("name", "water")
-    results.size shouldBe >= (1)
+    results.count() should equal(1)
   }
 }

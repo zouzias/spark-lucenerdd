@@ -16,11 +16,11 @@
  */
 package org.zouzias.spark.lucenerdd.response
 
+import com.twitter.algebird.TopKMonoid
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
@@ -28,8 +28,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
  */
 class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartition])
   extends RDD[SparkScoreDoc](partitionsRDD.context,
-    List(new OneToOneDependency(partitionsRDD)))
-  with SparkScoreDocAggregatable {
+    List(new OneToOneDependency(partitionsRDD))) {
 
   logInfo("Instance is created...")
 
@@ -60,9 +59,14 @@ class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartit
     this
   }
 
-
+  /**
+   * Use topK monoid for take
+   * @param num
+   * @return
+   */
   override def take(num: Int): Array[SparkScoreDoc] = {
-    partitionsRDD.map(SparkDocAscendingTopKMonoid.build(_))
-      .reduce(SparkDocAscendingTopKMonoid.plus).items.toArray
+    val monoid = new TopKMonoid[SparkScoreDoc](num)
+    partitionsRDD.map(monoid.build(_))
+      .reduce(monoid.plus).items.toArray
   }
 }

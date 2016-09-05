@@ -23,7 +23,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponse
 

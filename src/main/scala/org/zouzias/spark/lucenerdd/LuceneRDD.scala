@@ -77,14 +77,14 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   setName("LuceneRDD")
 
   /**
-   * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocAscendingTopKMonoid]]
+   * Maps partition results
    *
    * @param f Function to apply on each partition / distributed index
    * @param k number of documents to return
    * @return
    */
-  protected def resultsAggregator(f: AbstractLuceneRDDPartition[T] => LuceneRDDResponsePartition,
-                                  k: Int): LuceneRDDResponse = {
+  protected def partitionMapper(f: AbstractLuceneRDDPartition[T] => LuceneRDDResponsePartition,
+                                k: Int): LuceneRDDResponse = {
     new LuceneRDDResponse(partitionsRDD.map(f))
   }
 
@@ -106,7 +106,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @return
    */
   def exists(doc: Map[String, String]): Boolean = {
-    !resultsAggregator(_.multiTermQuery(doc, DefaultTopK), DefaultTopK).isEmpty()
+    !partitionMapper(_.multiTermQuery(doc, DefaultTopK), DefaultTopK).isEmpty()
   }
 
   /**
@@ -118,7 +118,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def query(searchString: String,
             topK: Int = DefaultTopK): LuceneRDDResponse = {
-    resultsAggregator(_.query(searchString, topK), topK)
+    partitionMapper(_.query(searchString, topK), topK)
   }
 
 
@@ -198,7 +198,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def termQuery(fieldName: String, query: String,
                 topK: Int = DefaultTopK): LuceneRDDResponse = {
     logInfo(s"Term search on field ${fieldName} with query ${query}")
-    resultsAggregator(_.termQuery(fieldName, query, topK), topK)
+    partitionMapper(_.termQuery(fieldName, query, topK), topK)
   }
 
   /**
@@ -212,7 +212,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def prefixQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): LuceneRDDResponse = {
     logInfo(s"Prefix search on field ${fieldName} with query ${query}")
-    resultsAggregator(_.prefixQuery(fieldName, query, topK), topK)
+    partitionMapper(_.prefixQuery(fieldName, query, topK), topK)
   }
 
   /**
@@ -227,7 +227,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int = DefaultTopK): LuceneRDDResponse = {
     logInfo(s"Fuzzy search on field ${fieldName} with query ${query}")
-    resultsAggregator(_.fuzzyQuery(fieldName, query, maxEdits, topK), topK)
+    partitionMapper(_.fuzzyQuery(fieldName, query, maxEdits, topK), topK)
   }
 
   /**
@@ -241,7 +241,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def phraseQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): LuceneRDDResponse = {
     logInfo(s"Phrase search on field ${fieldName} with query ${query}")
-    resultsAggregator(_.phraseQuery(fieldName, query, topK), topK)
+    partitionMapper(_.phraseQuery(fieldName, query, topK), topK)
   }
 
   override def count(): Long = {

@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.search.BooleanClause
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 
 import scala.reflect.ClassTag
 
@@ -49,7 +50,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def multiTermQuery(docMap: Map[String, String],
                      topK: Int,
                      boolClause: BooleanClause.Occur = BooleanClause.Occur.MUST)
-  : Iterable[SparkScoreDoc]
+  : LuceneRDDResponsePartition
 
 
   /**
@@ -58,7 +59,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @param topK Number of documents to return
    * @return
    */
-  def query(searchString: String, topK: Int): Iterable[SparkScoreDoc]
+  def query(searchString: String, topK: Int): LuceneRDDResponsePartition
 
   /**
    * Multiple generic Lucene Queries using QueryParser
@@ -67,7 +68,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @return
    */
   def queries(searchString: Iterable[String], topK: Int)
-  : Iterable[(String, Iterable[SparkScoreDoc])]
+  : Iterable[(String, LuceneRDDResponsePartition)]
 
   /**
    * Generic Lucene faceted Query using QueryParser
@@ -85,7 +86,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @param topK Number of documents to return
    * @return
    */
-  def termQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
+  def termQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
   /**
    * Prefix Query
@@ -94,7 +95,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @param topK Number of documents to return
    * @return
    */
-  def prefixQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
+  def prefixQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
   /**
    * Fuzzy Query
@@ -105,7 +106,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @return
    */
   def fuzzyQuery(fieldName: String, query: String,
-                 maxEdits: Int, topK: Int): Iterable[SparkScoreDoc]
+                 maxEdits: Int, topK: Int): LuceneRDDResponsePartition
 
   /**
    * PhraseQuery
@@ -114,7 +115,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    * @param topK Number of documents to return
    * @return
    */
-  def phraseQuery(fieldName: String, query: String, topK: Int): Iterable[SparkScoreDoc]
+  def phraseQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
   /**
    * Restricts the entries to those satisfying a predicate

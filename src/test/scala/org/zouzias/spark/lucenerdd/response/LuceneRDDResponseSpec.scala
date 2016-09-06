@@ -20,6 +20,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
+import org.zouzias.spark.lucenerdd._
 
 class LuceneRDDResponseSpec extends FlatSpec with Matchers
   with BeforeAndAfterEach
@@ -44,14 +45,16 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.take(2).size should be (2)
+    val result = luceneRDD.query("*:*", 10)
+    result.take(2).size should be (2)
   }
 
   "LuceneRDDResponseSpec.collect()" should "return all elements" in {
     val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.collect().length should be (array.size)
+    val result = luceneRDD.query("*:*", 10)
+    result.collect().length should be (array.size)
   }
 
 }

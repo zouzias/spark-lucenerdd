@@ -27,6 +27,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
 
@@ -81,18 +82,14 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   setName("ShapeLuceneRDD")
 
   /**
-   * Aggregates Lucene documents using monoidal structure, i.e., [[SparkDocAscendingTopKMonoid]]
-   *
-   * TODO: Move to aggregations
+   * Compute results per partition
    *
    * @param f
    * @return
    */
-  private def docResultsAggregator
-  (f: AbstractShapeLuceneRDDPartition[K, V] => Iterable[SparkScoreDoc])
-  : List[SparkScoreDoc] = {
-    val parts = partitionsRDD.map(f(_)).map(x => SparkDocAscendingTopKMonoid.build(x))
-    parts.reduce(SparkDocAscendingTopKMonoid.plus).items
+  private def docResultsMapper(f: AbstractShapeLuceneRDDPartition[K, V] =>
+    LuceneRDDResponsePartition): LuceneRDDResponse = {
+    new LuceneRDDResponse(partitionsRDD.map(f(_)))
   }
 
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
@@ -216,9 +213,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def knnSearch(queryPoint: PointType, k: Int,
                 searchString: String = LuceneQueryHelpers.MatchAllDocsString)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponse = {
     logInfo(s"Knn search with query ${queryPoint} and search string ${searchString}")
-    docResultsAggregator(_.knnSearch(queryPoint, k, searchString)).take(k)
+    docResultsMapper(_.knnSearch(queryPoint, k, searchString))
   }
 
   /**
@@ -230,11 +227,11 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @return
    */
   def circleSearch(center: PointType, radius: Double, k: Int)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponse = {
     logInfo(s"Circle search with center ${center} and radius ${radius}")
     // Points can only intersect
-    docResultsAggregator(_.circleSearch(center, radius, k,
-      SpatialOperation.Intersects.getName)).take(k)
+    docResultsMapper(_.circleSearch(center, radius, k,
+      SpatialOperation.Intersects.getName))
   }
 
   /**
@@ -247,9 +244,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def spatialSearch(shapeWKT: String, k: Int,
                     operationName: String = SpatialOperation.Intersects.getName)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponse = {
     logInfo(s"Spatial search with shape ${shapeWKT} and operation ${operationName}")
-    docResultsAggregator(_.spatialSearch(shapeWKT, k, operationName)).take(k)
+    docResultsMapper(_.spatialSearch(shapeWKT, k, operationName))
   }
 
   /**
@@ -262,9 +259,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def spatialSearch(point: PointType, k: Int,
                     operationName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponse = {
     logInfo(s"Spatial search with point ${point} and operation ${operationName}")
-    docResultsAggregator(_.spatialSearch(point, k, operationName)).take(k)
+    docResultsMapper(_.spatialSearch(point, k, operationName))
   }
 
   /**
@@ -278,9 +275,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def bboxSearch(center: PointType, radius: Double, k: Int,
                     operationName: String = SpatialOperation.Intersects.getName)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponse = {
     logInfo(s"Bounding box with center ${center}, radius ${radius}, k = ${k}")
-    docResultsAggregator(_.bboxSearch(center, radius, k, operationName)).take(k)
+    docResultsMapper(_.bboxSearch(center, radius, k, operationName))
   }
 
   /**
@@ -293,9 +290,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int,
                  operationName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponse = {
     logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
-    docResultsAggregator(_.bboxSearch(lowerLeft, upperRight, k, operationName)).take(k)
+    docResultsMapper(_.bboxSearch(lowerLeft, upperRight, k, operationName))
   }
 
   override def count(): Long = {

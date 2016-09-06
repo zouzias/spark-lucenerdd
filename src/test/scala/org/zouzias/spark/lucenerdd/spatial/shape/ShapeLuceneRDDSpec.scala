@@ -54,7 +54,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
     // Bern, Laussanne and Zurich is within 300km
-    val results = pointLuceneRDD.circleSearch(Bern._1, 300, k)
+    val results = pointLuceneRDD.circleSearch(Bern._1, 300, k).collect()
 
     results.size should equal(3)
 
@@ -80,7 +80,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     val circleWKT = writer.getBuffer.toString
 
     // Bern, Laussanne and Zurich is within 300km
-    val results = pointLuceneRDD.spatialSearch(circleWKT, k)
+    val results = pointLuceneRDD.spatialSearch(circleWKT, k).collect()
 
     results.size should equal(3)
 
@@ -102,7 +102,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     val radius = 150.0
 
     // Bern, Laussanne and Zurich is within 300km
-    val results = pointLuceneRDD.bboxSearch((x, y), radius, k)
+    val results = pointLuceneRDD.bboxSearch((x, y), radius, k).collect()
 
     results.size should equal(3)
 
@@ -125,8 +125,9 @@ class ShapeLuceneRDDSpec extends FlatSpec
 
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.bboxSearch((x - width, y - width), (x + width, y + width), k, "Intersects")
+      .collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
     results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)

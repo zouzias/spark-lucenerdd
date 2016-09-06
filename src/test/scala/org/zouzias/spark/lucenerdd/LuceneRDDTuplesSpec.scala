@@ -44,48 +44,48 @@ class LuceneRDDTuplesSpec extends FlatSpec with Matchers with SharedSparkContext
     val rdd = sc.parallelize(array).map(x => (x, x, x))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(Second, array(1))
-    results.size should equal (1)
+    results.count should equal (1)
   }
 
   "LuceneRDD" should "work with Tuple4" in {
     val rdd = sc.parallelize(array).map(x => (x, x, x, x))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(Second, array(1))
-    results.size should equal (1)
+    results.count should equal (1)
   }
 
   "LuceneRDD" should "work with Tuple5" in {
     val rdd = sc.parallelize(array).map(x => (x, x, x, x, x))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(Second, array(1))
-    results.size should equal (1)
+    results.count should equal (1)
   }
 
   "LuceneRDD" should "work with Tuple6" in {
     val rdd = sc.parallelize(array).map(x => (x, x, x, x, x, x))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(Second, array(1))
-    results.size should equal (1)
+    results.count should equal (1)
   }
 
   "LuceneRDD" should "work with Tuple7" in {
     val rdd = sc.parallelize(array).map(x => (x, x, 2.0d, 1.0d, x, 1, x))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(First, array.head)
-    results.size should equal (1)
+    results.count should equal (1)
   }
 
   "LuceneRDD" should "work with Tuple8" in {
     val rdd = sc.parallelize(array).map(x => (x, x, 2.0d, 1.0d, x, 1, x, 3.4))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(First, array(1))
-    results.size should equal (1)
+    results.count should equal (1)
   }
 
   "LuceneRDD" should "work with mixed types in Tuples" in {
     val rdd = sc.parallelize(array).map(x => (x, 1, x, 2L, x, 3.0F))
     val luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.termQuery(First, array(1))
-    results.size should equal (1)
+    results.count should equal (1)
   }
 }

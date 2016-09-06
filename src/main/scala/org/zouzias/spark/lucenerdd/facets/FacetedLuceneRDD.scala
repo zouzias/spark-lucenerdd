@@ -23,8 +23,9 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
+import org.zouzias.spark.lucenerdd.response.LuceneRDDResponse
 
 import scala.reflect.ClassTag
 
@@ -76,8 +77,8 @@ class FacetedLuceneRDD[T: ClassTag]
                  facetField: String,
                  topK: Int = DefaultTopK,
                  facetNum: Int = DefaultFacetNum
-                ): (Iterable[SparkScoreDoc], SparkFacetResult) = {
-    val aggrTopDocs = resultsAggregator(_.query(searchString, topK), topK)
+                ): (LuceneRDDResponse, SparkFacetResult) = {
+    val aggrTopDocs = partitionMapper(_.query(searchString, topK), topK)
     val aggrFacets = facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum))
     (aggrTopDocs, aggrFacets)
   }
@@ -94,9 +95,9 @@ class FacetedLuceneRDD[T: ClassTag]
                    facetFields: Seq[String],
                    topK: Int = DefaultTopK,
                    facetNum: Int = DefaultFacetNum)
-  : (Iterable[SparkScoreDoc], Map[String, SparkFacetResult]) = {
+  : (LuceneRDDResponse, Map[String, SparkFacetResult]) = {
     logInfo(s"Faceted query on facet fields ${facetFields.mkString(",")}...")
-    val aggrTopDocs = resultsAggregator(_.query(searchString, topK), topK)
+    val aggrTopDocs = partitionMapper(_.query(searchString, topK), topK)
     val aggrFacets = facetFields.map { case facetField =>
       (facetField, facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum)))
     }.toMap[String, SparkFacetResult]

@@ -52,7 +52,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "*:*")
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "*:*").collect()
 
     results.size should equal(k)
     results.size should be > 0
@@ -71,7 +71,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Mil*")
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Mil*").collect()
 
     results.size should be <= k
     results.size should be > 0
@@ -89,7 +89,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Miln~1")
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Miln~1").collect()
 
     results.size should be <= k
     results.size should be > 0
@@ -107,7 +107,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Milan")
+    val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Milan").collect()
 
     results.size should be <= k
     results.size should be > 0

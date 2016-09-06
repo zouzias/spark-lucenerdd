@@ -26,6 +26,7 @@ import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.grids.GridLoader
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
@@ -111,18 +112,18 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   }
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponsePartition = {
     val args = new SpatialArgs(SpatialOperation.get(operationName),
         ctx.makeCircle(center._1, center._2,
         DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
 
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+    new LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
   }
 
   override def knnSearch(point: PointType, k: Int, searchString: String)
-  : List[SparkScoreDoc] = {
+  : LuceneRDDResponsePartition = {
 
     // Match all, order by distance ascending
     val pt = ctx.makePoint(point._1, point._2)
@@ -142,7 +143,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
     // search results then that's not a big deal. Alternatively, try wrapping
     // the ValueSource with CachingDoubleValueSource then retrieve the value
     // from the ValueSource now. See LUCENE-4541 for an example.
-    docs.scoreDocs.map { case scoreDoc => {
+    val result = docs.scoreDocs.map { case scoreDoc => {
         val location = docLocation(scoreDoc)
         location match {
           case Some(shape) =>
@@ -152,31 +153,33 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
             SparkScoreDoc(indexSearcher, scoreDoc, -1F)
         }
       }
-    }.toList
+    }
+
+    new LuceneRDDResponsePartition(result.toIterator)
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponsePartition = {
     val shape = stringToShape(shapeAsString)
-    spatialSearch(shape, k, operationName)
+    (spatialSearch(shape, k, operationName))
   }
 
   private def spatialSearch(shape: Shape, k: Int, operationName: String)
-    : Iterable[SparkScoreDoc] = {
+    : LuceneRDDResponsePartition = {
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+    new LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
   }
 
   override def spatialSearch(point: PointType, k: Int, operationName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponsePartition = {
     val shape = ctx.makePoint(point._1, point._2)
     spatialSearch(shape, k, operationName)
   }
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponsePartition = {
     val x = center._1
     val y = center._2
     val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)
@@ -185,7 +188,7 @@ private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
   }
 
   override def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int, opName: String)
-  : Iterable[SparkScoreDoc] = {
+  : LuceneRDDResponsePartition = {
     val lowerLeftPt = ctx.makePoint(lowerLeft._1, lowerLeft._2)
     val upperRightPt = ctx.makePoint(upperRight._1, upperRight._2)
     val shape = ctx.makeRectangle(lowerLeftPt, upperRightPt)

@@ -62,7 +62,7 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     val circleWKT = writer.getBuffer.toString
 
     // Bern, Laussanne and Zurich is within 300km
-    val results = pointLuceneRDD.spatialSearch(circleWKT, k)
+    val results = pointLuceneRDD.spatialSearch(circleWKT, k).collect()
 
     results.size should equal(3)
 
@@ -85,6 +85,7 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
 
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.bboxSearch((x - width, y - width), (x + width, y + width), k, "Intersects")
+      .collect()
 
     results.size should equal(3)
 
@@ -103,6 +104,7 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
 
     val point = ctx.makePoint(Bern._1._1, Bern._1._2)
     val results = pointLuceneRDD.spatialSearch( (Bern._1._1, Bern._1._2), k, "Intersects")
+      .collect()
 
     results.size should equal(1)
 
@@ -131,7 +133,7 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     val rectangleWKT = writer.getBuffer.toString
 
     // Bern, Laussanne and Zurich is within 300km
-    val results = pointLuceneRDD.spatialSearch(rectangleWKT, k)
+    val results = pointLuceneRDD.spatialSearch(rectangleWKT, k).collect()
 
     results.size should equal(3)
 
@@ -159,7 +161,7 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     val polygonAsString = writer.getBuffer.toString
 
     // Bern, Laussanne and Zurich is within 300km
-    val results = pointLuceneRDD.spatialSearch(polygonAsString, k)
+    val results = pointLuceneRDD.spatialSearch(polygonAsString, k).collect()
 
     results.size should equal(3)
 

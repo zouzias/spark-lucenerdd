@@ -72,7 +72,7 @@ The `--packages` argument can also be used with `bin/spark-submit`.
 
 This library is cross-published for Scala 2.11, so 2.11 users should replace 2.10 with 2.11 in the commands listed above.
 
-Currently, artifacts of `Spark 2.X.X` are not released but development for version 2.X can be found under [https://github.com/zouzias/spark-lucenerdd/tree/branch_2.x](branch_2.x).
+Currently, artifacts of `Spark 2.X.X` are not released but development for version 2.X can be found under [branch_2.x](https://github.com/zouzias/spark-lucenerdd/tree/branch_2.x).
 
 ### Project Status and Limitations
 

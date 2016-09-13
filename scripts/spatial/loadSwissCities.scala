@@ -19,7 +19,7 @@ import org.zouzias.spark.lucenerdd.spatial.shape._
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.LuceneRDD
-val df = sqlContext.read.format("com.databricks.spark.csv").option("header", "false").option("inferSchema", "true").option("delimiter", "\t").load("src/test/resources/spatial/CH.txt")
-val swissCities = df.select("C0", "C1", "C5", "C4").map(row => ((row.getDouble(2), row.getDouble(3)), row.getString(1).toLowerCase()))
-val shapes = ShapeLuceneRDD(swissCities)
+val df = spark.read.format("com.databricks.spark.csv").option("header", "false").option("inferSchema", "true").option("delimiter", "\t").load("src/test/resources/spatial/CH.txt")
+val swissCities = df.select("_c0", "_c1", "_c5", "_c4").map(row => ((row.getDouble(2), row.getDouble(3)), row.getString(1).toLowerCase()))
+val shapes = ShapeLuceneRDD(swissCities.rdd)
 shapes.count

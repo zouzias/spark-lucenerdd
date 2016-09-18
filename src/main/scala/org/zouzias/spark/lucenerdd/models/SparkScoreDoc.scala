@@ -41,12 +41,22 @@ object SparkScoreDoc extends Serializable {
   }
 
   /**
+   * Ordering by score (descending)
+   */
+  def descending: Ordering[SparkScoreDoc] = new Ordering[SparkScoreDoc]{
+    override def compare(x: SparkScoreDoc, y: SparkScoreDoc): Int = {
+      if ( x.score > y.score) -1 else if (x.score == y.score) 0 else 1
+    }
+  }
+
+  /**
    * Ordering by score (ascending)
    */
-  implicit val  ScoreAscendingOrdered = new Ordering[SparkScoreDoc]{
+  def ascending: Ordering[SparkScoreDoc] = new Ordering[SparkScoreDoc]{
     override def compare(x: SparkScoreDoc, y: SparkScoreDoc): Int = {
       if ( x.score < y.score) -1 else if (x.score == y.score) 0 else 1
     }
   }
 }
+
 

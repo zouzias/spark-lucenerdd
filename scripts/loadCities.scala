@@ -29,13 +29,13 @@ luceneRDD.cache
 luceneRDD.count
 
 println("=" * 20)
-luceneRDD.termQuery("_1", "toronto")
+luceneRDD.termQuery("_1", "toronto").take(10)
 
 println("=" * 20)
-luceneRDD.termQuery("_1", "athens")
+luceneRDD.termQuery("_1", "athens").take(10)
 
 println("=" * 20)
-luceneRDD.termQuery("_1", "bern")
+luceneRDD.termQuery("_1", "bern").take(10)
 
 println("=" * 20)
-luceneRDD.termQuery("_1", "madrid")
+luceneRDD.termQuery("_1", "madrid").take(10)

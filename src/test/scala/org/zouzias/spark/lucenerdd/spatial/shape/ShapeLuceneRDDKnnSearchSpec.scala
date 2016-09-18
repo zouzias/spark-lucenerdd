@@ -57,8 +57,6 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     results.size should equal(k)
     results.size should be > 0
 
-    results.take(k).foreach(println)
-
     // Closest is Bern and fartherst is Toronto
     docTextFieldEq(results.head.doc, "_1", Bern._2) should equal(true)
     docTextFieldEq(results.last.doc, "_1", Toronto._2) should equal(true)

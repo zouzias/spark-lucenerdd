@@ -17,14 +17,14 @@
 package org.zouzias.spark.lucenerdd.spatial.shape
 
 import com.spatial4j.core.shape.Shape
-import com.twitter.algebird.TopK
+import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
-import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
+import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
@@ -43,7 +43,7 @@ import scala.reflect.ClassTag
 class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   (private val partitionsRDD: RDD[AbstractShapeLuceneRDDPartition[K, V]])
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-    with SparkScoreDocAggregatable
+    with LuceneRDDConfigurable
     with Logging {
 
   logInfo("Instance is created...")
@@ -87,9 +87,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param f
    * @return
    */
-  private def docResultsMapper(f: AbstractShapeLuceneRDDPartition[K, V] =>
+  private def partitionMapper(f: AbstractShapeLuceneRDDPartition[K, V] =>
     LuceneRDDResponsePartition): LuceneRDDResponse = {
-    new LuceneRDDResponse(partitionsRDD.map(f(_)))
+    new LuceneRDDResponse(partitionsRDD.map(f(_)), SparkScoreDoc.ascending)
   }
 
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
@@ -97,6 +97,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                             Iterable[SparkScoreDoc]): RDD[(T, List[SparkScoreDoc])] = {
     logDebug("Linker requested")
 
+    val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     logDebug("Collecting query points to driver")
     val queries = that.map(pointFunctor).collect()
     logDebug("Query points collected to driver successfully")
@@ -107,16 +108,16 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     logDebug("Compute topK linkage per partition")
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = mapper(queryPoint, partition).map(x => SparkDocAscendingTopKMonoid.build(x))
-          .reduceOption(SparkDocAscendingTopKMonoid.plus)
-          .getOrElse(SparkDocAscendingTopKMonoid.zero)
+        val results = mapper(queryPoint, partition).map(x => topKMonoid.build(x))
+          .reduceOption(topKMonoid.plus)
+          .getOrElse(topKMonoid.zero)
 
         (index.toLong, results)
       }
     }
 
     logDebug("Merge topK linkage results")
-    val results = resultsByPart.reduceByKey(SparkDocAscendingTopKMonoid.plus)
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
     that.zipWithIndex.map(_.swap).join(results)
       .map{ case (_, joined) => (joined._1, joined._2.items)}
   }
@@ -215,7 +216,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                 searchString: String = LuceneQueryHelpers.MatchAllDocsString)
   : LuceneRDDResponse = {
     logInfo(s"Knn search with query ${queryPoint} and search string ${searchString}")
-    docResultsMapper(_.knnSearch(queryPoint, k, searchString))
+    partitionMapper(_.knnSearch(queryPoint, k, searchString))
   }
 
   /**
@@ -230,7 +231,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   : LuceneRDDResponse = {
     logInfo(s"Circle search with center ${center} and radius ${radius}")
     // Points can only intersect
-    docResultsMapper(_.circleSearch(center, radius, k,
+    partitionMapper(_.circleSearch(center, radius, k,
       SpatialOperation.Intersects.getName))
   }
 
@@ -246,7 +247,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                     operationName: String = SpatialOperation.Intersects.getName)
   : LuceneRDDResponse = {
     logInfo(s"Spatial search with shape ${shapeWKT} and operation ${operationName}")
-    docResultsMapper(_.spatialSearch(shapeWKT, k, operationName))
+    partitionMapper(_.spatialSearch(shapeWKT, k, operationName))
   }
 
   /**
@@ -261,7 +262,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                     operationName: String)
   : LuceneRDDResponse = {
     logInfo(s"Spatial search with point ${point} and operation ${operationName}")
-    docResultsMapper(_.spatialSearch(point, k, operationName))
+    partitionMapper(_.spatialSearch(point, k, operationName))
   }
 
   /**
@@ -277,7 +278,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                     operationName: String = SpatialOperation.Intersects.getName)
   : LuceneRDDResponse = {
     logInfo(s"Bounding box with center ${center}, radius ${radius}, k = ${k}")
-    docResultsMapper(_.bboxSearch(center, radius, k, operationName))
+    partitionMapper(_.bboxSearch(center, radius, k, operationName))
   }
 
   /**
@@ -292,7 +293,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                  operationName: String)
   : LuceneRDDResponse = {
     logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
-    docResultsMapper(_.bboxSearch(lowerLeft, upperRight, k, operationName))
+    partitionMapper(_.bboxSearch(lowerLeft, upperRight, k, operationName))
   }
 
   override def count(): Long = {

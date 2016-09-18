@@ -26,7 +26,8 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 /**
  * LuceneRDD response
  */
-class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartition])
+class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartition],
+                        protected val ordering: Ordering[SparkScoreDoc])
   extends RDD[SparkScoreDoc](partitionsRDD.context,
     List(new OneToOneDependency(partitionsRDD))) {
 
@@ -63,14 +64,14 @@ class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartit
    * @return
    */
   override def take(num: Int): Array[SparkScoreDoc] = {
-    val monoid = new TopKMonoid[SparkScoreDoc](num)
+    val monoid = new TopKMonoid[SparkScoreDoc](num)(ordering)
     partitionsRDD.map(monoid.build(_))
       .reduce(monoid.plus).items.toArray
   }
 
   override def collect(): Array[SparkScoreDoc] = {
     val sz = partitionsRDD.map(_.size).sum().toInt
-    val monoid = new TopKMonoid[SparkScoreDoc](sz)
+    val monoid = new TopKMonoid[SparkScoreDoc](sz)(ordering)
     partitionsRDD.map(monoid.build(_))
       .reduce(monoid.plus).items.toArray
 

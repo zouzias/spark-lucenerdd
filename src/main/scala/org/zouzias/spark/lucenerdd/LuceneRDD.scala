@@ -84,7 +84,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   protected def partitionMapper(f: AbstractLuceneRDDPartition[T] => LuceneRDDResponsePartition,
                                 k: Int): LuceneRDDResponse = {
-    new LuceneRDDResponse(partitionsRDD.map(f))
+    new LuceneRDDResponse(partitionsRDD.map(f), SparkScoreDoc.descending)
   }
 
 
@@ -149,7 +149,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, List[SparkScoreDoc])] = {
     logInfo("Linkage requested")
-    val monoid = new TopKMonoid[SparkScoreDoc](topK)
+    val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     val queries = other.map(searchQueryGen).collect()
     val queriesB = partitionsRDD.context.broadcast(queries)
 
@@ -165,7 +165,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
     val results = resultsByPart.reduceByKey(monoid.plus)
     other.zipWithIndex.map(_.swap).join(results)
-      .map{ case (_, joined) => (joined._1, joined._2.items.reverse.take(topK))}
+      .map{ case (_, joined) => (joined._1, joined._2.items.take(topK))}
   }
 
   /**

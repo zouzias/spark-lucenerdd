@@ -66,4 +66,9 @@ trait LuceneRDDTestUtils {
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
+  // Check if sequence is sorted in descending order
+  protected def sortedDescSparkScoreDocs(seq : Seq[SparkScoreDoc]) : Boolean = {
+    if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1.score >= x._2.score)
+  }
+
 }

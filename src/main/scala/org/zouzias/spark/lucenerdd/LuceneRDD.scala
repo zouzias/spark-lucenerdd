@@ -19,27 +19,15 @@ package org.zouzias.spark.lucenerdd
 
 import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.document.Document
-<<<<<<< b6952639dc8e6edb234e3fd3818996cae21ac9c3
-import org.apache.lucene.search.Query
-import org.apache.spark.rdd.RDD
-import org.apache.spark._
-import org.apache.spark.sql.{DataFrame, Row}
-import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
-import org.zouzias.spark.lucenerdd.logging.Logging
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
-import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
-=======
 import org.apache.spark.rdd.RDD
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.lucenerdd.aggregate.SparkScoreDocAggregatable
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
->>>>>>> branch_2.x: init commit
 
 import scala.reflect.ClassTag
 

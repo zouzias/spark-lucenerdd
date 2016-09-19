@@ -25,7 +25,8 @@ import scala.collection.JavaConverters._
  * Wrapper around Lucene document
  *
  * If [[Document]] were serializable, this class would not exist.
- * @param doc
+ *
+ * @param doc Lucene document
  */
 class SparkDoc(doc: Document) extends Serializable {
 

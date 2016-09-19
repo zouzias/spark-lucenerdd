@@ -23,6 +23,7 @@ import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
+import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 
 class LuceneRDDKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
@@ -32,6 +33,8 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[SparkDoc])
     kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])
+    kryo.register(classOf[LuceneRDDResponse])
+    kryo.register(classOf[LuceneRDDResponsePartition])
     kryo.register(classOf[TopK[_]])
     ()
   }

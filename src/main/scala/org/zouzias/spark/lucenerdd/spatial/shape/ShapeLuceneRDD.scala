@@ -81,12 +81,6 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
   setName("ShapeLuceneRDD")
 
-  /**
-   * Compute results per partition
-   *
-   * @param f
-   * @return
-   */
   private def partitionMapper(f: AbstractShapeLuceneRDDPartition[K, V] =>
     LuceneRDDResponsePartition): LuceneRDDResponse = {
     new LuceneRDDResponse(partitionsRDD.map(f(_)), SparkScoreDoc.ascending)
@@ -325,6 +319,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
 object ShapeLuceneRDD {
 
+  /** Type for a point */
   type PointType = (Double, Double)
 
   /**
@@ -346,8 +341,8 @@ object ShapeLuceneRDD {
   /**
    * Instantiate a ShapeLuceneRDD with an iterable
    *
-   * @param elems
-   * @param sc
+   * @param elems Elements
+   * @param sc Spark Context
    * @return
    */
   def apply[K: ClassTag, V: ClassTag]

@@ -22,7 +22,6 @@ case class SparkFacetResult(facetName: String, facets: Map[String, Long]) {
 
   /**
    * Return facet counts sorted descending
-   *
    * @return Sequence of (facet value, facet counts)
    */
   def sortedFacets(): Seq[(String, Long)] = {

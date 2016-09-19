@@ -21,6 +21,7 @@ import com.twitter.chill._
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.ShapeLuceneRDDPartition
 
 
@@ -30,6 +31,8 @@ class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[ShapeLuceneRDDPartition[_, _]])
     kryo.register(classOf[SparkDoc])
     kryo.register(classOf[SparkFacetResult])
+    kryo.register(classOf[LuceneRDDResponse])
+    kryo.register(classOf[LuceneRDDResponsePartition])
     kryo.register(classOf[SparkScoreDoc])
     kryo.register(classOf[TopK[_]])
     ()

@@ -92,6 +92,7 @@ class LuceneRDDSearchSpec extends FlatSpec
     luceneRDD.fuzzyQuery(First, "tree", 1).count() should equal (1)
   }
 
+  /*
   "LuceneRDD.fuzzyQuery" should "correctly search for Bern in Cities dataset" in {
     val cities = Source.fromFile("src/test/resources/cities.txt").getLines().toSeq
     val rdd = sc.parallelize(cities)
@@ -106,6 +107,7 @@ class LuceneRDDSearchSpec extends FlatSpec
     // Results must be sorted (descending)
     sortedDescSparkScoreDocs(results) should equal(true)
   }
+  */
 
   "LuceneRDD.phraseQuery" should "correctly search with PhraseQuery" in {
     val phrases = Array("hello world", "the company name was", "highlight lucene")

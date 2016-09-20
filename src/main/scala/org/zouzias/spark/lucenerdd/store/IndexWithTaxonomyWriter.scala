@@ -39,5 +39,4 @@ trait IndexWithTaxonomyWriter extends IndexStorable
     taxoWriter.close()
     indexWriter.close()
   }
-
 }

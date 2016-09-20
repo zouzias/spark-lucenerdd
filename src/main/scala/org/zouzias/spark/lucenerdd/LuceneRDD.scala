@@ -291,9 +291,9 @@ object LuceneRDD {
   /**
    * Instantiate a LuceneRDD with an iterable
    *
-   * @param elems
-   * @param sc
-   * @tparam T
+   * @param elems Elements to index
+   * @param sc Spark Context
+   * @tparam T Input type
    * @return
    */
   def apply[T : ClassTag]

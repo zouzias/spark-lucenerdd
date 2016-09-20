@@ -43,8 +43,9 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Multi term query
-   * @param docMap
-   * @param topK
+   *
+   * @param docMap Map of field names to terms
+   * @param topK Number of documents to return
    * @return
    */
   def multiTermQuery(docMap: Map[String, String],
@@ -63,8 +64,8 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Multiple generic Lucene Queries using QueryParser
-   * @param searchString
-   * @param topK
+   * @param searchString  Lucene query string
+   * @param topK Number of results to return
    * @return
    */
   def queries(searchString: Iterable[String], topK: Int)
@@ -119,7 +120,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
   /**
    * Restricts the entries to those satisfying a predicate
-   * @param pred
+   * @param pred Predicate to filter on
    * @return
    */
   def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T]

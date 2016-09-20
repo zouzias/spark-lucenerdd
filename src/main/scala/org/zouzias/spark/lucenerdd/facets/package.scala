@@ -107,8 +107,8 @@ package object facets {
 
   implicit def mapToDocument[T: ClassTag](map: Map[String, T]): Document = {
     val doc = new Document
-    map.keys.foreach{ case key =>
-      typeToDocument(doc, key, map.get(key).get)
+    map.foreach{ case (key, value) =>
+      typeToDocument(doc, key, value)
     }
     doc
   }

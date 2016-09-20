@@ -59,7 +59,7 @@ class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartit
   }
 
   /**
-   * Use topK monoid for take
+   * Use [[TopKMonoid]] to take
    * @param num
    * @return
    */
@@ -74,6 +74,5 @@ class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartit
     val monoid = new TopKMonoid[SparkScoreDoc](sz)(ordering)
     partitionsRDD.map(monoid.build(_))
       .reduce(monoid.plus).items.toArray
-
   }
 }

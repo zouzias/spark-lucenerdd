@@ -58,9 +58,9 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
   /**
    * Spatial search with arbitrary shape
    *
-   * @param shapeAsString
-   * @param k
-   * @param operationName
+   * @param shapeAsString Shape object represented as String
+   * @param k Number of results to return
+   * @param operationName Operation name, i.e., intersect, within, etc
    * @return
    */
   def spatialSearch(shapeAsString: String, k: Int, operationName: String)
@@ -69,9 +69,9 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
   /**
    * Spatial search with point
    *
-   * @param point
-   * @param k
-   * @param operationName
+   * @param point Query point
+   * @param k Number of result to return
+   * @param operationName Operation name, i.e., intersect, within, etc
    * @return
    */
   def spatialSearch(point: PointType, k: Int, operationName: String)
@@ -82,8 +82,8 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
    *
    * @param center given as (x, y)
    * @param radius distance from center in kilometers (KM)
-   * @param k
-   * @param operationName
+   * @param k Number of results to return
+   * @param operationName Operation name, i.e., intersect, within, etc
    * @return
    */
   def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
@@ -92,10 +92,10 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
   /**
    * Bounding box search with lower left and upper right corners
    *
-   * @param lowerLeft
-   * @param upperRight
-   * @param k
-   * @param operationName
+   * @param lowerLeft Lower left point
+   * @param upperRight Upper left point
+   * @param k Number of results
+   * @param operationName Operation name, i.e., intersect, within, etc
    * @return
    */
   def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int, operationName: String)
@@ -104,7 +104,7 @@ abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
   /**
    * Restricts the entries to those satisfying a predicate
    *
-   * @param pred Predicate
+   * @param pred Predicate to filter on
    * @return
    */
   def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V]

@@ -68,9 +68,10 @@ class FacetedLuceneRDD[T: ClassTag]
   /**
    * Faceted query
    *
-   * @param searchString
-   * @param facetField
-   * @param topK
+   * @param searchString Lucene query string
+   * @param facetField Field on which to compute facet
+   * @param topK Number of results
+   * @param facetNum Number of faceted results
    * @return
    */
   def facetQuery(searchString: String,
@@ -86,9 +87,10 @@ class FacetedLuceneRDD[T: ClassTag]
   /**
    * Faceted query with multiple facets
    *
-   * @param searchString
-   * @param facetFields
-   * @param topK
+   * @param searchString Lucene query string
+   * @param facetFields Fields on which to compute facets
+   * @param topK Number of results
+   * @param facetNum Number of faceted results
    * @return
    */
   def facetQueries(searchString: String,

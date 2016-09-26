@@ -47,7 +47,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.0.XX"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "x.y.z"
 ```
 
 Using Maven:
@@ -56,7 +56,7 @@ Using Maven:
 <dependency>
     <groupId>org.zouzias</groupId>
     <artifactId>spark-lucenerdd_2.11</artifactId>
-    <version>0.0.XX</version>
+    <version>x.y.z</version>
 </dependency>
 ```
 
@@ -74,6 +74,15 @@ This library is cross-published for Scala 2.11, so 2.11 users should replace 2.1
 
 Currently, artifacts of `Spark 2.X.X` are not released but development for version 2.X can be found under [branch_2.x](https://github.com/zouzias/spark-lucenerdd/tree/branch_2.x).
 
+### Compatibility
+The project has the following compatibility with Apache Spark:
+
+spark-lucenerdd Version      | Release Date | Spark compatibility | Notes | Status
+------------------------- | ------------ | -------------------------- | ----- | ----
+0.1.1-SNAPSHOT            |              | >= 1.4           | [master](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
+0.2.0 (**current stable**)| 2016-09-26   | 2.0.0           | [tag v0.2.0](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd/tree/v0.2.0) | Released 
+0.1.0 (**current stable**)| 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
+
 ### Project Status and Limitations
 
 Currently the Lucene index is only stored in memory.
@@ -85,11 +94,6 @@ Implicit conversions for the primitive types (Int, Float, Double, Long, String) 
 If you want to use your own custom class with `LuceneRDD` you can do it provided that your class member types are one of the primitive types (Int, Float, Double, Long, String).
 
 For more details, see `LuceneRDDCustomcaseClassImplicits` under the tests directory.
-
-
-## Requirements
-
-This library requires Spark 1.4+ and Java 7+.
 
 ### Development
 

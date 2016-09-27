@@ -77,11 +77,11 @@ Currently, artifacts of `Spark 2.X.X` are not released but development for versi
 ### Compatibility
 The project has the following compatibility with Apache Spark:
 
-spark-lucenerdd Version      | Release Date | Spark compatibility | Notes | Status
+spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
 ------------------------- | ------------ | -------------------------- | ----- | ----
 0.1.1-SNAPSHOT            |              | >= 1.4           | [master](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
-0.2.0 (**current stable**)| 2016-09-26   | 2.0.0           | [tag v0.2.0](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd/tree/v0.2.0) | Released 
-0.1.0 (**current stable**)| 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
+0.2.0 (**stable**)| 2016-09-26   | 2.0.0           | [tag v0.2.0](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd/tree/v0.2.0) | Released 
+0.1.0 (**stable**)| 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 
 ### Project Status and Limitations
 

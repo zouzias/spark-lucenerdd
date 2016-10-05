@@ -19,7 +19,7 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 |Prefix Query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
 |Query Parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
 |Faceted Search| `FacetedLuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
-|[Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage-with-LuceneRDD)| `LuceneRDD.link(otherEntity: RDD[T], linkageFct: T => searchQuery, topK)`| Record linkage via Lucene queries|
+|[Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage)| `LuceneRDD.link(otherEntity: RDD[T], linkageFct: T => searchQuery, topK)`| Record linkage via Lucene queries|
 |Circle Search| `ShapeLuceneRDD.circleSearch((x,y), radius, topK)` | Search within radius |
 |Bbox Search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |
 |Spatial Linkage| `ShapeLuceneRDD.linkByRadius(RDD[T], linkage: T => (x,y), radius, topK)` | Spatial radius linkage|

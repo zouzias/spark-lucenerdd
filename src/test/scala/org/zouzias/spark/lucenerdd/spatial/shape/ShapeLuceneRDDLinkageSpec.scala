@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
@@ -80,16 +80,16 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
   "ShapeLuceneRDD.linkByRadius" should "link correctly countries with capitals" in {
 
     val Radius = 50.0
-    val sqlContext = new SQLContext(sc)
-    import sqlContext.implicits._
-    val countriesRDD = sqlContext.read.parquet("data/countries-poly.parquet")
+    val sparkSession = SparkSession.builder.getOrCreate()
+    import sparkSession.implicits._
+    val countriesRDD = sparkSession.read.parquet("data/countries-poly.parquet")
       .select("name", "shape")
       .map(row => (row.getString(1), row.getString(0)))
 
     pointLuceneRDD = ShapeLuceneRDD(countriesRDD)
     pointLuceneRDD.cache()
 
-    val capitals = sqlContext.read.parquet("data/capitals.parquet")
+    val capitals = sparkSession.read.parquet("data/capitals.parquet")
       .select("name", "shape")
       .map(row => (row.getString(1), row.getString(0)))
 
@@ -105,7 +105,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       (coords(0).toDouble, coords(1).toDouble)
     }
 
-    val linkage = pointLuceneRDD.linkByRadius(capitals, coords, Radius).collect()
+    val linkage = pointLuceneRDD.linkByRadius(capitals.rdd, coords, Radius).collect()
 
     linkage.size should equal(capitals.count)
 
@@ -162,8 +162,8 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
   "ShapeLuceneRDD.linkDataFrameByKnn" should "link correctly k-nearest neighbors (knn)" in {
 
-    val sqlContext = new SQLContext(sc)
-    import sqlContext.implicits._
+    val sparkSession = SparkSession.builder.getOrCreate()
+    import sparkSession.implicits._
     val citiesRDD = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
     pointLuceneRDD.cache()

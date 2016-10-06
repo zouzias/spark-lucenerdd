@@ -37,6 +37,7 @@ javacOptions ++= Seq("-Xlint")
 
 // Add jcenter repo
 resolvers += Resolver.jcenterRepo
+resolvers += "Apache Repos" at "https://repository.apache.org/content/repositories/releases"
 
 releaseCrossBuild := true
 releasePublishArtifactsAction := PgpKeys.publishSigned.value

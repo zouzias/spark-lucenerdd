@@ -33,7 +33,8 @@ scalacOptions ++= Seq("-deprecation",
   "-Ywarn-value-discard",
   "-language:implicitConversions")
 
-javacOptions ++= Seq("-Xlint")
+javacOptions ++= Seq("-Xlint", "-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+
 
 // Add jcenter repo
 resolvers += Resolver.jcenterRepo

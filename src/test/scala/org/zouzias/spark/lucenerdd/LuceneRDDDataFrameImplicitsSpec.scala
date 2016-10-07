@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 case class FavoriteCaseClass(name: String, age: Int, myLong: Long, myFloat: Float, email: String)
@@ -50,8 +50,8 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
 
   "LuceneRDD(case class).count" should "return correct number of elements" in {
     val rdd = sc.parallelize(elem)
-    val sqlContext = new SQLContext(sc)
-    import sqlContext.implicits._
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
     val df = rdd.toDF()
     luceneRDD = LuceneRDD(df)
     luceneRDD.count should equal (elem.size)
@@ -59,8 +59,8 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
 
   "LuceneRDD(case class).fields" should "return all fields" in {
     val rdd = sc.parallelize(elem)
-    val sqlContext = new SQLContext(sc)
-    import sqlContext.implicits._
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
     val df = rdd.toDF()
     luceneRDD = LuceneRDD(df)
 
@@ -74,8 +74,8 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
 
   "LuceneRDD(case class).termQuery" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(elem)
-    val sqlContext = new SQLContext(sc)
-    import sqlContext.implicits._
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
     val df = rdd.toDF()
     luceneRDD = LuceneRDD(df)
 

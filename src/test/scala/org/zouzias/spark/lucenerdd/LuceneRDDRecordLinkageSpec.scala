@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.{FuzzyQuery, PrefixQuery}
-import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 import scala.io.Source
@@ -103,7 +103,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     }
 
     val linked = luceneRDD.link(leftCountriesRDD, linker, 10)
-    linked.count() should equal(leftCountries.size)
+    linked.count() should equal(leftCountries.length)
     // Greece and Greenland should appear
     linked.collect().exists(link => link._1 == "gree" && link._2.length == 2) should equal(true)
     // Italy should appear
@@ -115,9 +115,9 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     implicit val mySC = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
-    implicit val sqlContext = new SQLContext(sc)
-    import sqlContext.implicits._
-    val countriesDF = leftCountriesRDD.map(Country(_)).toDF()
+    implicit val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+    val countriesDF = leftCountriesRDD.map(Country).toDF()
 
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
       .map(_.toLowerCase()).toSeq)
@@ -133,7 +133,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     }
 
     val linked = luceneRDD.linkDataFrame(countriesDF, linker, 10)
-    linked.count() should equal(leftCountries.size)
+    linked.count() should equal(leftCountries.length)
     // Greece and Greenland should appear
     linked.collect().exists(link => link._1.get("name") == "gree"
       && link._2.length == 2) should equal(true)
@@ -158,7 +158,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     }
 
     val linked = luceneRDD.link(leftCountriesRDD, fuzzyLinker, 10)
-    linked.count() should equal(leftCountries.size)
+    linked.count() should equal(leftCountries.length)
     // Greece should appear only
     linked.collect.exists(link => link._1 == "gree" && link._2.length == 1)  should equal(true)
     // At least Italy, Iraq and Iran should appear

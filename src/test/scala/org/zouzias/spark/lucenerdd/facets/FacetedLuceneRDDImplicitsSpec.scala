@@ -20,9 +20,8 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.{FavoriteCaseClass, LuceneRDD, LuceneRDDKryoRegistrator}
-
-case class FavCaseClass(name: String, age: Int, myLong: Long, myFloat: Float, email: String)
+import org.zouzias.spark.lucenerdd.testing.FavoriteCaseClass
+import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
 
 class FacetedLuceneRDDImplicitsSpec  extends FlatSpec
   with Matchers

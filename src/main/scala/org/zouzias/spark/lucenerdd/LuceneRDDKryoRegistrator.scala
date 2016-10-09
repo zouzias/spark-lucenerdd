@@ -77,6 +77,7 @@ object LuceneRDDKryoRegistrator {
   def registerKryoClasses(conf: SparkConf): SparkConf = {
     conf.set("spark.serializer", classOf[KryoSerializer].getName)
       .set("spark.kryo.registrator", classOf[LuceneRDDKryoRegistrator].getName)
-      .set("spark.kryo.registrationRequired", "true")
+      .set("spark.kryo.registrationRequired", "false")
+    /* Set the above to true s.t. all classes are registered with Kryo */
   }
 }

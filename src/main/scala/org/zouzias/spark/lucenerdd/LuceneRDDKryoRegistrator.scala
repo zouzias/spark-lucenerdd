@@ -31,6 +31,12 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[LuceneRDDPartition[_]])
     kryo.register(classOf[FacetedLuceneRDD[_]])
     kryo.register(classOf[SparkDoc])
+    kryo.register(classOf[Number])
+    kryo.register(classOf[java.lang.Double])
+    kryo.register(classOf[java.lang.Float])
+    kryo.register(classOf[java.lang.Integer])
+    kryo.register(classOf[java.lang.Long])
+    kryo.register(classOf[java.lang.Short])
     kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])
     kryo.register(classOf[LuceneRDDResponse])
@@ -46,6 +52,6 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
 object LuceneRDDKryoRegistrator {
   def registerKryoClasses(conf: SparkConf): SparkConf = {
     conf.set("spark.serializer", classOf[KryoSerializer].getName)
-          .set("spark.kryo.registrator", classOf[LuceneRDDKryoRegistrator].getName)
+      .set("spark.kryo.registrator", classOf[LuceneRDDKryoRegistrator].getName)
   }
 }

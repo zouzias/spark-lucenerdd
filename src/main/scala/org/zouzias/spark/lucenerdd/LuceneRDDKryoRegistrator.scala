@@ -24,6 +24,7 @@ import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
+import org.zouzias.spark.lucenerdd.testing.{FavoriteCaseClass, Person}
 
 class LuceneRDDKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
@@ -61,10 +62,10 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[LuceneRDDResponse])
     kryo.register(classOf[LuceneRDDResponsePartition])
     kryo.register(classOf[TopK[_]])
-    kryo.register(classOf[org.zouzias.spark.lucenerdd.testing.FavoriteCaseClass])
-    kryo.register(classOf[Array[org.zouzias.spark.lucenerdd.testing.FavoriteCaseClass]])
-    kryo.register(classOf[org.zouzias.spark.lucenerdd.testing.Person])
-    kryo.register(classOf[Array[org.zouzias.spark.lucenerdd.testing.Person]])
+    kryo.register(classOf[FavoriteCaseClass]) /* For testing */
+    kryo.register(classOf[Array[FavoriteCaseClass]]) /* For testing */
+    kryo.register(classOf[Person]) /* For testing */
+    kryo.register(classOf[Array[Person]]) /* For testing */
     ()
   }
 }

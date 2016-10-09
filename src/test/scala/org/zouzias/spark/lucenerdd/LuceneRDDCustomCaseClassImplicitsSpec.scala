@@ -19,8 +19,7 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-
-case class Person(name: String, age: Int, email: String)
+import org.zouzias.spark.lucenerdd.testing.Person
 
 class LuceneRDDCustomCaseClassImplicitsSpec extends FlatSpec
   with Matchers

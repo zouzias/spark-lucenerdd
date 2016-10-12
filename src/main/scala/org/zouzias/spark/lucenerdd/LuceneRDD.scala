@@ -150,8 +150,12 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     : RDD[(T1, List[SparkScoreDoc])] = {
     logInfo("Linkage requested")
     val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
+    logDebug("Collecting query points to driver")
     val queries = other.map(searchQueryGen).collect()
+    logDebug("Query points collected to driver successfully")
+    logDebug("Broadcasting query points")
     val queriesB = partitionsRDD.context.broadcast(queries)
+    logDebug("Query points broadcasting was successfully")
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
@@ -163,7 +167,12 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
       }
     }
 
+    logDebug("Compute topK linkage per partition")
     val results = resultsByPart.reduceByKey(monoid.plus)
+
+    //  Asynchronously delete cached copies of this broadcast on the executors
+    queriesB.unpersist()
+
     other.zipWithIndex.map(_.swap).join(results)
       .map{ case (_, joined) => (joined._1, joined._2.items.take(topK))}
   }

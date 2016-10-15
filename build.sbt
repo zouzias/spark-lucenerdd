@@ -63,7 +63,7 @@ pomIncludeRepository := { _ => false }
 
 pomExtra := (
   <scm>
-    <url>git@github.com:amplab/spark-lucenerdd.git</url>
+    <url>git@github.com:zouzias/spark-lucenerdd.git</url>
     <connection>scm:git:git@github.com:zouzias/spark-lucenerdd.git</connection>
   </scm>
   <developers>

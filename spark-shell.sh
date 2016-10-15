@@ -23,5 +23,6 @@ ${SPARK_HOME}/bin/spark-shell   --jars "${MAIN_JAR}" \
 				--conf "spark.driver.memory=512m" \
 				--conf "spark.rdd.compress=true" \
 				--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
+				--conf "spark.kryo.registrator=org.zouzias.spark.lucenerdd.LuceneRDDKryoRegistrator" \
 				--conf "spark.kryoserializer.buffer=24mb" \
 				--master local[*]

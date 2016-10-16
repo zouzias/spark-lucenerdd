@@ -115,8 +115,8 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     //  Asynchronously delete cached copies of this broadcast on the executors
     queriesB.unpersist()
 
-    that.zipWithIndex.map(_.swap).join(results)
-      .map{ case (_, joined) => (joined._1, joined._2.items)}
+    that.zipWithIndex.map(_.swap).join(results).values
+      .map(joined => (joined._1, joined._2.items))
   }
 
   /**

@@ -34,7 +34,7 @@ import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._
 
-private[lucenerdd] class ShapeLuceneRDDPartition[K, V]
+private[shape] class ShapeLuceneRDDPartition[K, V]
   (private val iter: Iterator[(K, V)])
   (override implicit val kTag: ClassTag[K],
    override implicit val vTag: ClassTag[V])

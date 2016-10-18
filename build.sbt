@@ -136,6 +136,18 @@ libraryDependencies ++= Seq(
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 
+// Read version in code from build.sbt
+lazy val root = (project in file(".")).
+  enablePlugins(BuildInfoPlugin).
+  settings(
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    // See https://github.com/sbt/sbt-buildinfo#buildinfooptionbuildtime
+    buildInfoOptions += BuildInfoOption.BuildTime,
+    // https://github.com/sbt/sbt-buildinfo#buildinfooptiontomap
+    buildInfoOptions += BuildInfoOption.ToMap,
+    buildInfoPackage := "org.zouzias.spark.lucenerdd"
+)
+
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 compileScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value
 (compile in Compile) <<= (compile in Compile) dependsOn compileScalastyle

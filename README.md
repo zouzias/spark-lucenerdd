@@ -38,7 +38,7 @@ Here are a few examples using `LuceneRDD` for full text search, spatial search a
 * [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search)
 * [Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage)
 
-For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki).
+For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki). More examples are available at [examples](https://github.com/zouzias/spark-lucenerdd-examples) and performance evaluation examples on AWS can be found [here](https://github.com/zouzias/spark-lucenerdd-aws)
 
 ## Linking
 

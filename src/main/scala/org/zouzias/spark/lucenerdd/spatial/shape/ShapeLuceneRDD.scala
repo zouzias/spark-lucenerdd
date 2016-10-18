@@ -351,6 +351,14 @@ object ShapeLuceneRDD {
     new ShapeLuceneRDD(partitions)
   }
 
+  /**
+   * Return project information, i.e., version number, build time etc
+   * @return
+   */
+  def version(): Map[String, Any] = {
+    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
+    org.zouzias.spark.lucenerdd.BuildInfo.toMap
+  }
 
   /**
    * Instantiate a ShapeLuceneRDD with an iterable

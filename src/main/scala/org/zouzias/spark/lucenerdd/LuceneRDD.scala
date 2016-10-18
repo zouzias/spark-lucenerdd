@@ -321,4 +321,13 @@ object LuceneRDD {
   : LuceneRDD[Row] = {
     apply(dataFrame.rdd)
   }
+
+  /**
+   * Return project information, i.e., version number, build time etc
+   * @return
+   */
+  def version(): Map[String, Any] = {
+    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
+    org.zouzias.spark.lucenerdd.BuildInfo.toMap
+  }
 }

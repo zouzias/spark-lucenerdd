@@ -47,7 +47,7 @@ class FacetedLuceneRDDImplicitsSpec  extends FlatSpec
     FavoriteCaseClass(str, index, 10L, 12.3F, s"${str}@gmail.com")}
 
 
-  "LuceneRDD(case class).count" should "return correct number of elements" in {
+  "FacetedLuceneRDD(case class).count" should "return correct number of elements" in {
     val rdd = sc.parallelize(elem)
     val spark = SparkSession.builder().getOrCreate()
     import spark.implicits._
@@ -56,7 +56,7 @@ class FacetedLuceneRDDImplicitsSpec  extends FlatSpec
     luceneRDD.count should equal (elem.size)
   }
 
-  "LuceneRDD(case class).fields" should "return all fields" in {
+  "FacetedLuceneRDD(case class).fields" should "return all fields" in {
     val rdd = sc.parallelize(elem)
     val spark = SparkSession.builder().getOrCreate()
     import spark.implicits._
@@ -71,7 +71,7 @@ class FacetedLuceneRDDImplicitsSpec  extends FlatSpec
     luceneRDD.fields().contains("email") should equal(true)
   }
 
-  "LuceneRDD(case class).termQuery" should "correctly search with TermQueries" in {
+  "FacetedLuceneRDD(case class).termQuery" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(elem)
     val spark = SparkSession.builder().getOrCreate()
     import spark.implicits._

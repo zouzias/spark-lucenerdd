@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd.facets
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.LuceneRDDKryoRegistrator
+import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
 
 class FacetedLuceneRDDFacetSpec extends FlatSpec
   with Matchers
@@ -37,7 +37,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 
-  "LuceneRDD.facetQuery" should "compute facets correctly" in {
+  "FacetedLuceneRDD.facetQuery" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -51,7 +51,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.facetQuery" should "compute facets correctly with ints" in {
+  "FacetedLuceneRDD.facetQuery" should "compute facets correctly with ints" in {
     val words = Array(10, 10, 10, 10, 22, 22, 22, 33, 33)
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -67,7 +67,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.facetQuery" should "compute facets correctly with doubles" in {
+  "FacetedLuceneRDD.facetQuery" should "compute facets correctly with doubles" in {
     val words = Array(10.5D, 10.5D, 10.5D, 10.5D, 22.2D, 22.2D, 22.2D, 33.2D, 33.2D)
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -83,7 +83,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.facetQueries" should "compute facets correctly" in {
+  "FacetedLuceneRDD.facetQueries" should "compute facets correctly" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -98,7 +98,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.sortedFacets" should "return facets sorted by decreasing order" in {
+  "FacetedLuceneRDD.sortedFacets" should "return facets sorted by decreasing order" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -109,7 +109,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.facetQuery" should "compute facets with prefix search" in {
+  "FacetedLuceneRDD.facetQuery" should "compute facets with prefix search" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -124,7 +124,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.facetQuery" should "compute facets with term search" in {
+  "FacetedLuceneRDD.facetQuery" should "compute facets with term search" in {
     val words = Array("aaa", "aaa", "aaa", "aaa", "aaaa", "bb", "bb", "bb", "cc", "cc")
     val rdd = sc.parallelize(words)
     val luceneRDD = FacetedLuceneRDD(rdd)
@@ -146,7 +146,7 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     luceneRDD.close()
   }
 
-  "LuceneRDD.facetQuery" should "compute facets with term search in Tuple2" in {
+  "FacetedLuceneRDD.facetQuery" should "compute facets with term search in Tuple2" in {
     val words = Array(("aaa", "aaa1"), ("aaa", "aaa2"), ("aaa", "aaa3"), ("aaa", "aaa3"),
       ("aaaa", "aaa3"), ("bb", "cc1"), ("bb", "cc1"), ("bb", "cc1"), ("cc", "cc2"), ("cc", "cc2"))
     val rdd = sc.parallelize(words)
@@ -163,6 +163,16 @@ class FacetedLuceneRDDFacetSpec extends FlatSpec
     facetResults.facets.get("aaa3") should equal (Some(2))
 
     luceneRDD.close()
+  }
+
+  "FacetedLuceneRDD.version" should "return project sbt build information" in {
+    val map = LuceneRDD.version()
+    map.contains("name") should equal(true)
+    map.contains("builtAtMillis") should equal(true)
+    map.contains("scalaVersion") should equal(true)
+    map.contains("version") should equal(true)
+    map.contains("sbtVersion") should equal(true)
+    map.contains("builtAtString") should equal(true)
   }
 
 }

@@ -16,17 +16,29 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.grids
 
-import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTreeFactory
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
+import scala.collection.JavaConverters._
 
-trait GridLoader extends ContextLoader
+trait PrefixTreeLoader extends ContextLoader
   with ShapeLuceneRDDConfigurable {
 
   // results in sub-meter precision for geohash
-  protected val maxLevels = getGridMaxLevel
+  protected val maxLevels: Int = getPrefixTreeMaxLevel
+
+  // Excepting 'geohash' or 'quad'
+  protected val prefixTreeName: String = getPrefixTreeName
+
+  // Maximum distance error (in KM)
+  protected val prefixTreeMaxDistErr: Double = getPrefixTreeMaxDistErr
 
   // This can also be constructed from SpatialPrefixTreeFactory
-  protected val grid = new GeohashPrefixTree(ctx, maxLevels)
+  protected val grid = SpatialPrefixTreeFactory.makeSPT(
+    Map("prefixTree" -> prefixTreeName,
+    "maxLevels" -> maxLevels.toString,
+    "maxDistErr" -> prefixTreeMaxDistErr.toString).asJava,
+    ClassLoader.getSystemClassLoader,
+    ctx)
 }

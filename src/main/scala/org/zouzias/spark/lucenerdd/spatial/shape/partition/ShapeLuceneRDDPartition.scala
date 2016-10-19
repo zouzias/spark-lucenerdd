@@ -42,7 +42,6 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
    docConversion: V => Document)
   extends AbstractShapeLuceneRDDPartition[K, V]
     with IndexWithTaxonomyWriter
-    with GridLoader
     with SpatialStrategy {
 
   private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
@@ -80,7 +79,6 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
-  private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
 
   override def size: Long = iterOriginal.size.toLong
 
@@ -113,17 +111,19 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
+    logInfo(s"circleSearch [center:${center}, operation:${operationName}]")
     val args = new SpatialArgs(SpatialOperation.get(operationName),
         ctx.makeCircle(center._1, center._2,
         DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
 
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    new LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
   }
 
   override def knnSearch(point: PointType, k: Int, searchString: String)
   : LuceneRDDResponsePartition = {
+    logInfo(s"knnSearch [center:${point}, searchQuery:${searchString}]")
 
     // Match all, order by distance ascending
     val pt = ctx.makePoint(point._1, point._2)
@@ -143,7 +143,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     // search results then that's not a big deal. Alternatively, try wrapping
     // the ValueSource with CachingDoubleValueSource then retrieve the value
     // from the ValueSource now. See LUCENE-4541 for an example.
-    val result = docs.scoreDocs.map { case scoreDoc => {
+    val result = docs.scoreDocs.map { scoreDoc => {
         val location = docLocation(scoreDoc)
         location match {
           case Some(shape) =>
@@ -155,13 +155,14 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    new LuceneRDDResponsePartition(result.toIterator)
+    LuceneRDDResponsePartition(result.toIterator)
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
+    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
     val shape = stringToShape(shapeAsString)
-    (spatialSearch(shape, k, operationName))
+    spatialSearch(shape, k, operationName)
   }
 
   private def spatialSearch(shape: Shape, k: Int, operationName: String)
@@ -169,7 +170,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    new LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
   }
 
   override def spatialSearch(point: PointType, k: Int, operationName: String)
@@ -180,6 +181,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
+    logInfo(s"bboxSearch [center:${center}, radius: ${radius} and operation:${operationName}]")
     val x = center._1
     val y = center._2
     val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)

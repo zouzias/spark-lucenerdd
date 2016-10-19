@@ -16,13 +16,13 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.grids
 
-import org.apache.lucene.spatial.prefix.tree.{GeohashPrefixTree, SpatialPrefixTreeFactory}
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTreeFactory
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
 import scala.collection.JavaConverters._
 
-trait GridLoader extends ContextLoader
+trait PrefixTreeLoader extends ContextLoader
   with ShapeLuceneRDDConfigurable {
 
   // results in sub-meter precision for geohash

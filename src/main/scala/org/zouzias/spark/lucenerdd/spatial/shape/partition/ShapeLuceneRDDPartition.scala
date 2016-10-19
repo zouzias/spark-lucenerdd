@@ -28,7 +28,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
-import org.zouzias.spark.lucenerdd.spatial.shape.grids.GridLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.grids.PrefixTreeLoader
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
@@ -137,8 +137,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val query = LuceneQueryHelpers.parseQueryString(searchString)(Analyzer)
     val docs = indexSearcher.search(query, k, distSort)
 
-    // To get the distance, we could compute from stored values like earlier.
-    // However in this example we sorted on it, and the distance will get
+    // Here we sorted on it, and the distance will get
     // computed redundantly.  If the distance is only needed for the top-X
     // search results then that's not a big deal. Alternatively, try wrapping
     // the ValueSource with CachingDoubleValueSource then retrieve the value

@@ -21,7 +21,7 @@ import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 
 import scala.reflect.ClassTag
 
-abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
+private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
 
   protected implicit def kTag: ClassTag[K]
   protected implicit def vTag: ClassTag[V]

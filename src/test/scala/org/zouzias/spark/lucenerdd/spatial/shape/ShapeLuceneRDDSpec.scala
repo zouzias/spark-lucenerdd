@@ -138,4 +138,14 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
+  "ShapeLuceneRDD.version" should "return project sbt build information" in {
+    val map = LuceneRDD.version()
+    map.contains("name") should equal(true)
+    map.contains("builtAtMillis") should equal(true)
+    map.contains("scalaVersion") should equal(true)
+    map.contains("version") should equal(true)
+    map.contains("sbtVersion") should equal(true)
+    map.contains("builtAtString") should equal(true)
+  }
+
 }

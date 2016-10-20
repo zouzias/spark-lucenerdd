@@ -63,7 +63,7 @@ pomIncludeRepository := { _ => false }
 
 pomExtra := (
   <scm>
-    <url>git@github.com:amplab/spark-lucenerdd.git</url>
+    <url>git@github.com:zouzias/spark-lucenerdd.git</url>
     <connection>scm:git:git@github.com:zouzias/spark-lucenerdd.git</connection>
   </scm>
   <developers>
@@ -134,6 +134,18 @@ libraryDependencies ++= Seq(
   "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.4.7"
     % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
+)
+
+// Read version in code from build.sbt
+lazy val root = (project in file(".")).
+  enablePlugins(BuildInfoPlugin).
+  settings(
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    // See https://github.com/sbt/sbt-buildinfo#buildinfooptionbuildtime
+    buildInfoOptions += BuildInfoOption.BuildTime,
+    // https://github.com/sbt/sbt-buildinfo#buildinfooptiontomap
+    buildInfoOptions += BuildInfoOption.ToMap,
+    buildInfoPackage := "org.zouzias.spark.lucenerdd"
 )
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")

@@ -20,11 +20,25 @@ import com.spatial4j.core.io.ShapeIO
 
 trait ShapeLuceneRDDConfigurable extends LuceneRDDConfigurable {
 
-  protected val getGridMaxLevel: Int = {
-    if (config.hasPath("lucenerdd.spatial.grid.level.max")) {
-      config.getInt("lucenerdd.spatial.grid.level.max")
+  protected val getPrefixTreeMaxLevel: Int = {
+    if (config.hasPath("lucenerdd.spatial.prefixtree.maxlevel")) {
+      config.getInt("lucenerdd.spatial.prefixtree.maxlevel")
     }
     else 11
+  }
+
+  protected val getPrefixTreeName: String = {
+    if (config.hasPath("lucenerdd.spatial.prefixtree.name")) {
+      config.getString("lucenerdd.spatial.prefixtree.name")
+    }
+    else "geohash"  // Geohash tree by default
+  }
+
+  protected val getPrefixTreeMaxDistErr: Double = {
+    if (config.hasPath("lucenerdd.spatial.prefixtree.maxDistErr")) {
+      config.getDouble("lucenerdd.spatial.prefixtree.maxDistErr")
+    }
+    else 1D
   }
 
   protected val getLocationFieldName: String = {

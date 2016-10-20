@@ -30,23 +30,23 @@ import scala.collection.JavaConverters._
  */
 class SparkDoc(doc: Document) extends Serializable {
 
-  private val stringFields = doc.getFields().asScala.map( field =>
+  private val stringFields: Map[String, String] = doc.getFields().asScala.flatMap( field =>
     if (field.stringValue() != null && field.name() != null) {
-      Map((field.name(), List(field.stringValue())))
+      Some((field.name(), field.stringValue()))
     }
     else {
-      Map.empty[String, List[String]]
+      None
     }
-  ).reduce(SparkDoc.stringMonoid.plus)
+  ).toMap[String, String]
 
-  private val numberFields = doc.getFields().asScala.map( field =>
+  private val numberFields: Map[String, Number] = doc.getFields().asScala.flatMap( field =>
     if (field.numericValue() != null && field.name() != null) {
-      Map((field.name(), List(field.numericValue())))
+      Some((field.name(), field.numericValue()))
     }
     else {
-      Map.empty[String, List[Number]]
+      None
     }
-  ).reduce(SparkDoc.numberMonoid.plus)
+  ).toMap[String, Number]
 
   def getFields: Set[String] = {
     getTextFields ++ getNumericFields
@@ -60,33 +60,29 @@ class SparkDoc(doc: Document) extends Serializable {
     numberFields.keySet
   }
 
-  def textField(fieldName: String): List[String] = {
-    stringFields.getOrElse(fieldName, List.empty[String])
+  def textField(fieldName: String): Option[String] = {
+    stringFields.get(fieldName)
   }
 
-  def numericField(fieldName: String): List[Number] = {
-    numberFields.getOrElse(fieldName, List.empty[Number])
+  def numericField(fieldName: String): Option[Number] = {
+    numberFields.get(fieldName)
   }
 
   override def toString: String = {
     val builder = new StringBuilder
     if ( numberFields.nonEmpty) builder.append("Numeric fields:")
-    numberFields.foreach { case (name, values) =>
-      builder.append(s"$name:[${values.mkString(",")}]")
+    numberFields.foreach { case (name, value) =>
+      builder.append(s"$name:[${value}]")
     }
     if (stringFields.nonEmpty) builder.append("Text fields:")
-    stringFields.foreach { case (name, values) =>
-      builder.append(s"$name:[${values.mkString(",")}]")
+    stringFields.foreach { case (name, value) =>
+      builder.append(s"$name:[${value}]")
     }
     builder.result()
   }
 }
 
 object SparkDoc extends Serializable {
-
-  private lazy val stringMonoid = new MapMonoid[String, List[String]]()
-  private lazy val numberMonoid = new MapMonoid[String, List[Number]]()
-
   def apply(doc: Document): SparkDoc = {
     new SparkDoc(doc)
   }

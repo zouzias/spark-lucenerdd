@@ -111,8 +111,12 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
     logDebug("Merge topK linkage results")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)
-    that.zipWithIndex.map(_.swap).join(results)
-      .map{ case (_, joined) => (joined._1, joined._2.items)}
+
+    //  Asynchronously delete cached copies of this broadcast on the executors
+    queriesB.unpersist()
+
+    that.zipWithIndex.map(_.swap).join(results).values
+      .map(joined => (joined._1, joined._2.items))
   }
 
   /**
@@ -347,6 +351,14 @@ object ShapeLuceneRDD {
     new ShapeLuceneRDD(partitions)
   }
 
+  /**
+   * Return project information, i.e., version number, build time etc
+   * @return
+   */
+  def version(): Map[String, Any] = {
+    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
+    org.zouzias.spark.lucenerdd.BuildInfo.toMap
+  }
 
   /**
    * Instantiate a ShapeLuceneRDD with an iterable

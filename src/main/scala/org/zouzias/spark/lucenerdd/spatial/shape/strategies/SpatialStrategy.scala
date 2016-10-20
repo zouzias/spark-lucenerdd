@@ -17,9 +17,9 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.strategies
 
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy
-import org.zouzias.spark.lucenerdd.spatial.shape.grids.GridLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.grids.PrefixTreeLoader
 
-trait SpatialStrategy extends GridLoader {
+trait SpatialStrategy extends PrefixTreeLoader {
 
   /**
    * The Lucene spatial {@link SpatialStrategy} encapsulates an approach to

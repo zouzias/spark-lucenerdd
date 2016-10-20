@@ -26,8 +26,9 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 /**
  * LuceneRDD response
  */
-class LuceneRDDResponse(protected val partitionsRDD: RDD[LuceneRDDResponsePartition],
-                        protected val ordering: Ordering[SparkScoreDoc])
+private[lucenerdd] class LuceneRDDResponse
+  (protected val partitionsRDD: RDD[LuceneRDDResponsePartition],
+   protected val ordering: Ordering[SparkScoreDoc])
   extends RDD[SparkScoreDoc](partitionsRDD.context,
     List(new OneToOneDependency(partitionsRDD))) {
 

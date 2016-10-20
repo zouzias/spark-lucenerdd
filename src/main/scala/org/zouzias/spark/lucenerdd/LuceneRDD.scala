@@ -140,14 +140,14 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    *
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
-   * @tparam T1 A type
+   * @tparam T A type
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    *
    * Note: Currently the query strings of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
-    : RDD[(T1, List[SparkScoreDoc])] = {
+  def link[T: ClassTag](other: RDD[T], searchQueryGen: T => String, topK: Int = DefaultTopK)
+    : RDD[(T, List[SparkScoreDoc])] = {
     logInfo("Linkage requested")
     val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     logDebug("Collecting query points to driver")
@@ -182,18 +182,18 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    *
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a Lucene Query object for each element of other
-   * @tparam T1 A type
+   * @tparam T A type
    * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
    */
-  def linkByQuery[T1: ClassTag](other: RDD[T1],
-                                searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
-  : RDD[(T1, List[SparkScoreDoc])] = {
+  def linkByQuery[T: ClassTag](other: RDD[T],
+                                searchQueryGen: T => Query, topK: Int = DefaultTopK)
+  : RDD[(T, List[SparkScoreDoc])] = {
     logInfo("LinkByQuery requested")
-    def typeToQueryString = (input: T1) => {
+    def typeToQueryString = (input: T) => {
       searchQueryGen(input).toString
     }
 
-    link[T1](other, typeToQueryString, topK)
+    link[T](other, typeToQueryString, topK)
   }
 
   /**

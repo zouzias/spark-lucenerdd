@@ -2,8 +2,8 @@
   "paragraphs": [
     {
       "title": "Load Spark LuceneRDD Jars",
-      "text": "%dep\nz.addRepo(\"Spark Packages Repo\").url(\"http://dl.bintray.com/spark-packages/maven\")\nz.load(\"org.zouzias:spark-lucenerdd_2.11:0.2.0\")",
-      "dateUpdated": "Oct 1, 2016 2:57:49 PM",
+      "text": "%dep\nz.addRepo(\"Spark Packages Repo\").url(\"http://dl.bintray.com/spark-packages/maven\")\nz.addRepo(\"OSS Snapshots\").url(\"https://oss.sonatype.org/content/repositories/snapshots\")\nz.load(\"org.zouzias:spark-lucenerdd_2.11:0.2.2-SNAPSHOT\")",
+      "dateUpdated": "Oct 20, 2016 9:26:50 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -32,20 +32,20 @@
       "jobName": "paragraph_1475323002559_-245827101",
       "id": "20161001-115642_482200633",
       "result": {
-        "code": "ERROR",
+        "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "Must be used before SparkInterpreter (%spark) initialized\nHint: put this paragraph before any Spark code and restart Zeppelin/Interpreter"
+        "msg": "DepInterpreter(%dep) deprecated. Add repository through GUI interpreter menu instead.\nDepInterpreter(%dep) deprecated. Add repository through GUI interpreter menu instead.\nDepInterpreter(%dep) deprecated. Load dependency through GUI interpreter menu instead.\nres0: org.apache.zeppelin.dep.Dependency \u003d org.apache.zeppelin.dep.Dependency@2129f0e\n"
       },
       "dateCreated": "Oct 1, 2016 11:56:42 AM",
-      "dateStarted": "Oct 1, 2016 2:57:49 PM",
-      "dateFinished": "Oct 1, 2016 2:57:49 PM",
-      "status": "ERROR",
+      "dateStarted": "Oct 20, 2016 9:26:51 AM",
+      "dateFinished": "Oct 20, 2016 9:27:09 AM",
+      "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
-      "title": "Verify Spark version",
-      "text": "\nspark.version\n",
-      "dateUpdated": "Oct 1, 2016 2:57:49 PM",
+      "title": "Verify Spark and LuceneRDD version",
+      "text": "\nprintln(s\"Spark version: ${spark.version}\")\nprintln(s\"Build time: ${org.zouzias.spark.lucenerdd.LuceneRDD.version.mkString(\" | \")}\")\n",
+      "dateUpdated": "Oct 20, 2016 9:29:49 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -76,18 +76,18 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "\nres24: String \u003d 2.0.0\n"
+        "msg": "Spark version: 2.0.0\nBuild time: builtAtMillis -\u003e 1476953930916 | name -\u003e spark-lucenerdd | scalaVersion -\u003e 2.11.8 | version -\u003e 0.2.2-SNAPSHOT | sbtVersion -\u003e 0.13.12 | builtAtString -\u003e 2016-10-20 08:58:50.916\n"
       },
       "dateCreated": "Oct 1, 2016 11:58:49 AM",
-      "dateStarted": "Oct 1, 2016 2:57:49 PM",
-      "dateFinished": "Oct 1, 2016 2:57:51 PM",
+      "dateStarted": "Oct 20, 2016 9:29:49 AM",
+      "dateFinished": "Oct 20, 2016 9:29:50 AM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "title": "Imports for spark-lucenerdd",
-      "text": "import scala.io.Source\nimport org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition\nimport org.zouzias.spark.lucenerdd._\nimport org.zouzias.spark.lucenerdd.LuceneRDD\n",
-      "dateUpdated": "Oct 1, 2016 2:57:49 PM",
+      "text": "import scala.io.Source\nimport org.apache.spark.rdd.RDD\nimport org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition\nimport org.zouzias.spark.lucenerdd._\nimport org.zouzias.spark.lucenerdd.LuceneRDD\n",
+      "dateUpdated": "Oct 20, 2016 9:30:53 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -118,18 +118,18 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "\nimport scala.io.Source\n\nimport org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition\n\nimport org.zouzias.spark.lucenerdd._\n\nimport org.zouzias.spark.lucenerdd.LuceneRDD\n"
+        "msg": "\nimport scala.io.Source\n\nimport org.apache.spark.rdd.RDD\n\nimport org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition\n\nimport org.zouzias.spark.lucenerdd._\n\nimport org.zouzias.spark.lucenerdd.LuceneRDD\n"
       },
       "dateCreated": "Oct 1, 2016 12:00:20 PM",
-      "dateStarted": "Oct 1, 2016 2:57:50 PM",
-      "dateFinished": "Oct 1, 2016 2:57:53 PM",
+      "dateStarted": "Oct 20, 2016 9:30:53 AM",
+      "dateFinished": "Oct 20, 2016 9:30:54 AM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "title": "Load world cities",
-      "text": "val cities \u003d Source.fromURL(\"https://raw.githubusercontent.com/zouzias/spark-lucenerdd/master/src/test/resources/cities.txt\").getLines().toSeq\nval rdd \u003d sc.parallelize(cities)\nval luceneRDD \u003d LuceneRDD(rdd)\nluceneRDD.cache\nluceneRDD.count\n",
-      "dateUpdated": "Oct 1, 2016 2:57:50 PM",
+      "text": "val cities \u003d Source.fromURL(\"https://raw.githubusercontent.com/zouzias/spark-lucenerdd/master/src/test/resources/cities.txt\").getLines().toSeq\nval rdd: RDD[String] \u003d sc.parallelize(cities)\nval luceneRDD \u003d LuceneRDD(rdd)\nluceneRDD.cache\nluceneRDD.count\n",
+      "dateUpdated": "Oct 20, 2016 9:31:08 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -147,7 +147,9 @@
           }
         },
         "enabled": true,
-        "title": true
+        "title": true,
+        "editorMode": "ace/mode/scala",
+        "tableHide": true
       },
       "settings": {
         "params": {},
@@ -159,18 +161,18 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "\ncities: Seq[String] \u003d Stream(AEaenekoski, ?)\n\nrdd: org.apache.spark.rdd.RDD[String] \u003d ParallelCollectionRDD[32] at parallelize at \u003cconsole\u003e:47\n\nluceneRDD: org.zouzias.spark.lucenerdd.LuceneRDD[String] \u003d LuceneRDD[34] at RDD at LuceneRDD.scala:40\n\nres25: luceneRDD.type \u003d LuceneRDD[34] at RDD at LuceneRDD.scala:40\n\nres26: Long \u003d 38106\n"
+        "msg": "\ncities: Seq[String] \u003d Stream(AEaenekoski, ?)\n\nrdd: org.apache.spark.rdd.RDD[String] \u003d ParallelCollectionRDD[16] at parallelize at \u003cconsole\u003e:43\n\nluceneRDD: org.zouzias.spark.lucenerdd.LuceneRDD[String] \u003d LuceneRDD[18] at RDD at LuceneRDD.scala:40\n\nres31: luceneRDD.type \u003d LuceneRDD[18] at RDD at LuceneRDD.scala:40\n\nres32: Long \u003d 38106\n"
       },
       "dateCreated": "Oct 1, 2016 12:03:20 PM",
-      "dateStarted": "Oct 1, 2016 2:57:51 PM",
-      "dateFinished": "Oct 1, 2016 2:57:59 PM",
+      "dateStarted": "Oct 20, 2016 9:31:02 AM",
+      "dateFinished": "Oct 20, 2016 9:31:06 AM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "title": "Full-text search functionality",
-      "text": "println(\"\u003d\" * 20)\nluceneRDD.termQuery(\"_1\", \"toronto\").take(10).foreach(println)\n\nprintln(\"\u003d\" * 20)\nluceneRDD.prefixQuery(\"_1\", \"ath\").take(10).foreach(println)\n\nprintln(\"\u003d\" * 20)\nluceneRDD.fuzzyQuery(\"_1\", \"bern\", 2).take(10).foreach(println)\n\nprintln(\"\u003d\" * 20)\nluceneRDD.phraseQuery(\"_1\", \"sant\").take(10).foreach(println)",
-      "dateUpdated": "Oct 1, 2016 3:11:58 PM",
+      "text": "println(\"\u003d\" * 40)\nluceneRDD.termQuery(\"_1\", \"toronto\").take(10).foreach(println)\n\nprintln(\"\u003d\" * 40)\nluceneRDD.prefixQuery(\"_1\", \"ath\").take(10).foreach(println)\n\nprintln(\"\u003d\" * 40)\nluceneRDD.fuzzyQuery(\"_1\", \"bern\", 2).take(10).foreach(println)\n\nprintln(\"\u003d\" * 40)\nluceneRDD.phraseQuery(\"_1\", \"sant\").take(10).foreach(println)",
+      "dateUpdated": "Oct 20, 2016 9:31:34 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -188,7 +190,8 @@
           }
         },
         "enabled": true,
-        "title": true
+        "title": true,
+        "editorMode": "ace/mode/scala"
       },
       "settings": {
         "params": {},
@@ -200,17 +203,17 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(10.8549795,33837,0,Text fields:_1:[Toronto])\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(1.0,1964,0,Text fields:_1:[Athol])\nSparkScoreDoc(1.0,1963,0,Text fields:_1:[Athni])\nSparkScoreDoc(1.0,1962,0,Text fields:_1:[Athlone])\nSparkScoreDoc(1.0,1961,0,Text fields:_1:[Athis-Mons])\nSparkScoreDoc(1.0,1960,0,Text fields:_1:[Atherton])\nSparkScoreDoc(1.0,1959,0,Text fields:_1:[Atherstone])\nSparkScoreDoc(1.0,1958,0,Text fields:_1:[Athens])\nSparkScoreDoc(1.0,1957,0,Text fields:_1:[Athelstone])\nSparkScoreDoc(1.0,1956,0,Text fields:_1:[Athagarh])\nSparkScoreDoc(1.0,1955,0,Text fields:_1:[Ath])\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(2.1096375,3606,0,Text fields:_1:[Bern])\nSparkScoreDoc(1.5822282,4552,0,Text fields:_1:[Borne])\nSparkScoreDoc(1.5822282,4550,0,Text fields:_1:[Born])\nSparkScoreDoc(1.5822282,4305,0,Text fields:_1:[Boerne])\nSparkScoreDoc(1.5822282,3734,0,Text fields:_1:[Beynes])\nSparkScoreDoc(1.5822282,3568,0,Text fields:_1:[Berg])\nSparkScoreDoc(1.5822282,3542,0,Text fields:_1:[Bere])\nSparkScoreDoc(1.5822282,3536,0,Text fields:_1:[Berd])\nSparkScoreDoc(1.5822282,3518,0,Text fields:_1:[Berane])\nSparkScoreDoc(1.5822282,3516,0,Text fields:_1:[Bera])\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(10.449514,29600,0,Text fields:_1:[Santes])\nSparkScoreDoc(6.5309467,29613,0,Text fields:_1:[Sants-Montjuic])\n"
+        "msg": "\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(10.161833,14784,0,Text fields:_1:[Toronto])\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(1.0,1964,0,Text fields:_1:[Athol])\nSparkScoreDoc(1.0,1963,0,Text fields:_1:[Athni])\nSparkScoreDoc(1.0,1962,0,Text fields:_1:[Athlone])\nSparkScoreDoc(1.0,1961,0,Text fields:_1:[Athis-Mons])\nSparkScoreDoc(1.0,1960,0,Text fields:_1:[Atherton])\nSparkScoreDoc(1.0,1959,0,Text fields:_1:[Atherstone])\nSparkScoreDoc(1.0,1958,0,Text fields:_1:[Athens])\nSparkScoreDoc(1.0,1957,0,Text fields:_1:[Athelstone])\nSparkScoreDoc(1.0,1956,0,Text fields:_1:[Athagarh])\nSparkScoreDoc(1.0,1955,0,Text fields:_1:[Ath])\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(2.1071432,3606,0,Text fields:_1:[Bern])\nSparkScoreDoc(1.6767414,17295,0,Text fields:_1:[Werne])\nSparkScoreDoc(1.6767414,16257,0,Text fields:_1:[Verne])\nSparkScoreDoc(1.5803573,4552,0,Text fields:_1:[Borne])\nSparkScoreDoc(1.5803573,4550,0,Text fields:_1:[Born])\nSparkScoreDoc(1.5803573,4305,0,Text fields:_1:[Boerne])\nSparkScoreDoc(1.5803573,3734,0,Text fields:_1:[Beynes])\nSparkScoreDoc(1.5803573,3568,0,Text fields:_1:[Berg])\nSparkScoreDoc(1.5803573,3542,0,Text fields:_1:[Bere])\nSparkScoreDoc(1.5803573,3536,0,Text fields:_1:[Berd])\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nSparkScoreDoc(9.756368,10547,0,Text fields:_1:[Santes])\nSparkScoreDoc(6.0977297,10560,0,Text fields:_1:[Sants-Montjuic])\n"
       },
-      "dateCreated": "Oct 1, 2016 2:56:32 PM",
-      "dateStarted": "Oct 1, 2016 3:11:58 PM",
-      "dateFinished": "Oct 1, 2016 3:12:03 PM",
+      "dateCreated": "Oct 1, 2016 2:56:32 AM",
+      "dateStarted": "Oct 20, 2016 9:31:34 AM",
+      "dateFinished": "Oct 20, 2016 9:31:37 AM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
     {
       "text": "",
-      "dateUpdated": "Oct 1, 2016 2:58:01 PM",
+      "dateUpdated": "Oct 20, 2016 9:26:51 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -227,7 +230,8 @@
             "pinCols": []
           }
         },
-        "enabled": true
+        "enabled": true,
+        "editorMode": "ace/mode/scala"
       },
       "settings": {
         "params": {},
@@ -236,23 +240,30 @@
       "apps": [],
       "jobName": "paragraph_1475333870642_-1603530019",
       "id": "20161001-145750_1024985566",
-      "dateCreated": "Oct 1, 2016 2:57:50 PM",
-      "status": "READY",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": ""
+      },
+      "dateCreated": "Oct 1, 2016 2:57:50 AM",
+      "dateStarted": "Oct 20, 2016 9:27:32 AM",
+      "dateFinished": "Oct 20, 2016 9:27:35 AM",
+      "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     }
   ],
   "name": "Spark LuceneRDD",
   "id": "2BXC9TF8J",
   "angularObjects": {
-    "2BXTJKSEW:shared_process": [],
-    "2BX1ANVHB:shared_process": [],
-    "2BWH95CND:shared_process": [],
-    "2BWZ9CBVH:shared_process": [],
-    "2BYHYZ468:shared_process": [],
-    "2BWM5AEUK:shared_process": [],
-    "2BY21WDMU:shared_process": [],
-    "2BWVWZKJ2:shared_process": [],
-    "2BYFQZ1HM:shared_process": []
+    "2C1JTDAK4:shared_process": [],
+    "2C1W5TSMW:shared_process": [],
+    "2C1XQMCEW:shared_process": [],
+    "2BXQPWSW7:shared_process": [],
+    "2C1A641UZ:shared_process": [],
+    "2BZH4Z263:shared_process": [],
+    "2BZGD7UA5:shared_process": [],
+    "2BXSGSRDW:shared_process": [],
+    "2C1Q6UJ3X:shared_process": []
   },
   "config": {},
   "info": {}

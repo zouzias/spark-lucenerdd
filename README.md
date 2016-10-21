@@ -83,8 +83,6 @@ spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
 
 ### Project Status and Limitations
 
-Currently the Lucene index is only stored in memory.
-
 Implicit conversions for the primitive types (Int, Float, Double, Long, String) are supported. Moreover, implicit conversions for all product types (i.e., tuples and case classes) of the above primitives are supported. Implicits for tuples default the field names to "_1", "_2", "_3, ... following Scala's naming conventions for tuples.
 
 ### Custom Case Classes

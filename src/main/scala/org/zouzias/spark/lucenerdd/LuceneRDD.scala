@@ -158,9 +158,9 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     logDebug("Query points broadcasting was successfully")
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
+      case partition => queriesB.value.zipWithIndex.par.map { case (qr, index) =>
         (index.toLong, monoid.build(partition.query(qr, topK)))
-      }
+      }.toList
     }
 
     logDebug("Compute topK linkage per partition")

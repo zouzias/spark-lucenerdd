@@ -87,7 +87,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
     mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
-                            Iterable[SparkScoreDoc]): RDD[(T, List[SparkScoreDoc])] = {
+                            Iterable[SparkScoreDoc]): RDD[(T, Array[SparkScoreDoc])] = {
     logDebug("Linker requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
@@ -116,7 +116,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     queriesB.unpersist()
 
     that.zipWithIndex.map(_.swap).join(results).values
-      .map(joined => (joined._1, joined._2.items))
+      .map(joined => (joined._1, joined._2.items.toArray))
   }
 
   /**

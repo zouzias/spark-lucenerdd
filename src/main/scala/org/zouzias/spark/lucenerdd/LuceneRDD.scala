@@ -147,7 +147,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * broadcast to the workers.
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
-    : RDD[(T1, List[SparkScoreDoc])] = {
+    : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
     val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     logDebug("Collecting query points to driver")
@@ -174,7 +174,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     queriesB.unpersist()
 
     other.zipWithIndex.map(_.swap).join(results).values
-      .map(joined => (joined._1, joined._2.items.take(topK)))
+      .map(joined => (joined._1, joined._2.items.toArray))
   }
 
   /**

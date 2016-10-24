@@ -170,9 +170,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     logDebug("Compute topK linkage per partition")
     val results = resultsByPart.reduceByKey(monoid.plus)
 
-    //  Asynchronously delete cached copies of this broadcast on the executors
-    queriesB.unpersist()
-
     other.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
   }

@@ -132,7 +132,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def linkByKnn[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
                            topK: Int = DefaultTopK)
-  : RDD[(T, List[SparkScoreDoc])] = {
+  : RDD[(T, Array[SparkScoreDoc])] = {
     logInfo("linkByKnn requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
       part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString))
@@ -153,7 +153,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => PointType, radius: Double,
     topK: Int = DefaultTopK, spatialOp: String = SpatialOperation.Intersects.getName)
-  : RDD[(T, List[SparkScoreDoc])] = {
+  : RDD[(T, Array[SparkScoreDoc])] = {
     logInfo("linkByRadius requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
       part.circleSearch(queryPoint, radius, topK, spatialOp))
@@ -173,7 +173,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    */
   def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => PointType,
                          topK: Int = DefaultTopK)
-  : RDD[(Row, List[SparkScoreDoc])] = {
+  : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("linkDataFrameByKnn requested")
     linkByKnn[Row](other.rdd, searchQueryGen, topK)
   }
@@ -193,7 +193,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   def linkDataFrameByRadius(other: DataFrame, pointFunctor: Row => PointType,
                             radius: Double, topK: Int = DefaultTopK,
                             spatialOp: String = SpatialOperation.Intersects.getName)
-  : RDD[(Row, List[SparkScoreDoc])] = {
+  : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("linkDataFrameByRadius requested")
     linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp)
   }

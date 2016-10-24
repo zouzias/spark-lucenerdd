@@ -24,11 +24,8 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 |Bbox Search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |
 |Spatial Linkage| `ShapeLuceneRDD.linkByRadius(RDD[T], linkage: T => (x,y), radius, topK)` | Spatial radius linkage|
 
-Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc. 
+Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc and any combination of those. 
 For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). 
-
-For example, using the query parser you can perform prefix queries on the field named textField and prefix query 
-`spar` as `LuceneRDD.query("textField:spar*", 10)`.
 
 ### Examples
 
@@ -38,7 +35,7 @@ Here are a few examples using `LuceneRDD` for full text search, spatial search a
 * [Spatial Search](https://github.com/zouzias/spark-lucenerdd/wiki/Spatial-search)
 * [Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage)
 
-For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki). More examples are available at [examples](https://github.com/zouzias/spark-lucenerdd-examples) and performance evaluation examples on AWS can be found [here](https://github.com/zouzias/spark-lucenerdd-aws)
+For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki). More examples are available at [examples](https://github.com/zouzias/spark-lucenerdd-examples) and performance evaluation examples on AWS can be found [here](https://github.com/zouzias/spark-lucenerdd-aws).
 
 ## Linking
 
@@ -77,7 +74,7 @@ The project has the following compatibility with Apache Spark:
 
 spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
 ------------------------- | ------------ | -------------------------- | ----- | ----
-0.2.3-SNAPSHOT            |              | >= 2.0.0           | [develop](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
+0.2.3-SNAPSHOT            |             | >= 2.0.0           | [develop](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
 0.2.2 | 2016-10-09   | >= 2.0.0           | [tag v0.2.2](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.2) | Released 
 0.1.0 | 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 

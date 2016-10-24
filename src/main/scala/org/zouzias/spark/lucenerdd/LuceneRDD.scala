@@ -150,22 +150,27 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
     val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
-    logDebug("Collecting query points to driver")
-    val queries = other.map(searchQueryGen).collect()
-    logDebug("Query points collected to driver successfully")
-    logDebug("Broadcasting query points")
+    logInfo("Collecting query points to driver")
+    val queriesString = other.map(searchQueryGen).collect().mkString("$").getBytes("UTF-8")
+    logInfo(s"Uncompressed queries: ${queriesString.length / 1024.0} MB")
+    val queries = Gzip.compress(queriesString)
+    logInfo(s"Compressed queries: ${queries.length / 1024.0} MB")
+    logInfo("Query points collected to driver successfully")
+    logInfo("Broadcasting query points")
     val queriesB = partitionsRDD.context.broadcast(queries)
-    logDebug("Query points broadcasting was successfully")
+    logInfo("Query points broadcasting was successfully")
 
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.par.map { case (qr, index) =>
-        (index.toLong, monoid.build(partition.query(qr, topK)))
-      }.toList
-    }
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions(partitions =>
+        partitions.flatMap { case partition =>
+          Gzip.decompress(queriesB.value).getOrElse("")
+            .split('$').zipWithIndex.par.map { case (qr, index) =>
+            (index.toLong, monoid.build(partition.query(qr, topK)))
+          }
+        }
+        , preservesPartitioning = true)
 
-    logDebug("Compute topK linkage per partition")
-    val results = resultsByPart.reduceByKey(monoid.plus _,
-      this.getNumPartitions * other.getNumPartitions)
+    logInfo("Compute topK linkage per partition")
+    val results = resultsByPart.reduceByKey(monoid.plus)
 
     other.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))

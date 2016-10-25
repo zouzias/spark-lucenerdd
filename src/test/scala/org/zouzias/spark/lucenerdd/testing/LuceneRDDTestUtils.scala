@@ -56,7 +56,7 @@ trait LuceneRDDTestUtils {
     doc.textField(fieldName).forall(_.contains(fieldValue))
   }
 
-  protected def docTextFieldEq(docs: List[SparkScoreDoc], fieldName: String, fieldValue: String)
+  protected def docTextFieldEq(docs: Array[SparkScoreDoc], fieldName: String, fieldValue: String)
   : Boolean = {
     docs.exists(x => x.doc.textField(fieldName).forall(_.contains(fieldValue)))
   }

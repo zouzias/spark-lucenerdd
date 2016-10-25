@@ -130,7 +130,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    */
   def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
-  : RDD[(Row, List[SparkScoreDoc])] = {
+  : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("LinkDataFrame requested")
     link[Row](other.rdd, searchQueryGen, topK)
   }
@@ -147,7 +147,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * broadcast to the workers.
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
-    : RDD[(T1, List[SparkScoreDoc])] = {
+    : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
     val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     logDebug("Collecting query points to driver")
@@ -170,11 +170,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     logDebug("Compute topK linkage per partition")
     val results = resultsByPart.reduceByKey(monoid.plus)
 
-    //  Asynchronously delete cached copies of this broadcast on the executors
-    queriesB.unpersist()
-
     other.zipWithIndex.map(_.swap).join(results).values
-      .map(joined => (joined._1, joined._2.items.take(topK)))
+      .map(joined => (joined._1, joined._2.items.toArray))
   }
 
   /**
@@ -187,7 +184,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def linkByQuery[T1: ClassTag](other: RDD[T1],
                                 searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
-  : RDD[(T1, List[SparkScoreDoc])] = {
+  : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("LinkByQuery requested")
     def typeToQueryString = (input: T1) => {
       searchQueryGen(input).toString

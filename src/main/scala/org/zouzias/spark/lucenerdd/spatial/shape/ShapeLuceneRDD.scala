@@ -82,7 +82,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
   private def partitionMapper(f: AbstractShapeLuceneRDDPartition[K, V] =>
     LuceneRDDResponsePartition): LuceneRDDResponse = {
-    new LuceneRDDResponse(partitionsRDD.map(f(_)), SparkScoreDoc.ascending)
+    new LuceneRDDResponse(partitionsRDD.map(f), SparkScoreDoc.ascending)
   }
 
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
@@ -110,7 +110,8 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     }
 
     logDebug("Merge topK linkage results")
-    val results = resultsByPart.reduceByKey(topKMonoid.plus)
+    val results = resultsByPart.reduceByKey(topKMonoid.plus _,
+      this.getNumPartitions * that.getNumPartitions)
 
     that.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))

@@ -167,10 +167,11 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
             (index.toLong, monoid.build(partition.query(qr, topK)))
           }
         }
-        , preservesPartitioning = true)
+        , preservesPartitioning = false)
 
     logInfo("Compute topK linkage per partition")
-    val results = resultsByPart.reduceByKey(monoid.plus)
+    val results = resultsByPart.reduceByKey(monoid.plus(_, _),
+      this.getNumPartitions * other.getNumPartitions)
 
     other.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))

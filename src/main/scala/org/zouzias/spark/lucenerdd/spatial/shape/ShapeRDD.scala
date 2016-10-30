@@ -34,11 +34,11 @@ import org.zouzias.spark.lucenerdd.spatial.shape.response.{ShapeRDDResponse, Sha
 import scala.reflect.ClassTag
 
 /**
- * ShapeRDD for geospatial search queries
+ * ShapeRDD for spatial / geospatial queries. Index only the (single) spatial field
  *
- * @param partitionsRDD
+ * @param partitionsRDD Partitions containing the spatial lucene indices
  * @tparam K Type containing the geospatial information (must be implicitly converted to [[Shape]])
- * @tparam V Type containing remaining information (must be implicitly converted to [[Document]])
+ * @tparam V Type containing remaining information
  */
 class ShapeRDD[K: ClassTag, V: ClassTag]
 (private val partitionsRDD: RDD[AbstractShapeRDDPartition[K, V]])
@@ -169,7 +169,6 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
    * @return
    */
   def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])]): RDD[(T, V)] = {
-
     val linkageById: RDD[(Long, T)] = linkage.flatMap{ case (k, v) =>
       v.headOption
         .flatMap(x => x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue()))

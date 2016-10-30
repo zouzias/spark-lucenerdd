@@ -27,6 +27,7 @@ import org.joda.time.DateTime
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeRDD
 import org.zouzias.spark.lucenerdd.spatial.shape.response.ShapeRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
@@ -47,10 +48,7 @@ private[shape] class ShapeRDDPartition[K, V]
     // Potentially more than one shape in this field is supported by some
     // strategies; see the Javadoc of the SpatialStrategy impl to see.
     shapes.foreach{ case shape =>
-      strategy.createIndexableFields(shape).foreach{ case field =>
-        doc.add(field)
-      }
-
+      strategy.createIndexableFields(shape).foreach{ case field => doc.add(field)}
       doc.add(new StoredField(strategy.getFieldName, shapeToString(shape)))
     }
 
@@ -62,10 +60,10 @@ private[shape] class ShapeRDDPartition[K, V]
   private val startTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process initiated at ${startTime}...")
   iterIndex.foreach { case (key, value) =>
-    // (implicitly) convert type K to Shape and V to a Lucene document
+    // (implicitly) convert type K to Shape
     val shape = shapeConversion(key._1)
     val doc = new Document()
-    doc.add(new LongField("__index__", value, Store.YES))
+    doc.add(new LongField(ShapeRDD.RddPositionFieldName, value, Store.YES))
     val docWithLocation = decorateWithLocation(doc, Seq(shape))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
   }

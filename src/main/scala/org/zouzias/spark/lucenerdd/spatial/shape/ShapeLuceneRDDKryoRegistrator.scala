@@ -22,7 +22,8 @@ import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
-import org.zouzias.spark.lucenerdd.spatial.shape.partition.ShapeLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
 
 
 class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {

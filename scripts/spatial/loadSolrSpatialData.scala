@@ -6,9 +6,9 @@ import com.spatial4j.core.context.jts.JtsSpatialContext
 import com.spatial4j.core.io.ShapeIO
 import org.apache.spark.rdd.RDD
 import org.zouzias.spark.lucenerdd.spatial.shape._
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
 
 import scala.reflect.ClassTag
 

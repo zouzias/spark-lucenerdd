@@ -24,7 +24,7 @@ import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
- * LuceneRDD response
+ * Response of [[org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD]]
  */
 private[lucenerdd] class ShapeRDDResponse
   (protected val partitionsRDD: RDD[ShapeRDDResponsePartition],

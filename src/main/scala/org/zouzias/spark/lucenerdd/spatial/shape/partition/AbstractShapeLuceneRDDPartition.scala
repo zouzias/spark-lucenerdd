@@ -17,10 +17,17 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD.PointType
 
 import scala.reflect.ClassTag
 
+/**
+ * Partition class for [[ShapeLuceneRDD]]
+ *
+ * @tparam K Spatial type
+ * @tparam V Document type
+ */
 private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
 
   protected implicit def kTag: ClassTag[K]

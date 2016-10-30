@@ -33,7 +33,6 @@ import org.zouzias.spark.lucenerdd.spatial.shape.response.{ShapeRDDResponse, Sha
 
 import scala.reflect.ClassTag
 
-
 /**
  * ShapeRDD for geospatial search queries
  *
@@ -159,6 +158,25 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     logInfo("linkByRadius requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
       part.circleSearch(queryPoint, radius, topK, spatialOp))
+  }
+
+
+  /**
+   * Post linker function. Picks the first result for linkage
+   *
+   * @param linkage
+   * @tparam T
+   * @return
+   */
+  def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])]): RDD[(T, V)] = {
+
+    val linkageById: RDD[(Long, T)] = linkage.flatMap{ case (k, v) =>
+      v.headOption
+        .flatMap(x => x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue()))
+        .map(x => (x, k))
+    }
+
+    linkageById.join(this.map(_.swap)).values.mapValues(_._2)
   }
 
 
@@ -323,6 +341,8 @@ object ShapeRDD {
 
   /** Type for a point */
   type PointType = (Double, Double)
+
+  val RddPositionFieldName = "__index__"
 
   /**
    * Instantiate a ShapeRDD given an RDD[T]

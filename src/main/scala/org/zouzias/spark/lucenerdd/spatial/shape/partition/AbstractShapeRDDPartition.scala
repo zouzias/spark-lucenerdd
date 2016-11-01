@@ -34,7 +34,7 @@ private[shape] abstract class AbstractShapeRDDPartition[K, V] extends Serializab
 
   def size: Long
 
-  def iterator: Iterator[((K, V), Long)]
+  def iterator: Iterator[(Long, (K, V))]
 
   def isDefined(key: K): Boolean
 

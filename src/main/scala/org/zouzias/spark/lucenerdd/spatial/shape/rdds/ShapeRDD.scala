@@ -28,7 +28,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.AbstractShapeRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeRDDPartition
-import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD.PointType
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD.{PointType, ShapeItemUUID}
 import org.zouzias.spark.lucenerdd.spatial.shape.response.{ShapeRDDResponse, ShapeRDDResponsePartition}
 
 import scala.reflect.ClassTag
@@ -100,7 +100,7 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     logDebug("Query points broadcasting was successfully")
 
     logDebug("Compute topK linkage per partition")
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
+    val resultsByPart: RDD[(ShapeItemUUID, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
         val results = mapper(queryPoint, partition).map(x => topKMonoid.build(x))
           .reduceOption(topKMonoid.plus)
@@ -126,7 +126,7 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     */
   def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])])
   : RDD[(T, V)] = {
-    val linkageById: RDD[(Long, T)] = linkage.flatMap{ case (k, v) =>
+    val linkageById: RDD[(ShapeItemUUID, T)] = linkage.flatMap{ case (k, v) =>
       v.headOption.flatMap(x =>
         x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue())
       ).map(x => (x, k))
@@ -313,7 +313,7 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
   }
 
   /** RDD compute method. */
-  override def compute(part: Partition, context: TaskContext): Iterator[((K, V), Long)] = {
+  override def compute(part: Partition, context: TaskContext): Iterator[(ShapeItemUUID, (K, V))] = {
     firstParent[AbstractShapeRDDPartition[K, V]].iterator(part, context).next.iterator
   }
 
@@ -338,6 +338,8 @@ object ShapeRDD {
 
   /** Type for a point */
   type PointType = (Double, Double)
+
+  type ShapeItemUUID = Long
 
   val RddPositionFieldName = "__index__"
 

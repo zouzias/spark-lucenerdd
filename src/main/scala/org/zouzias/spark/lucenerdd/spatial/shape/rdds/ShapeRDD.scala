@@ -26,7 +26,6 @@ import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
-import org.zouzias.spark.lucenerdd.spatial.shape.linkage.{PresentLinkage, TopOnePresentLinkage}
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.AbstractShapeRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD.PointType

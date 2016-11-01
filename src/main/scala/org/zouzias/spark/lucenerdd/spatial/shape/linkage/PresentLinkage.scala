@@ -30,6 +30,6 @@ trait PresentLinkage[V] {
     * @tparam T
     * @return
     */
-  def postLinker[T: ClassTag](that: RDD[(Long, T)], linkage: RDD[(T, Array[SparkScoreDoc])])
+  def postLinker[T: ClassTag](that: RDD[(Long, V)], linkage: RDD[(T, Array[SparkScoreDoc])])
   : RDD[(T, V)]
 }

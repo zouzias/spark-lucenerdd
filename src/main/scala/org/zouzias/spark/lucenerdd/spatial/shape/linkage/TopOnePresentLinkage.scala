@@ -23,23 +23,25 @@ import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD
 import scala.reflect.ClassTag
 
 /**
- * Top-one linkage, link with the
+ * Top-one linkage, link with the first rank result
  */
-trait TopOnePresentLinkage[V]
-  extends PresentLinkage[V] {
+trait TopOnePresentLinkage[V] extends PresentLinkage[V] {
 
   /**
    * Post linker function. Picks the top result for linkage
    *
-   * @param linkage
+   * @param that RDD of indexed by Long values of type V
+   * @param linkage Linkage RDD containing linkage between type T and V
    * @return
    */
-  def postLinker[T: ClassTag](that: RDD[(Long, T)], linkage: RDD[(T, Array[SparkScoreDoc])]): RDD[(T, V)] = {
+  def postLinker[T: ClassTag](that: RDD[(Long, V)], linkage: RDD[(T, Array[SparkScoreDoc])])
+  : RDD[(T, V)] = {
     val linkageById: RDD[(Long, T)] = linkage.flatMap{ case (k, v) =>
-      v.headOption.flatMap(x => x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue()))
-        .map(x => (x, k))
+      v.headOption.flatMap(x =>
+        x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue())
+      ).map(x => (x, k))
     }
 
-    linkageById.join(that).values.mapValues(_.)
+    linkageById.join(that).values
   }
 }

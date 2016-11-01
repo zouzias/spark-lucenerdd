@@ -36,7 +36,7 @@ import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import scala.reflect._
 
 private[shape] class ShapeRDDPartition[K, V]
-  (private val iter: Iterator[((K, V), Long)])
+  (private val iter: Iterator[(Long, (K, V))])
   (override implicit val kTag: ClassTag[K],
    override implicit val vTag: ClassTag[V])
   (implicit shapeConversion: K => Shape)
@@ -62,9 +62,9 @@ private[shape] class ShapeRDDPartition[K, V]
   logInfo(s"Indexing process initiated at ${startTime}...")
   iterIndex.foreach { case (key, value) =>
     // (implicitly) convert type K to Shape
-    val shape = shapeConversion(key._1)
+    val shape = shapeConversion(value._1)
     val doc = new Document()
-    doc.add(new LongField(ShapeRDD.RddPositionFieldName, value, Store.YES))
+    doc.add(new LongField(ShapeRDD.RddPositionFieldName, key, Store.YES))
     val docWithLocation = decorateWithLocation(doc, Seq(shape))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
   }
@@ -87,12 +87,12 @@ private[shape] class ShapeRDDPartition[K, V]
    * @return
    */
   override def filter(pred: (K, V) => Boolean): AbstractShapeRDDPartition[K, V] = {
-    ShapeRDDPartition(iterOriginal.filter{case ((k, v), _) => pred(k, v)})
+    ShapeRDDPartition(iterOriginal.filter{case (_, (k, v)) => pred(k, v)})
   }
 
   override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
 
-  override def iterator: Iterator[((K, V), Long)] = iterOriginal
+  override def iterator: Iterator[(Long, (K, V))] = iterOriginal
 
   private def docLocation(scoreDoc: ScoreDoc): Option[Shape] = {
     val shapeString = indexReader.document(scoreDoc.doc)
@@ -198,9 +198,8 @@ private[shape] class ShapeRDDPartition[K, V]
 
 object ShapeRDDPartition {
 
-  def apply[K: ClassTag, V: ClassTag](iter: Iterator[((K, V), Long)])
-                                     (implicit shapeConv: K => Shape)
-  : ShapeRDDPartition[K, V] = {
+  def apply[K: ClassTag, V: ClassTag](iter: Iterator[(Long, (K, V))])
+    (implicit shapeConv: K => Shape): ShapeRDDPartition[K, V] = {
     new ShapeRDDPartition[K, V](iter) (classTag[K], classTag[V]) (shapeConv)
   }
 }

@@ -43,9 +43,8 @@ import scala.reflect.ClassTag
  */
 class ShapeRDD[K: ClassTag, V: ClassTag]
 (private val partitionsRDD: RDD[AbstractShapeRDDPartition[K, V]])
-  extends RDD[((K, V), Long)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-    with TopOnePresentLinkage[V]
-    with LuceneRDDConfigurable {
+  extends RDD[(Long, (K, V))](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
+  with LuceneRDDConfigurable {
 
   logInfo("Instance is created...")
   logInfo(s"Number of partitions: ${partitionsRDD.count()}")
@@ -118,6 +117,23 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
 
     that.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
+  }
+
+  /**
+    * Post linker function. Picks the top result for linkage
+    *
+    * @param linkage Linkage RDD containing linkage between type T and V
+    * @return
+    */
+  def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])])
+  : RDD[(T, V)] = {
+    val linkageById: RDD[(Long, T)] = linkage.flatMap{ case (k, v) =>
+      v.headOption.flatMap(x =>
+        x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue())
+      ).map(x => (x, k))
+    }
+
+    linkageById.join(this).values.mapValues(_._2)
   }
 
   /**
@@ -335,7 +351,7 @@ object ShapeRDD {
   def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
                                      (implicit shapeConv: K => Shape)
   : ShapeRDD[K, V] = {
-    val elemsWithIndex = elems.zipWithIndex()
+    val elemsWithIndex = elems.zipWithIndex().map(_.swap)
     val partitions = elemsWithIndex.mapPartitions[AbstractShapeRDDPartition[K, V]](
       iter => Iterator(ShapeRDDPartition[K, V](iter)),
       preservesPartitioning = true)
@@ -345,7 +361,7 @@ object ShapeRDD {
   def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)])
                                      (implicit shapeConv: K => Shape)
   : ShapeRDD[K, V] = {
-    val elemsWithIndex = elems.rdd.zipWithIndex()
+    val elemsWithIndex = elems.rdd.zipWithIndex().map(_.swap)
     val partitions = elemsWithIndex.mapPartitions[AbstractShapeRDDPartition[K, V]](
       iter => Iterator(ShapeRDDPartition[K, V](iter)),
       preservesPartitioning = true)

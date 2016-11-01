@@ -26,6 +26,7 @@ import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.spatial.shape.linkage.{PresentLinkage, TopOnePresentLinkage}
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.AbstractShapeRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD.PointType
@@ -43,6 +44,7 @@ import scala.reflect.ClassTag
 class ShapeRDD[K: ClassTag, V: ClassTag]
 (private val partitionsRDD: RDD[AbstractShapeRDDPartition[K, V]])
   extends RDD[((K, V), Long)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
+    with TopOnePresentLinkage[V]
     with LuceneRDDConfigurable {
 
   logInfo("Instance is created...")
@@ -87,7 +89,8 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
 
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
                                   mapper: ( PointType, AbstractShapeRDDPartition[K, V]) =>
-                                    Iterable[SparkScoreDoc]): RDD[(T, Array[SparkScoreDoc])] = {
+                                    Iterable[SparkScoreDoc])
+  : RDD[(T, Array[SparkScoreDoc])] = {
     logDebug("Linker requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
@@ -160,30 +163,10 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
       part.circleSearch(queryPoint, radius, topK, spatialOp))
   }
 
-
-  /**
-   * Post linker function. Picks the first result for linkage
-   *
-   * @param linkage
-   * @tparam T
-   * @return
-   */
-  def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])]): RDD[(T, V)] = {
-    val linkageById: RDD[(Long, T)] = linkage.flatMap{ case (k, v) =>
-      v.headOption
-        .flatMap(x => x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue()))
-        .map(x => (x, k))
-    }
-
-    linkageById.join(this.map(_.swap)).values.mapValues(_._2)
-  }
-
-
   /**
    * Link with DataFrame based on k-nearest neighbors (Knn)
    *
    * Links this and that based on nearest neighbors, returns Knn
-   *
    *
    * @param other
    * @param searchQueryGen

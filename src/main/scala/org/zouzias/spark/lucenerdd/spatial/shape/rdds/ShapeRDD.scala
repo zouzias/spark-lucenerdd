@@ -32,6 +32,7 @@ import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD.{PointType, Shape
 import org.zouzias.spark.lucenerdd.spatial.shape.response.{ShapeRDDResponse, ShapeRDDResponsePartition}
 
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 /**
  * ShapeRDD for spatial / geospatial queries. Index only the (single) spatial field
@@ -85,6 +86,16 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     new ShapeRDDResponse(partitionsRDD.map(f), SparkScoreDoc.ascending)
   }
 
+  /**
+    * Returns the position of a scored shape item, reading it
+    * from [[ShapeRDD.RddPositionFieldName]] field
+    * @param scoredDoc Scored document containing the Shape index
+    * @return
+    */
+  private def shapeItemHash(scoredDoc: SparkScoreDoc): Option[Long] = {
+    scoredDoc.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue())
+  }
+
   private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
                                   mapper: ( PointType, AbstractShapeRDDPartition[K, V]) =>
                                     Iterable[SparkScoreDoc])
@@ -124,15 +135,12 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     * @param linkage Linkage RDD containing linkage between type T and V
     * @return
     */
-  def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])])
-  : RDD[(T, V)] = {
-    val linkageById: RDD[(ShapeItemUUID, T)] = linkage.flatMap{ case (k, v) =>
-      v.headOption.flatMap(x =>
-        x.doc.numericField(ShapeRDD.RddPositionFieldName).map(_.longValue())
-      ).map(x => (x, k))
+  def postLinker[T: ClassTag](linkage: RDD[(T, Array[SparkScoreDoc])]): RDD[(T, (K, V))] = {
+    val linkageById: RDD[(ShapeItemUUID, T)] = linkage.flatMap{ case (tp, results) =>
+      results.headOption.flatMap(shapeItemHash).map(x => (x, tp))
     }
 
-    linkageById.join(this).values.mapValues(_._2)
+    linkageById.join(this).values
   }
 
   /**
@@ -352,21 +360,21 @@ object ShapeRDD {
   def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
                                      (implicit shapeConv: K => Shape)
   : ShapeRDD[K, V] = {
-    val elemsWithIndex = elems.zipWithIndex().map(_.swap)
+    val elemsWithIndex: RDD[(Long, (K, V))] = elems.zipWithIndex().map(_.swap)
     val partitions = elemsWithIndex.mapPartitions[AbstractShapeRDDPartition[K, V]](
       iter => Iterator(ShapeRDDPartition[K, V](iter)),
       preservesPartitioning = true)
-    new ShapeRDD(partitions)
+    new ShapeRDD[K, V](partitions)
   }
 
   def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)])
                                      (implicit shapeConv: K => Shape)
   : ShapeRDD[K, V] = {
-    val elemsWithIndex = elems.rdd.zipWithIndex().map(_.swap)
+    val elemsWithIndex: RDD[(Long, (K, V))] = elems.rdd.zipWithIndex().map(_.swap)
     val partitions = elemsWithIndex.mapPartitions[AbstractShapeRDDPartition[K, V]](
       iter => Iterator(ShapeRDDPartition[K, V](iter)),
       preservesPartitioning = true)
-    new ShapeRDD(partitions)
+    new ShapeRDD[K, V](partitions)
   }
 
   /**

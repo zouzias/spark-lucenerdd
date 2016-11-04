@@ -66,7 +66,7 @@ private[shape] class ShapeRDDPartition[K, V]
     val doc = new Document()
     doc.add(new LongField(ShapeRDD.RddPositionFieldName, key, Store.YES))
     val docWithLocation = decorateWithLocation(doc, Seq(shape))
-    indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
+    indexWriter.addDocument(docWithLocation)
   }
   private val endTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process completed at ${endTime}...")

@@ -14,28 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.shape
+package org.zouzias.spark.lucenerdd.spatial.shape.rdds
 
 import com.esotericsoftware.kryo.Kryo
 import com.twitter.algebird.TopK
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
-import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
-import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeLuceneRDDPartition
-import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeRDDPartition
+import org.zouzias.spark.lucenerdd.spatial.shape.response.{ShapeRDDResponse, ShapeRDDResponsePartition}
 
 
-class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
+class ShapeRDDKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
-    kryo.register(classOf[ShapeLuceneRDD[_, _]])
-    kryo.register(classOf[ShapeLuceneRDDPartition[_, _]])
-    kryo.register(classOf[SparkDoc])
-    kryo.register(classOf[SparkFacetResult])
-    kryo.register(classOf[LuceneRDDResponse])
-    kryo.register(classOf[LuceneRDDResponsePartition])
-    kryo.register(classOf[SparkScoreDoc])
-    kryo.register(classOf[TopK[_]])
     kryo.register(classOf[SparkDoc])
     kryo.register(classOf[Number])
     kryo.register(classOf[java.lang.Double])
@@ -62,6 +53,14 @@ class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.collection.immutable.Set$EmptySet$])
     kryo.register(classOf[scala.collection.immutable.Map[_, _]])
     kryo.register(classOf[Array[scala.collection.immutable.Map[_, _]]])
+    kryo.register(classOf[ShapeRDD[_, _]])
+    kryo.register(classOf[ShapeRDDPartition[_, _]])
+    kryo.register(classOf[SparkDoc])
+    kryo.register(classOf[SparkFacetResult])
+    kryo.register(classOf[ShapeRDDResponse])
+    kryo.register(classOf[ShapeRDDResponsePartition])
+    kryo.register(classOf[SparkScoreDoc])
+    kryo.register(classOf[TopK[_]])
     ()
   }
 }
@@ -69,12 +68,10 @@ class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
 /**
  * Decorator for [[ShapeLuceneRDD]] Kryo serialization
  */
-object ShapeLuceneRDDKryoRegistrator {
+object ShapeRDDKryoRegistrator {
   def registerKryoClasses(conf: SparkConf): SparkConf = {
     conf.set("spark.serializer", classOf[KryoSerializer].getName)
-      .set("spark.kryo.registrator", classOf[ShapeLuceneRDDKryoRegistrator].getName)
-      .set("spark.kryo.registrationRequired", "false")
-    /* Set the above to true s.t. all classes are registered with Kryo */
+      .set("spark.kryo.registrator", classOf[ShapeRDDKryoRegistrator].getName)
   }
 }
 

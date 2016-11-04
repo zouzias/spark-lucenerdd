@@ -21,7 +21,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
-import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.{ShapeRDD, ShapeRDDKryoRegistrator}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 class ShapeRDDLinkageSpec extends FlatSpec
@@ -37,7 +37,7 @@ class ShapeRDDLinkageSpec extends FlatSpec
 
   var pointRDD: ShapeRDD[_, _] = _
 
-  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+  override val conf = ShapeRDDKryoRegistrator.registerKryoClasses(new SparkConf().
     setMaster("local[*]").
     setAppName("test").
     set("spark.ui.enabled", "false").
@@ -99,24 +99,17 @@ class ShapeRDDLinkageSpec extends FlatSpec
       (coords(0).toDouble, coords(1).toDouble)
     }
 
-    val linkage: Array[((String, String), (String, String))] = ShapeRDD
-      .postLinker(pointRDD, pointRDD.linkByRadius(capitals.rdd, coords, Radius)).collect()
-
-    linkage.length should equal(capitals.count)
+    val linkage = pointRDD.postLinker(pointRDD.linkByRadius(capitals.rdd, coords, Radius))
+      .collect()
 
 
-    // pointRDD.postLinker(linkage).map
+    linkage.exists{ case ((_, capital), (_, country)) =>
+      capital.compareToIgnoreCase("dublin") == 0 && country
+        .toString.compareToIgnoreCase("Ireland") == 0} should equal(true)
 
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Bern" && results.compareToIgnoreCase("Switzerland") == 0} should equal(true)
-
-    /* linkage.exists{case (cap, results) =>
-      cap._2 == "Berlin" && docTextFieldEq(results, "_1", "Germany")} should equal(true)
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Ottawa" && docTextFieldEq(results, "_1", "Canada")} should equal(true)
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Paris" && docTextFieldEq(results, "_1", "France")} should equal(true)
-*/
+    linkage.exists{ case ((_, capital), (_, country)) =>
+      capital.compareToIgnoreCase("madrid") == 0 && country
+        .toString.compareToIgnoreCase("spain") == 0} should equal(true)
   }
 
   "ShapeRDD.linkDataFrameByKnn" should "link correctly k-nearest neighbors (knn)" in {
@@ -135,9 +128,6 @@ class ShapeRDDLinkageSpec extends FlatSpec
     linkage.count() should equal(cities.length)
 
     linkage.collect().foreach { case (city, knnResults) =>
-
-      // top result should be linked with its query result
-      docTextFieldEq(knnResults, "_1", city.getString(0)) should equal(true)
 
       // Must return only at most k results
       knnResults.length should be <= k

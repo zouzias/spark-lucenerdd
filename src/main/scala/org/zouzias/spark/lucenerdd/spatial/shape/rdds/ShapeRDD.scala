@@ -122,8 +122,7 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     }
 
     logDebug("Merge topK linkage results")
-    val results = resultsByPart.reduceByKey(topKMonoid.plus _,
-      this.getNumPartitions * that.getNumPartitions)
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
 
     that.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))

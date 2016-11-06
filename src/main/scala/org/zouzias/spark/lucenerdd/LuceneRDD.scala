@@ -164,7 +164,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
         partitions.flatMap { case partition =>
           Gzip.decompress(queriesB.value).getOrElse("")
             .split('$').zipWithIndex.par.map { case (qr, index) =>
-            (index.toLong, monoid.build(partition.query(qr, topK)))
+            (index.toLong, topKMonoid.build(partition.query(qr, topK)))
           }
         }
     )

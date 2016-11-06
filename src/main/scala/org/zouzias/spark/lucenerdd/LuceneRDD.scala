@@ -159,11 +159,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
-        val results = partition.query(qr, topK)
-          .map(x => monoid.build(x))
-
-        (index.toLong, results.reduceOption(monoid.plus)
-          .getOrElse(monoid.zero))
+        (index.toLong, monoid.build(partition.query(qr, topK)))
       }
     }
 

@@ -101,11 +101,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     logDebug("Compute topK linkage per partition")
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
       case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = mapper(queryPoint, partition).map(x => topKMonoid.build(x))
-          .reduceOption(topKMonoid.plus)
-          .getOrElse(topKMonoid.zero)
-
-        (index.toLong, results)
+        (index.toLong, topKMonoid.build(mapper(queryPoint, partition)))
       }
     }
 

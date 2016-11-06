@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.rdds
 
+import java.net.InetAddress
+
 import com.spatial4j.core.shape.Shape
 import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.spatial.query.SpatialOperation
@@ -30,6 +32,7 @@ import org.zouzias.spark.lucenerdd.spatial.shape.partition.AbstractShapeRDDParti
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeRDDPartition
 import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD.{PointType, ShapeItemUUID}
 import org.zouzias.spark.lucenerdd.spatial.shape.response.{ShapeRDDResponse, ShapeRDDResponsePartition}
+import redis.clients.jedis.Jedis
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -104,21 +107,40 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     logDebug("Collecting query points to driver")
-    val queries = that.map(pointFunctor).collect()
-    logDebug("Query points collected to driver successfully")
-    logDebug("Broadcasting query points")
-    val queriesB = partitionsRDD.context.broadcast(queries)
-    logDebug("Query points broadcasting was successfully")
+    val queries = that.map(pointFunctor).map(x => s"${x._1}:${x._2}")
+    val total = queries.count()
+
+    val driverHostname = InetAddress.getLocalHost.getCanonicalHostName
+
+    queries.zipWithIndex().foreachPartition { case part =>
+      val jedis = new Jedis(driverHostname)
+      val pipeline = jedis.pipelined
+
+      part.toSeq.par.foreach { case (value, index) =>
+        // println(s"Set ${value} for ${index}")
+        pipeline.set(index.toString, value)
+      }
+      pipeline.sync()
+      jedis.close()
+    }
+
 
     logDebug("Compute topK linkage per partition")
     val resultsByPart: RDD[(ShapeItemUUID, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        val results = mapper(queryPoint, partition).map(x => topKMonoid.build(x))
-          .reduceOption(topKMonoid.plus)
-          .getOrElse(topKMonoid.zero)
+      case partition =>
+        val jedis = new Jedis(driverHostname)
 
-        (index.toLong, results)
-      }
+        val qs = (0L to total - 1).par.map(x => (x, jedis.get(x.toString)))
+
+        val output = qs.map { case (index, q) =>
+          val p = q.split(":").map(_.toDouble)
+
+          val results = topKMonoid.build(mapper((p(0), p(1)), partition))
+          (index.toLong, results)
+        }
+
+      jedis.close()
+      output.toIterator
     }
 
     logDebug("Merge topK linkage results")

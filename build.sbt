@@ -108,12 +108,15 @@ val lucene_query_parsers      = "org.apache.lucene"              % "lucene-query
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 
+val jedis                     = "redis.clients"                  % "jedis"                     % "2.8.1"
+
 val jts                       = "com.vividsolutions"             % "jts"                       % "1.13"
 // scalastyle:on
 
 
 libraryDependencies ++= Seq(
   algebird,
+  jedis,
   lucene_facet,
   lucene_analyzers,
   lucene_expressions,

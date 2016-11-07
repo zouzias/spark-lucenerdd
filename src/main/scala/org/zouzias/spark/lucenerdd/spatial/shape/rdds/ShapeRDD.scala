@@ -112,11 +112,11 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     }
     val resultsByPart = concated.cartesian(partitionsRDD)
       .flatMap { case (qs, lucene) =>
-      qs.split('|').filter(_.nonEmpty).map { case x =>
+      qs.split('|').filter(_.nonEmpty).par.map { case x =>
         val arr = x.split('#')
           (arr(0).toLong,
             topKMonoid.build(mapper((arr(1).toDouble, arr(2).toDouble), lucene)))
-      }
+      }.toIterator
     }
 
     logDebug("Merge topK linkage results")

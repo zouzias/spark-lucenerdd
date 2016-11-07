@@ -103,18 +103,20 @@ class ShapeRDD[K: ClassTag, V: ClassTag]
     logDebug("Linker requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
-    logDebug("Collecting query points to driver")
-    val queries = that.map(pointFunctor).collect()
-    logDebug("Query points collected to driver successfully")
-    logDebug("Broadcasting query points")
-    val queriesB = partitionsRDD.context.broadcast(queries)
-    logDebug("Query points broadcasting was successfully")
+    val queries = that.map(pointFunctor)
 
-    logDebug("Compute topK linkage per partition")
-    val resultsByPart: RDD[(ShapeItemUUID, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.par.map { case (queryPoint, index) =>
-        (index.toLong, topKMonoid.build(mapper(queryPoint, partition)))
-      }.toIterator
+    val concated: RDD[String] = queries.zipWithIndex().map(_.swap).mapPartitions { case iter =>
+      val all = iter.map { case (ind, (x, y)) => s"${ind}#${x}#${y}"}
+        .reduce( (a, b) => s"${a}|${b}")
+      Iterator(all)
+    }
+    val resultsByPart = concated.cartesian(partitionsRDD)
+      .flatMap { case (qs, lucene) =>
+      qs.split('|').filter(_.nonEmpty).map { case x =>
+        val arr = x.split('#')
+          (arr(0).toLong,
+            topKMonoid.build(mapper((arr(1).toDouble, arr(2).toDouble), lucene)))
+      }
     }
 
     logDebug("Merge topK linkage results")

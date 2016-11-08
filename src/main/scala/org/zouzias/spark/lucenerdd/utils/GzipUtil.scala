@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd
+package org.zouzias.spark.lucenerdd.utils
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 import scala.util.Try
 
-object Gzip {
+object GzipUtils {
 
   def compress(input: Array[Byte]): Array[Byte] = {
     val bos = new ByteArrayOutputStream(input.length)

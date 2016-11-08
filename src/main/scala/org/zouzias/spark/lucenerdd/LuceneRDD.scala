@@ -26,8 +26,10 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
+import org.xerial.snappy.Snappy
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.utils.GzipUtils
 
 import scala.reflect.ClassTag
 
@@ -151,9 +153,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     logInfo("Linkage requested")
     val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     logInfo("Collecting query points to driver")
-    val queriesString = other.map(searchQueryGen).collect().mkString("$").getBytes("UTF-8")
+    val queriesString = other.map(searchQueryGen)
+      .reduce((x, y) => s"${x}${LuceneRDD.Separator}${y}")
+    val queries = Snappy.compress(queriesString.getBytes("UTF-8"))
     logInfo(s"Uncompressed queries: ${queriesString.length / 1024.0} MB")
-    val queries = Gzip.compress(queriesString)
     logInfo(s"Compressed queries: ${queries.length / 1024.0} MB")
     logInfo("Query points collected to driver successfully")
     logInfo("Broadcasting query points")
@@ -162,16 +165,15 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions(partitions =>
         partitions.flatMap { case partition =>
-          Gzip.decompress(queriesB.value).getOrElse("")
-            .split('$').zipWithIndex.par.map { case (qr, index) =>
+          new String(Snappy.uncompress(queriesB.value), "UTF-8")
+            .split(LuceneRDD.Separator).zipWithIndex.par.map { case (qr, index) =>
             (index.toLong, topKMonoid.build(partition.query(qr, topK)))
           }
         }
     )
 
     logInfo("Compute topK linkage per partition")
-    val results = resultsByPart.reduceByKey(topKMonoid.plus _,
-      this.getNumPartitions * other.getNumPartitions)
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
 
     other.zipWithIndex.map(_.swap).join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
@@ -281,6 +283,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 }
 
 object LuceneRDD {
+
+  val Separator = '|'
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]

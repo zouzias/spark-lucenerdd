@@ -29,6 +29,7 @@ import org.apache.spark.storage.StorageLevel
 import org.xerial.snappy.Snappy
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -292,7 +293,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   }
 }
 
-object LuceneRDD {
+object LuceneRDD extends Versionable {
 
   val Separator = '|'
   val IndexQuerySeparator = '/'
@@ -335,14 +336,5 @@ object LuceneRDD {
   def apply(dataFrame: DataFrame)
   : LuceneRDD[Row] = {
     apply(dataFrame.rdd)
-  }
-
-  /**
-   * Return project information, i.e., version number, build time etc
-   * @return
-   */
-  def version(): Map[String, Any] = {
-    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
-    org.zouzias.spark.lucenerdd.BuildInfo.toMap
   }
 }

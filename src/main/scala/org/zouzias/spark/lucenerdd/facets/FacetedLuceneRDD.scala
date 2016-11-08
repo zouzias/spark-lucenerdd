@@ -26,6 +26,7 @@ import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponse
+import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
 
@@ -109,7 +110,7 @@ class FacetedLuceneRDD[T: ClassTag]
 
 }
 
-object FacetedLuceneRDD {
+object FacetedLuceneRDD extends Versionable {
 
   /** All faceted fields are suffixed with _facet */
   val FacetTextFieldSuffix = "_facet"
@@ -153,15 +154,5 @@ object FacetedLuceneRDD {
   def apply(dataFrame: DataFrame)
   : FacetedLuceneRDD[Row] = {
     apply(dataFrame.rdd)
-  }
-
-
-  /**
-   * Return project information, i.e., version number, build time etc
-   * @return
-   */
-  def version(): Map[String, Any] = {
-    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
-    org.zouzias.spark.lucenerdd.BuildInfo.toMap
   }
 }

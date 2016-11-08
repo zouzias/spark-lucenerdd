@@ -24,6 +24,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.xerial.snappy.Snappy
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
@@ -32,6 +33,7 @@ import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
 
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
  * ShapeLuceneRDD for geospatial and full-text search queries
@@ -91,26 +93,35 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     logDebug("Linker requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
-    logDebug("Collecting query points to driver")
-    val queries = that.map(pointFunctor).collect()
-    logDebug("Query points collected to driver successfully")
-    logDebug("Broadcasting query points")
-    val queriesB = partitionsRDD.context.broadcast(queries)
-    logDebug("Query points broadcasting was successfully")
+    val thatWithIndex = that.zipWithIndex().map(_.swap)
+    val queries = thatWithIndex.mapValues(pointFunctor)
+      .map{ case (key, p) => s"$key:${p._1}:${p._2}"} // ':' is ShapeLuceneRDD.IndexQuerySeparator
+      .reduce{ case (x, y) => s"$x${ShapeLuceneRDD.Separator}$y"}
+    val compressed = Snappy.compress(queries)
+    val queriesB = partitionsRDD.context.broadcast(compressed)
 
-    logDebug("Compute topK linkage per partition")
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (queryPoint, index) =>
-        (index.toLong, topKMonoid.build(mapper(queryPoint, partition)))
-      }
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions {
+      case partitions =>
+        partitions.flatMap { case partition =>
+          Snappy.uncompressString(queriesB.value)
+            .split(ShapeLuceneRDD.Separator)
+            .par
+            .flatMap(parseQuery)
+            .map{ case (index, x, y) =>
+            (index, topKMonoid.build(mapper((x, y), partition)))
+          }.toIterator
+        }
     }
 
     logDebug("Merge topK linkage results")
-    val results = resultsByPart.reduceByKey(topKMonoid.plus _,
-      this.getNumPartitions * that.getNumPartitions)
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
+    thatWithIndex.join(results).values.map(joined => (joined._1, joined._2.items.toArray))
+  }
 
-    that.zipWithIndex.map(_.swap).join(results).values
-      .map(joined => (joined._1, joined._2.items.toArray))
+  @inline
+  private def parseQuery(q: String): Option[(Long, Double, Double)] = {
+    val arr = q.split(ShapeLuceneRDD.IndexQuerySeparator)
+    Try{(arr(0).toLong, arr(1).toDouble, arr(2).toDouble)}.toOption
   }
 
   /**
@@ -318,6 +329,9 @@ object ShapeLuceneRDD {
 
   /** Type for a point */
   type PointType = (Double, Double)
+
+  val Separator = '|'
+  val IndexQuerySeparator = ':'
 
   /**
    * Instantiate a ShapeLuceneRDD given an RDD[T]

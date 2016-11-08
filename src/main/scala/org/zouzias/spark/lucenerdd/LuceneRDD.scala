@@ -26,10 +26,12 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
+import org.xerial.snappy.Snappy
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
@@ -149,26 +151,42 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
     : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
-    val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
-    logDebug("Collecting query points to driver")
-    val queries = other.map(searchQueryGen).collect()
-    logDebug("Query points collected to driver successfully")
-    logDebug("Broadcasting query points")
+    val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
+    logInfo("Collecting query points to driver")
+    val otherWithIndex = other.zipWithIndex().map(_.swap)
+    val queriesString = otherWithIndex.mapValues(searchQueryGen)
+      .map(x => s"${x._1}${LuceneRDD.IndexQuerySeparator}${x._2}")
+      .reduce{ case (x, y) =>
+        s"${x}${LuceneRDD.Separator}${y}"}
+    val queries = Snappy.compress(queriesString)
+    logInfo(s"Uncompressed queries: ${queriesString.length / 1024.0} MB")
+    logInfo(s"Compressed queries: ${queries.length / 1024.0} MB")
+    logInfo("Query points collected to driver successfully")
+    logInfo("Broadcasting query points")
     val queriesB = partitionsRDD.context.broadcast(queries)
-    logDebug("Query points broadcasting was successfully")
+    logInfo("Query points broadcasting was successfully")
 
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
-        (index.toLong, monoid.build(partition.query(qr, topK)))
-      }
-    }
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions(partitions =>
+        partitions.flatMap { case partition =>
+          Snappy.uncompressString(queriesB.value)
+            .split(LuceneRDD.Separator).par
+            .flatMap(parseQuery)
+            .map { case (index, qr) =>
+            (index, topKMonoid.build(partition.query(qr, topK)))
+          }
+        }
+    )
 
-    logDebug("Compute topK linkage per partition")
-    val results = resultsByPart.reduceByKey(monoid.plus _,
-      this.getNumPartitions * other.getNumPartitions)
-
-    other.zipWithIndex.map(_.swap).join(results).values
+    logInfo("Compute topK linkage per partition")
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
+    otherWithIndex.join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
+  }
+
+  @inline
+  private def parseQuery(s: String): Option[(Long, String)] = {
+    val arr = s.split(LuceneRDD.IndexQuerySeparator)
+    Try{ (arr(0).toLong, arr(1)) }.toOption
   }
 
   /**
@@ -275,6 +293,9 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 }
 
 object LuceneRDD {
+
+  val Separator = '|'
+  val IndexQuerySeparator = '/'
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]

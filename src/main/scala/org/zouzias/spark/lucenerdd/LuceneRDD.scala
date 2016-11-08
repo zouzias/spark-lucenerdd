@@ -31,6 +31,7 @@ import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, Lucene
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
@@ -153,7 +154,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     logInfo("Collecting query points to driver")
     val otherWithIndex = other.zipWithIndex().map(_.swap)
-    val queriesString = otherWithIndex.mapValues(searchQueryGen).map(x => s"${x._1}/${x._2}")
+    val queriesString = otherWithIndex.mapValues(searchQueryGen)
+      .map(x => s"${x._1}${LuceneRDD.IndexQuerySeparator}${x._2}")
       .reduce{ case (x, y) =>
         s"${x}${LuceneRDD.Separator}${y}"}
     val queries = Snappy.compress(queriesString)
@@ -168,21 +170,22 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
         partitions.flatMap { case partition =>
           Snappy.uncompressString(queriesB.value)
             .split(LuceneRDD.Separator).par
-            .map(_.split(LuceneRDD.IndexQuerySeparator)) // Split by '/'
-            .filter(_.length == 2)  // Keep only index'/'query strings
-            .map { case indexWithQuery =>
-            val index = indexWithQuery(0)
-            val qr = indexWithQuery(1)
-            (index.toLong, topKMonoid.build(partition.query(qr, topK)))
+            .flatMap(parseQuery)
+            .map { case (index, qr) =>
+            (index, topKMonoid.build(partition.query(qr, topK)))
           }
         }
     )
 
     logInfo("Compute topK linkage per partition")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)
-
     otherWithIndex.join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
+  }
+
+  private def parseQuery(s: String): Option[(Long, String)] = {
+    val arr = s.split(LuceneRDD.IndexQuerySeparator)
+    Try(arr(0).toLong, arr(1)).toOption
   }
 
   /**

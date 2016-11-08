@@ -183,9 +183,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
       .map(joined => (joined._1, joined._2.items.toArray))
   }
 
+  @inline
   private def parseQuery(s: String): Option[(Long, String)] = {
     val arr = s.split(LuceneRDD.IndexQuerySeparator)
-    Try(arr(0).toLong, arr(1)).toOption
+    Try{ (arr(0).toLong, arr(1)) }.toOption
   }
 
   /**

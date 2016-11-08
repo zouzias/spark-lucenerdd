@@ -29,7 +29,6 @@ import org.apache.spark.storage.StorageLevel
 import org.xerial.snappy.Snappy
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
-import org.zouzias.spark.lucenerdd.utils.GzipUtils
 
 import scala.reflect.ClassTag
 

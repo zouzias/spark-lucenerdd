@@ -30,6 +30,7 @@ import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
+import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
 
@@ -314,7 +315,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   }
 }
 
-object ShapeLuceneRDD {
+object ShapeLuceneRDD extends Versionable {
 
   /** Type for a point */
   type PointType = (Double, Double)
@@ -343,15 +344,6 @@ object ShapeLuceneRDD {
       iter => Iterator(ShapeLuceneRDDPartition[K, V](iter)),
       preservesPartitioning = true)
     new ShapeLuceneRDD(partitions)
-  }
-
-  /**
-   * Return project information, i.e., version number, build time etc
-   * @return
-   */
-  def version(): Map[String, Any] = {
-    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
-    org.zouzias.spark.lucenerdd.BuildInfo.toMap
   }
 
   /**

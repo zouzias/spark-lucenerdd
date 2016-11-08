@@ -56,7 +56,8 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     }
 
     val linked = luceneRDD.linkByQuery(leftCountriesRDD, linker, 10)
-    linked.count() should equal(leftCountries.size)
+
+    linked.count() should equal(leftCountries.length)
     // Greece and Greenland should appear
     linked.collect().exists(link => link._1 == "gree" && link._2.length == 2) should equal(true)
     // Italy should appear

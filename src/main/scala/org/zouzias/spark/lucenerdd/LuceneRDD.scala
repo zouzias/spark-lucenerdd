@@ -18,6 +18,7 @@
 package org.zouzias.spark.lucenerdd
 
 import com.twitter.algebird.{TopK, TopKMonoid}
+import com.typesafe.config.Config
 import org.apache.lucene.document.Document
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
@@ -133,7 +134,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     */
   def dedup[T1: ClassTag](searchQueryGen: T1 => String, topK: Int = DefaultTopK)
   : RDD[(T1, Array[SparkScoreDoc])] = {
-    link[T1](this.firstParent[T1], searchQueryGen, topK)
+    // FIXME: is this asInstanceOf necessary?
+    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK)
   }
 
   /**

@@ -360,6 +360,20 @@ object ShapeLuceneRDD extends Versionable {
     new ShapeLuceneRDD(partitions)
   }
 
+  /**
+   * Instantiate [[ShapeLuceneRDD]] from DataFrame with spatial column
+   *
+   * {{
+   *  val countries = spark.read.parquet("data/countries-bbox.parquet")
+   *  val lucene = ShapeLuceneRDD(counties, "shape")
+   *
+   * }}
+   * @param df Input dataframe containing Shape as String field named "shapeField"
+   * @param shapeField Name of DataFrame column that contains Shape as String, i.e., WKT
+   * @param shapeConv Implicit convertion for spatial / shape
+   * @param docConverter Implicit conversion for Lucene Document
+   * @return
+   */
   def apply(df : DataFrame, shapeField: String)
                                      (implicit shapeConv: String => Shape,
                                       docConverter: Row => Document)

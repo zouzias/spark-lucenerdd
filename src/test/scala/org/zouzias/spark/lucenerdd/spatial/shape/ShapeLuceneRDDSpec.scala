@@ -21,6 +21,7 @@ import java.io.StringWriter
 import com.holdenkarau.spark.testing.SharedSparkContext
 import com.spatial4j.core.distance.DistanceUtils
 import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
@@ -136,6 +137,16 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+  }
+
+  "ShapeLuceneRDD.apply(DF, shapeField)" should
+    "instantiate ShapeLuceneRDD from DataFrame and shape field name" in {
+    val sparkSession = SparkSession.builder.getOrCreate()
+    import sparkSession.implicits._
+    val capitals = sparkSession.read.parquet("data/capitals.parquet")
+    pointLuceneRDD = ShapeLuceneRDD(capitals, "shape")
+
+    pointLuceneRDD.count() > 0 should equal(true)
   }
 
   "ShapeLuceneRDD.version" should "return project sbt build information" in {

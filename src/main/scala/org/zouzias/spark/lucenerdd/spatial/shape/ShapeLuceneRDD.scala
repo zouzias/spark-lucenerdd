@@ -379,8 +379,8 @@ object ShapeLuceneRDD extends Versionable {
                                       docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
     import df.sparkSession.implicits._
-    val partitions = df.map(row => (row.getString(row.fieldIndex(shapeField)), row))
-      .rdd.mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
+    val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
+      .mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
       iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter)),
       preservesPartitioning = true)
     new ShapeLuceneRDD(partitions)

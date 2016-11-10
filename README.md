@@ -37,6 +37,10 @@ Here are a few examples using `LuceneRDD` for full text search, spatial search a
 
 For more, check the [wiki](https://github.com/zouzias/spark-lucenerdd/wiki). More examples are available at [examples](https://github.com/zouzias/spark-lucenerdd-examples) and performance evaluation examples on AWS can be found [here](https://github.com/zouzias/spark-lucenerdd-aws).
 
+## Presentations
+
+For an overview of the library, check these [ScalaIO 2016 Slides](http://www.slideshare.net/zouzias/lucenerdd-for-geospatial-search-and-entity-linkage).
+
 ## Linking
 
 You can link against this library (for Spark 1.4+) in your program at the following coordinates:

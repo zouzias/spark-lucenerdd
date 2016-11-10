@@ -355,16 +355,29 @@ object ShapeLuceneRDD extends Versionable {
   }
 
   /**
-   * Instantiate a ShapeLuceneRDD with an iterable
+   * Instantiate [[ShapeLuceneRDD]] from DataFrame with spatial column (shape format)
    *
-   * @param elems Elements
-   * @param sc Spark Context
+   * Shape format can be one of ShapeIO.GeoJSON, ShapeIO.LEGACY, ShapeIO.POLY, ShapeIO.WKT
+   *
+   * {{
+   *  val countries = spark.read.parquet("data/countries-bbox.parquet")
+   *  val lucene = ShapeLuceneRDD(counties, "shape")
+   *
+   * }}
+   * @param df Input dataframe containing Shape as String field named "shapeField"
+   * @param shapeField Name of DataFrame column that contains Shape as String, i.e., WKT
+   * @param shapeConv Implicit convertion for spatial / shape
+   * @param docConverter Implicit conversion for Lucene Document
    * @return
-
-  def apply[K: ClassTag, V: ClassTag]
-  (elems: Iterable[(K, V)])(implicit sc: SparkContext, shapeConv: K => Shape,
-                            docConverter: V => Document): ShapeLuceneRDD[K, V] = {
-    apply(sc.parallelize[(K, V)](elems.toSeq))
+   */
+  def apply(df : DataFrame, shapeField: String)
+                                     (implicit shapeConv: String => Shape,
+                                      docConverter: Row => Document)
+  : ShapeLuceneRDD[String, Row] = {
+    val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
+      .mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
+      iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter)),
+      preservesPartitioning = true)
+    new ShapeLuceneRDD(partitions)
   }
-  */
 }

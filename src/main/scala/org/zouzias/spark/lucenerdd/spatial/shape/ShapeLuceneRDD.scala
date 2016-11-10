@@ -361,7 +361,9 @@ object ShapeLuceneRDD extends Versionable {
   }
 
   /**
-   * Instantiate [[ShapeLuceneRDD]] from DataFrame with spatial column
+   * Instantiate [[ShapeLuceneRDD]] from DataFrame with spatial column (shape format)
+   *
+   * Shape format can be one of ShapeIO.GeoJSON, ShapeIO.LEGACY, ShapeIO.POLY, ShapeIO.WKT
    *
    * {{
    *  val countries = spark.read.parquet("data/countries-bbox.parquet")
@@ -378,7 +380,6 @@ object ShapeLuceneRDD extends Versionable {
                                      (implicit shapeConv: String => Shape,
                                       docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
-    import df.sparkSession.implicits._
     val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
       .mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
       iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter)),

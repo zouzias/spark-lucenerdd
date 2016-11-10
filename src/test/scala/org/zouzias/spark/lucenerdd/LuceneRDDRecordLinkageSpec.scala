@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.{FuzzyQuery, PrefixQuery}
-import org.apache.spark.sql.{Row, SQLContext, SparkSession}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 import scala.io.Source
@@ -56,7 +56,8 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     }
 
     val linked = luceneRDD.linkByQuery(leftCountriesRDD, linker, 10)
-    linked.count() should equal(leftCountries.size)
+
+    linked.count() should equal(leftCountries.length)
     // Greece and Greenland should appear
     linked.collect().exists(link => link._1 == "gree" && link._2.length == 2) should equal(true)
     // Italy should appear
@@ -108,6 +109,22 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     linked.collect().exists(link => link._1 == "gree" && link._2.length == 2) should equal(true)
     // Italy should appear
     linked.collect().exists(link => link._1 == "ita" && link._2.length == 1) should equal(true)
+  }
+
+  "LuceneRDD.dedup" should "correctly deduplication top result" in {
+    implicit val mySC = sc
+    val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
+      .map(_.toLowerCase()).toSeq)
+
+    luceneRDD = LuceneRDD(countries)
+
+    def linker(country: String): String = {
+      s"_1:${country}*"
+    }
+
+    val linked = luceneRDD.dedup(linker, 5)
+
+    linked.count() should equal(countries.count)
   }
 
   "LuceneRDD.linkDataFrame" should "correctly link with query parser (prefix)" in {

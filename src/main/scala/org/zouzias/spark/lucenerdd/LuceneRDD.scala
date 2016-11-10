@@ -28,6 +28,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
 
@@ -122,6 +123,19 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
 
   /**
+    * Deduplication of self
+    *
+    * @param searchQueryGen Search query mapper function
+    * @param topK Number of results to deduplication
+    * @return
+    */
+  def dedup[T1: ClassTag](searchQueryGen: T1 => String, topK: Int = DefaultTopK)
+  : RDD[(T1, Array[SparkScoreDoc])] = {
+    // FIXME: is this asInstanceOf necessary?
+    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK)
+  }
+
+  /**
    * Entity linkage via Lucene query over all elements of an RDD.
    *
    * @param other DataFrame to be linked
@@ -130,7 +144,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    */
   def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
-  : RDD[(Row, List[SparkScoreDoc])] = {
+  : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("LinkDataFrame requested")
     link[Row](other.rdd, searchQueryGen, topK)
   }
@@ -147,34 +161,26 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * broadcast to the workers.
    */
   def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
-    : RDD[(T1, List[SparkScoreDoc])] = {
+    : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
-    val monoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
-    logDebug("Collecting query points to driver")
-    val queries = other.map(searchQueryGen).collect()
-    logDebug("Query points collected to driver successfully")
-    logDebug("Broadcasting query points")
+
+    val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
+    logInfo("Collecting query points to driver")
+    val otherWithIndex = other.zipWithIndex().map(_.swap)
+    val queries = otherWithIndex.mapValues(searchQueryGen).collect()
     val queriesB = partitionsRDD.context.broadcast(queries)
-    logDebug("Query points broadcasting was successfully")
 
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.flatMap {
-      case partition => queriesB.value.zipWithIndex.map { case (qr, index) =>
-        val results = partition.query(qr, topK)
-          .map(x => monoid.build(x))
+    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions(partitions =>
+      partitions.flatMap { case partition =>
+        queriesB.value.par.map { case (index, qr) =>
+          (index, topKMonoid.build(partition.query(qr, topK)))
+        }
+      })
 
-        (index.toLong, results.reduceOption(monoid.plus)
-          .getOrElse(monoid.zero))
-      }
-    }
-
-    logDebug("Compute topK linkage per partition")
-    val results = resultsByPart.reduceByKey(monoid.plus)
-
-    //  Asynchronously delete cached copies of this broadcast on the executors
-    queriesB.unpersist()
-
-    other.zipWithIndex.map(_.swap).join(results).values
-      .map(joined => (joined._1, joined._2.items.take(topK)))
+    logInfo("Compute topK linkage per partition")
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
+    otherWithIndex.join(results).values
+      .map(joined => (joined._1, joined._2.items.toArray))
   }
 
   /**
@@ -187,7 +193,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def linkByQuery[T1: ClassTag](other: RDD[T1],
                                 searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
-  : RDD[(T1, List[SparkScoreDoc])] = {
+  : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("LinkByQuery requested")
     def typeToQueryString = (input: T1) => {
       searchQueryGen(input).toString
@@ -280,7 +286,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   }
 }
 
-object LuceneRDD {
+object LuceneRDD extends Versionable {
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]
@@ -308,7 +314,7 @@ object LuceneRDD {
   def apply[T : ClassTag]
   (elems: Iterable[T])(implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {
-    apply(sc.parallelize[T](elems.toSeq))
+    apply[T](sc.parallelize[T](elems.toSeq))
   }
 
   /**
@@ -319,15 +325,6 @@ object LuceneRDD {
    */
   def apply(dataFrame: DataFrame)
   : LuceneRDD[Row] = {
-    apply(dataFrame.rdd)
-  }
-
-  /**
-   * Return project information, i.e., version number, build time etc
-   * @return
-   */
-  def version(): Map[String, Any] = {
-    // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
-    org.zouzias.spark.lucenerdd.BuildInfo.toMap
+    apply[Row](dataFrame.rdd)
   }
 }

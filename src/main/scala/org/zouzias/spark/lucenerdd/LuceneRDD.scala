@@ -18,7 +18,6 @@
 package org.zouzias.spark.lucenerdd
 
 import com.twitter.algebird.{TopK, TopKMonoid}
-import com.typesafe.config.Config
 import org.apache.lucene.document.Document
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
@@ -27,13 +26,11 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
-import org.xerial.snappy.Snappy
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
-import scala.util.Try
 
 /**
  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
@@ -290,9 +287,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 }
 
 object LuceneRDD extends Versionable {
-
-  val Separator = '|'
-  val IndexQuerySeparator = '/'
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]

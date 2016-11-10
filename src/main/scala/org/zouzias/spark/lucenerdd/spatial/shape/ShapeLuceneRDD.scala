@@ -113,12 +113,6 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     thatWithIndex.join(results).values.map(joined => (joined._1, joined._2.items.toArray))
   }
 
-  @inline
-  private def parseQuery(q: String): Option[(Long, Double, Double)] = {
-    val arr = q.split(ShapeLuceneRDD.IndexQuerySeparator)
-    Try{(arr(0).toLong, arr(1).toDouble, arr(2).toDouble)}.toOption
-  }
-
   /**
    * Link entities based on k-nearest neighbors (Knn)
    *
@@ -324,9 +318,6 @@ object ShapeLuceneRDD extends Versionable {
 
   /** Type for a point */
   type PointType = (Double, Double)
-
-  val Separator = '|'
-  val IndexQuerySeparator = ':'
 
   /**
    * Instantiate a ShapeLuceneRDD given an RDD[T]

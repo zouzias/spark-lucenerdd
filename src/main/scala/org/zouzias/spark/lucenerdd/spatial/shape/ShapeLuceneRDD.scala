@@ -95,22 +95,16 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     val thatWithIndex = that.zipWithIndex().map(_.swap)
-    val queries = thatWithIndex.mapValues(pointFunctor)
-      .map{ case (key, p) => s"$key:${p._1}:${p._2}"} // ':' is ShapeLuceneRDD.IndexQuerySeparator
-      .reduce{ case (x, y) => s"$x${ShapeLuceneRDD.Separator}$y"}
-    val compressed = Snappy.compress(queries)
-    val queriesB = partitionsRDD.context.broadcast(compressed)
+    val queries = thatWithIndex.mapValues(pointFunctor).collect()
+    val queriesB = partitionsRDD.context.broadcast(queries)
 
     val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions {
       case partitions =>
         partitions.flatMap { case partition =>
-          Snappy.uncompressString(queriesB.value)
-            .split(ShapeLuceneRDD.Separator)
-            .par
-            .flatMap(parseQuery)
-            .map{ case (index, x, y) =>
+          queriesB.value.par
+            .map{ case (index, (x, y)) =>
             (index, topKMonoid.build(mapper((x, y), partition)))
-          }.toIterator
+          }
         }
     }
 

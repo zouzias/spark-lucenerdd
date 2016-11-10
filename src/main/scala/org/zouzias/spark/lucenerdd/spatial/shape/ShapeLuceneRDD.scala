@@ -386,18 +386,4 @@ object ShapeLuceneRDD extends Versionable {
       preservesPartitioning = true)
     new ShapeLuceneRDD(partitions)
   }
-
-  /**
-   * Instantiate a ShapeLuceneRDD with an iterable
-   *
-   * @param elems Elements
-   * @param sc Spark Context
-   * @return
-
-  def apply[K: ClassTag, V: ClassTag]
-  (elems: Iterable[(K, V)])(implicit sc: SparkContext, shapeConv: K => Shape,
-                            docConverter: V => Document): ShapeLuceneRDD[K, V] = {
-    apply(sc.parallelize[(K, V)](elems.toSeq))
-  }
-  */
 }

@@ -48,7 +48,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "x.y.z"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.2.3"
 ```
 
 Using Maven:
@@ -57,7 +57,7 @@ Using Maven:
 <dependency>
     <groupId>org.zouzias</groupId>
     <artifactId>spark-lucenerdd_2.11</artifactId>
-    <version>x.y.z</version>
+    <version>0.2.3</version>
 </dependency>
 ```
 
@@ -65,13 +65,11 @@ This library can also be added to Spark jobs launched through `spark-shell` or `
 For example, to include it when starting the spark shell:
 
 ```
-$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.10:0.0.XX
+$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.2.3
 ```
 
 Unlike using `--jars`, using `--packages` ensures that this library and its dependencies will be added to the classpath.
 The `--packages` argument can also be used with `bin/spark-submit`.
-
-This library is cross-published for Scala 2.11, so 2.11 users should replace 2.10 with 2.11 in the commands listed above.
 
 ### Compatibility
 The project has the following compatibility with Apache Spark:

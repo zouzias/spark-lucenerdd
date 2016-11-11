@@ -78,8 +78,8 @@ The project has the following compatibility with Apache Spark:
 
 spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
 ------------------------- | ------------ | -------------------------- | ----- | ----
-0.2.3-SNAPSHOT            |             | >= 2.0.0           | [develop](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
-0.2.2 | 2016-10-09   | >= 2.0.0           | [tag v0.2.2](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.2) | Released 
+0.2.4-SNAPSHOT            |             | >= 2.0.0           | [develop](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
+0.2.3 | 2016-10-09   | >= 2.0.0           | [tag v0.2.3](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.3) | Released 
 0.1.0 | 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 
 ### Project Status and Limitations

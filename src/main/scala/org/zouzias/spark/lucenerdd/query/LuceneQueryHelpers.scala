@@ -25,6 +25,7 @@ import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
 import org.apache.lucene.facet.taxonomy.{FastTaxonomyFacetCounts, TaxonomyReader}
 import org.apache.lucene.index.Term
+import org.apache.lucene.queries.mlt.MoreLikeThis
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
@@ -279,5 +280,30 @@ object LuceneQueryHelpers extends Serializable {
     }
 
     searchTopK(indexSearcher, builder.build(), topK)
+  }
+
+  /**
+    * Lucene's More Like This (MLT) functionality
+    * @param indexSearcher
+    * @param fieldName
+    * @param query
+    * @param minTermFreq
+    * @param minDocFreq
+    * @param topK
+    * @param analyzer
+    * @return
+    */
+  def moreLikeThis(indexSearcher: IndexSearcher, fieldName: String,
+                   query: String,
+                   minTermFreq: Int, minDocFreq: Int, topK: Int)
+                  (implicit analyzer: Analyzer)
+  : Iterator[SparkScoreDoc] = {
+    val mlt = new MoreLikeThis(indexSearcher.getIndexReader)
+    mlt.setMinTermFreq(minTermFreq)
+    mlt.setMinDocFreq(minDocFreq)
+    mlt.setFieldNames(Array(fieldName)) // FIXME: Is this necessary?
+    mlt.setAnalyzer(analyzer)
+    val q = mlt.like(fieldName, new StringReader(query))
+    searchTopK(indexSearcher, q, topK).toIterator
   }
 }

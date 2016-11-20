@@ -145,6 +145,14 @@ private[lucenerdd] class LuceneRDDPartition[T]
       facetField + FacetedLuceneRDD.FacetTextFieldSuffix,
       topK)(Analyzer)
   }
+
+  override def moreLikeThis(fieldName: String, query: String,
+                            minTermFreq: Int, minDocFreq: Int, topK: Int)
+  : LuceneRDDResponsePartition = {
+    val docs = LuceneQueryHelpers.moreLikeThis(indexSearcher, fieldName,
+      query, minTermFreq, minDocFreq, topK)(Analyzer)
+    LuceneRDDResponsePartition(docs)
+  }
 }
 
 object LuceneRDDPartition {

@@ -51,5 +51,9 @@ class LuceneRDDMoreLikeThisSpec extends FlatSpec
     && x.contains("wonderland")
     && x.contains("adventures")) should equal(true)
 
+    results.last.doc.textField("_1").exists(x => x.contains("alice")
+      && !x.contains("wonderland")
+      && !x.contains("adventures")) should equal(true)
+
   }
 }

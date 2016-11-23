@@ -264,6 +264,22 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     partitionsRDD.map(_.size).reduce(_ + _)
   }
 
+  /**
+    * Lucene's More Like This (MLT) functionality
+    * @param fieldName Field name
+    * @param query Query text
+    * @param minTermFreq Minimum term frequency
+    * @param minDocFreq Minimum document frequency
+    * @param topK Number of returned documents
+    * @return
+    */
+  def moreLikeThis(fieldName: String, query: String,
+                   minTermFreq: Int, minDocFreq: Int, topK: Int = DefaultTopK)
+  : LuceneRDDResponse = {
+    logInfo(s"MoreLikeThis field: ${fieldName}, query: ${query}")
+    partitionMapper(_.moreLikeThis(fieldName, query, minTermFreq, minDocFreq, topK), topK)
+  }
+
   /** RDD compute method. */
   override def compute(part: Partition, context: TaskContext): Iterator[T] = {
     firstParent[AbstractLuceneRDDPartition[T]].iterator(part, context).next.iterator

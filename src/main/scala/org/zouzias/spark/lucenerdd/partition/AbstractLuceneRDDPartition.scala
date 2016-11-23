@@ -118,6 +118,20 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    */
   def phraseQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
+
+  /**
+    * Lucene's More Like This (MLT) functionality
+    * @param fieldName Field name
+    * @param query Query text
+    * @param minTermFreq Minimum term frequency
+    * @param minDocFreq Minimum document frequency
+    * @param topK Number of returned documents
+    * @return
+    */
+  def moreLikeThis(fieldName: String, query: String,
+                   minTermFreq: Int, minDocFreq: Int, topK: Int)
+  : LuceneRDDResponsePartition
+
   /**
    * Restricts the entries to those satisfying a predicate
    * @param pred Predicate to filter on

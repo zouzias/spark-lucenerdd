@@ -20,9 +20,11 @@ MAIN_JAR=${CURRENT_DIR}/target/scala-2.11/spark-lucenerdd-assembly-${SPARK_LUCEN
 # Run spark shell locally
 ${SPARK_HOME}/bin/spark-shell   --jars "${MAIN_JAR}" \
 				--conf "spark.executor.memory=1g" \
-				--conf "spark.driver.memory=512m" \
+				--conf "spark.driver.memory=1g" \
 				--conf "spark.rdd.compress=true" \
 				--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
 				--conf "spark.kryo.registrator=org.zouzias.spark.lucenerdd.LuceneRDDKryoRegistrator" \
+				--conf spark.executor.extraJavaOptions="-Dlucenerdd.index.store.mode=disk" \
+				--conf spark.driver.extraJavaOptions="-Dlucenerdd.index.store.mode=disk" \
 				--conf "spark.kryoserializer.buffer=24mb" \
 				--master local[*]

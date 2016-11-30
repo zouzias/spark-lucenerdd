@@ -90,7 +90,18 @@ If you want to use your own custom class with `LuceneRDD` you can do it provided
 
 For more details, see `LuceneRDDCustomcaseClassImplicits` under the tests directory.
 
-### Development
+## Development
+
+### Docker
+
+A docker compose script is setup with some preliminary notebook in Zeppelin, run
+
+```
+docker-compose up
+```
+
+For more LuceneRDD examples on Zeppelin, check these [examples](https://github.com/zouzias/spark-lucenerdd-examples) 
+### Build from Source
 
 Install Java, [SBT](http://www.scala-sbt.org) and clone the project
 

@@ -78,7 +78,7 @@ pomExtra := (
 val luceneV = "5.5.3"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.0.1"
+sparkVersion := "2.0.2"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql")
 spAppendScalaVersion := true

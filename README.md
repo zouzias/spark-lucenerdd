@@ -48,7 +48,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.2.3"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.2.4"
 ```
 
 Using Maven:
@@ -57,7 +57,7 @@ Using Maven:
 <dependency>
     <groupId>org.zouzias</groupId>
     <artifactId>spark-lucenerdd_2.11</artifactId>
-    <version>0.2.3</version>
+    <version>0.2.4</version>
 </dependency>
 ```
 
@@ -65,7 +65,7 @@ This library can also be added to Spark jobs launched through `spark-shell` or `
 For example, to include it when starting the spark shell:
 
 ```
-$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.2.3
+$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.2.4
 ```
 
 Unlike using `--jars`, using `--packages` ensures that this library and its dependencies will be added to the classpath.
@@ -76,8 +76,8 @@ The project has the following compatibility with Apache Spark:
 
 spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
 ------------------------- | ------------ | -------------------------- | ----- | ----
-0.2.4-SNAPSHOT            |             | >= 2.0.1           | [develop](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
-0.2.3 | 2016-10-09   | >= 2.0.1           | [tag v0.2.3](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.3) | Released 
+0.2.5-SNAPSHOT            |             | >= 2.0.1           | [develop](https://github.com/zouzias/spark-lucenerdd/spark-lucenerdd) | Under Development
+0.2.4 | 2016-12-01   | >= 2.0.1           | [tag v0.2.4](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.4) | Released 
 0.1.0 | 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 
 ### Project Status and Limitations

@@ -33,14 +33,18 @@ scalacOptions ++= Seq("-deprecation",
   "-Ywarn-value-discard",
   "-language:implicitConversions")
 
-javacOptions ++= Seq("-Xlint", "-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+javacOptions ++= Seq("-Xlint",
+  "-Xms512M",
+  "-Xmx2048M",
+  "-XX:MaxPermSize=2048M",
+  "-XX:+CMSClassUnloadingEnabled")
 
 
 // Add jcenter repo
 resolvers += Resolver.jcenterRepo
 resolvers += "Apache Repos" at "https://repository.apache.org/content/repositories/releases"
 
-releaseCrossBuild := true
+    releaseCrossBuild := true
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 publishMavenStyle := true
@@ -92,9 +96,8 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val specs2_core               = "org.specs2"                     %% "specs2-core"             % "2.3.13" % "test"
-val scala_check               = "org.scalacheck"                 %% "scalacheck"              % "1.12.2" % "test"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic" % "3.0.1"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.1" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.4"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
@@ -123,9 +126,8 @@ libraryDependencies ++= Seq(
   jts,
   joda_time,
   joda_convert, // To avoid warning: Class org.joda.convert.ToString not found
-  specs2_core,
-  scalatest,
-  specs2_core
+  scalactic,  // scalactic is recommended, see http://www.scalatest.org/install
+  scalatest
 )
 
 libraryDependencies ++= Seq(

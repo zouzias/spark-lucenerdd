@@ -39,10 +39,11 @@ def fuzzyLinker(country: String): String = {
 }
 
 // Step 4: Perform the linkage
-val linked: RDD[(String, List[SparkScoreDoc])] = luceneRDD.link(leftCountriesRDD, fuzzyLinker, 10)
+val linked: RDD[(String, Array[SparkScoreDoc])] = luceneRDD.link(leftCountriesRDD, fuzzyLinker, 10)
 
 // Step 5: View the results
-linked.foreach(println)
+linked.foreach(x => println((x._1, x._2.mkString(","))))
+
 // spa,List(SparkScoreDoc(5.1271343,84,0,Text fields:_1:[spain])))
 // (gree,List(SparkScoreDoc(5.1271343,86,0,Text fields:_1:[greece])))
 // (germa,List(SparkScoreDoc(5.127134,83,0,Text fields:_1:[germany])))

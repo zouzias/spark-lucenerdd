@@ -44,7 +44,7 @@ javacOptions ++= Seq("-Xlint",
 resolvers += Resolver.jcenterRepo
 resolvers += "Apache Repos" at "https://repository.apache.org/content/repositories/releases"
 
-    releaseCrossBuild := true
+releaseCrossBuild := false
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 publishMavenStyle := true

@@ -133,8 +133,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.4.7"
-    % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.5.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

@@ -48,7 +48,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.2.4"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.2.5"
 ```
 
 Using Maven:

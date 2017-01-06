@@ -26,7 +26,16 @@ import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
  * @param shardIndex Shard index
  * @param doc Serialized Lucene document
  */
-case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: SparkDoc)
+case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: SparkDoc) {
+
+  override def toString: String = {
+    val builder = new StringBuilder
+    builder.append(s"[score: ${score}/")
+    builder.append(s"docId: ${docId}/")
+    builder.append(s"doc: ${doc}]")
+    builder.result()
+  }
+}
 
 object SparkScoreDoc extends Serializable {
 

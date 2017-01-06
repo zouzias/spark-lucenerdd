@@ -37,10 +37,10 @@ def prefixLinker(country: String): String = {
 }
 
 // Step 4: Perform the linkage
-val linked: RDD[(String, List[SparkScoreDoc])] = luceneRDD.link(leftCountriesRDD, prefixLinker, 10)
+val linked: RDD[(String, Array[SparkScoreDoc])] = luceneRDD.link(leftCountriesRDD, prefixLinker, 10)
 
 // Step 5: View the results
-linked.foreach(println)
+linked.foreach(x => println((x._1, x._2.mkString(","))))
 
 // (gre,List(SparkScoreDoc(1.0,88,0,Text fields:_1:[grenada]), SparkScoreDoc(1.0,87,0,Text fields:_1:[greenland]), SparkScoreDoc(1.0,86,0,Text fields:_1:[greece])))
 // (ar,List(SparkScoreDoc(1.0,12,0,Text fields:_1:[aruba]), SparkScoreDoc(1.0,11,0,Text fields:_1:[armenia]), SparkScoreDoc(1.0,10,0,Text fields:_1:[argentina])))

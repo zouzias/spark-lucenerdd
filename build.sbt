@@ -82,7 +82,7 @@ pomExtra := (
 val luceneV = "5.5.3"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.0.2"
+sparkVersion := "2.1.0"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql")
 spAppendScalaVersion := true
@@ -99,9 +99,9 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 val scalactic                 = "org.scalactic"                  %% "scalactic" % "3.0.1"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.1" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.4"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.7"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.2"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.3"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 
@@ -133,8 +133,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.4.7"
-    % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.5.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

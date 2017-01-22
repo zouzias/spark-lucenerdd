@@ -48,6 +48,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   override protected def getPreferredLocations(s: Partition): Seq[String] =
     partitionsRDD.preferredLocations(s)
 
+  // Cache fields
+  private lazy val fieldNames = partitionsRDD.map(_.fields()).reduce(_ ++ _)
+
+
   override def cache(): LuceneRDD.this.type = {
     this.persist(StorageLevel.MEMORY_ONLY)
   }
@@ -96,7 +100,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def fields(): Set[String] = {
     logInfo("Fields requested")
-    partitionsRDD.map(_.fields()).reduce(_ ++ _)
+    fieldNames
   }
 
   /**

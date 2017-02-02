@@ -95,9 +95,9 @@ val specs2_core               = "org.specs2"                     %% "specs2-core
 val scala_check               = "org.scalacheck"                 %% "scalacheck"              % "1.12.2" % "test"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "2.2.6" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.4"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.1"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.7"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.4"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 
@@ -128,7 +128,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.4.7"
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.6.0"
     % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )

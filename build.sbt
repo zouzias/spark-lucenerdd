@@ -101,7 +101,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.7"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.3"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.4"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 
@@ -133,7 +133,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.5.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.6.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

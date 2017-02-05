@@ -18,10 +18,11 @@ package org.zouzias.spark
 
 import org.apache.lucene.document._
 import org.apache.spark.sql.Row
+import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 
 import scala.reflect.ClassTag
 
-package object lucenerdd {
+package object lucenerdd extends LuceneRDDConfigurable {
 
   private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
@@ -61,9 +62,19 @@ package object lucenerdd {
   }
 
   def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
+
+
     s match {
       case x: String if x != null =>
-        doc.add(new TextField(fieldName, x, Stored))
+        val fieldType = new FieldType()
+        fieldType.setStoreTermVectors(TextFieldsStoreTermVector)
+        fieldType.setStoreTermVectorPositions(TextFieldsStoreTermPositions)
+        fieldType.setOmitNorms(TextFieldsOmitNorms)
+        fieldType.setTokenized(TextFieldsAnalyzed)
+        fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
+        fieldType.setIndexOptions(TextFieldsIndexOptions)
+        fieldType.freeze()
+        doc.add(new Field(fieldName, x, fieldType))
       case x: Long if x != null =>
         doc.add(new LongField(fieldName, x, Stored))
       case x: Int if x != null =>

@@ -61,8 +61,8 @@ trait IndexStorable extends Configurable
    * @return
    */
   protected def storageMode(directoryPath: Path): Directory = {
-    if (config.hasPath(IndexStoreKey)) {
-      val storageMode = config.getString(IndexStoreKey)
+    if (Config.hasPath(IndexStoreKey)) {
+      val storageMode = Config.getString(IndexStoreKey)
 
       storageMode match {
           // TODO: FIX: Currently there is a single lock instance for each directory.

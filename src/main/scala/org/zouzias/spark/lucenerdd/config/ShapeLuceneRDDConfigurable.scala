@@ -21,36 +21,36 @@ import com.spatial4j.core.io.ShapeIO
 trait ShapeLuceneRDDConfigurable extends LuceneRDDConfigurable {
 
   protected val getPrefixTreeMaxLevel: Int = {
-    if (config.hasPath("lucenerdd.spatial.prefixtree.maxlevel")) {
-      config.getInt("lucenerdd.spatial.prefixtree.maxlevel")
+    if (Config.hasPath("lucenerdd.spatial.prefixtree.maxlevel")) {
+      Config.getInt("lucenerdd.spatial.prefixtree.maxlevel")
     }
     else 11
   }
 
   protected val getPrefixTreeName: String = {
-    if (config.hasPath("lucenerdd.spatial.prefixtree.name")) {
-      config.getString("lucenerdd.spatial.prefixtree.name")
+    if (Config.hasPath("lucenerdd.spatial.prefixtree.name")) {
+      Config.getString("lucenerdd.spatial.prefixtree.name")
     }
     else "geohash"  // Geohash tree by default
   }
 
   protected val getPrefixTreeMaxDistErr: Double = {
-    if (config.hasPath("lucenerdd.spatial.prefixtree.maxDistErr")) {
-      config.getDouble("lucenerdd.spatial.prefixtree.maxDistErr")
+    if (Config.hasPath("lucenerdd.spatial.prefixtree.maxDistErr")) {
+      Config.getDouble("lucenerdd.spatial.prefixtree.maxDistErr")
     }
     else 1D
   }
 
   protected val getLocationFieldName: String = {
-    if (config.hasPath("lucenerdd.spatial.location.field.name")) {
-      config.getString("lucenerdd.spatial.location.field.name")
+    if (Config.hasPath("lucenerdd.spatial.location.field.name")) {
+      Config.getString("lucenerdd.spatial.location.field.name")
     }
     else "__location__"
   }
 
   protected val getShapeFormat: String = {
-    if (config.hasPath("lucenerdd.spatial.shape.io.format")) {
-      val format = config.getString("lucenerdd.spatial.shape.io.format")
+    if (Config.hasPath("lucenerdd.spatial.shape.io.format")) {
+      val format = Config.getString("lucenerdd.spatial.shape.io.format")
       val availableFormats = Array(ShapeIO.GeoJSON, ShapeIO.LEGACY, ShapeIO.POLY, ShapeIO.WKT)
       if (availableFormats.contains(format)) format else ShapeIO.WKT
     }

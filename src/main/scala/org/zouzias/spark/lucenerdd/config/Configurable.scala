@@ -22,5 +22,5 @@ import com.typesafe.config.ConfigFactory
  * Use typesafe configuration
  */
 trait Configurable extends Serializable {
-  val config = ConfigFactory.load()
+  lazy val Config = ConfigFactory.load()
 }

@@ -57,8 +57,8 @@ trait AnalyzerConfigurable extends Configurable {
 
   private val AnalyzerConfigKey = "lucenerdd.analyzer.name"
 
-  protected val AnalyzerConfigName: Option[String] = if (config.hasPath(AnalyzerConfigKey)) {
-    Some(config.getString(AnalyzerConfigKey))} else None
+  protected val AnalyzerConfigName: Option[String] = if (Config.hasPath(AnalyzerConfigKey)) {
+    Some(Config.getString(AnalyzerConfigKey))} else None
 
     protected val Analyzer: Analyzer = {
 

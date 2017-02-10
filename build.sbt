@@ -84,7 +84,7 @@ val luceneV = "5.5.3"
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "2.1.0"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
-sparkComponents ++= Seq("core", "sql")
+sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
 // This is necessary because of how we explicitly specify Spark dependencies
 // for tests rather than using the sbt-spark-package plugin to provide them.

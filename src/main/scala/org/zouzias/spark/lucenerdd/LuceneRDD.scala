@@ -27,7 +27,7 @@ import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
@@ -280,6 +280,17 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     partitionMapper(_.moreLikeThis(fieldName, query, minTermFreq, minDocFreq, topK), topK)
   }
 
+  /**
+    * Return Term vectors
+    * @param fieldName
+    * @return
+    */
+  def termVectors(fieldName: String): RDD[TermVectorEntry] = {
+    partitionsRDD.flatMap { case part =>
+      part.termVectors(fieldName)
+    }
+  }
+
   /** RDD compute method. */
   override def compute(part: Partition, context: TaskContext): Iterator[T] = {
     firstParent[AbstractLuceneRDDPartition[T]].iterator(part, context).next.iterator
@@ -313,8 +324,8 @@ object LuceneRDD extends Versionable {
    */
   def apply[T : ClassTag](elems: RDD[T])
     (implicit conv: T => Document): LuceneRDD[T] = {
-    val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
-      iter => Iterator(LuceneRDDPartition(iter)),
+    val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId)),
       preservesPartitioning = true)
     new LuceneRDD[T](partitions)
   }

@@ -125,8 +125,8 @@ object FacetedLuceneRDD extends Versionable {
    */
   def apply[T : ClassTag](elems: RDD[T])
                          (implicit conv: T => Document): FacetedLuceneRDD[T] = {
-    val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
-      iter => Iterator(LuceneRDDPartition(iter)),
+    val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId)),
       preservesPartitioning = true)
     new FacetedLuceneRDD[T](partitions)
   }

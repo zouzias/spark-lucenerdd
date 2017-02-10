@@ -70,7 +70,7 @@ trait LuceneRDDConfigurable extends Configurable {
     if (Config.hasPath("lucenerdd.index.textfields.terms.omitnorms")) {
       Config.getBoolean("lucenerdd.index.textfields.terms.omitnorms")
     }
-    else true
+    else false
   }
 
   protected val TextFieldsIndexOptions: IndexOptions = {
@@ -86,7 +86,7 @@ trait LuceneRDDConfigurable extends Configurable {
         case "none" => IndexOptions.NONE
       }
     }
-    else IndexOptions.DOCS_AND_FREQS  // Default
+    else IndexOptions.DOCS_AND_FREQS_AND_POSITIONS  // Default
   }
 
 

@@ -171,7 +171,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
           val termsIter = terms.iterator()
           while (termsIter.next() != null) {
             val termValue = termsIter.term().utf8ToString()
-            val termFreq = termsIter.docFreq()
+            val termFreq = termsIter.totalTermFreq()
             termDocMatrix.append(TermVectorEntry((docId, partitionId), termValue, termFreq))
           }
         }

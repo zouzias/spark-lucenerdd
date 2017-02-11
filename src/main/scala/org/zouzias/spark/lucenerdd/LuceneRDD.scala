@@ -286,6 +286,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     * @return
     */
   def termVectors(fieldName: String): RDD[TermVectorEntry] = {
+    require(StringFieldsStoreTermVector,
+      "Store term vectors is not configured. Set lucenerdd.index.stringfields.termvectors to true")
     partitionsRDD.flatMap { case part =>
       part.termVectors(fieldName)
     }

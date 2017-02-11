@@ -45,37 +45,37 @@ trait LuceneRDDConfigurable extends Configurable {
     else 10
   }
 
-  protected val TextFieldsAnalyzed: Boolean = {
-    if (Config.hasPath("lucenerdd.index.textfields.analyzed")) {
-      Config.getBoolean("lucenerdd.index.textfields.analyzed")
+  protected val StringFieldsAnalyzed: Boolean = {
+    if (Config.hasPath("lucenerdd.index.stringfields.analyzed")) {
+      Config.getBoolean("lucenerdd.index.stringfields.analyzed")
     }
     else true
   }
 
-  protected val TextFieldsStoreTermVector: Boolean = {
-    if (Config.hasPath("lucenerdd.index.textfields.termvectors")) {
-      Config.getBoolean("lucenerdd.index.textfields.termvectors")
+  protected val StringFieldsStoreTermVector: Boolean = {
+    if (Config.hasPath("lucenerdd.index.stringfields.terms.vectors")) {
+      Config.getBoolean("lucenerdd.index.stringfields.terms.vectors")
     }
     else true
   }
 
-  protected val TextFieldsStoreTermPositions: Boolean = {
-    if (Config.hasPath("lucenerdd.index.textfields.termpositions")) {
-      Config.getBoolean("lucenerdd.index.textfields.termpositions")
+  protected val StringFieldsStoreTermPositions: Boolean = {
+    if (Config.hasPath("lucenerdd.index.stringfields.terms.positions")) {
+      Config.getBoolean("lucenerdd.index.stringfields.terms.positions")
     }
     else true
   }
 
-  protected val TextFieldsOmitNorms: Boolean = {
-    if (Config.hasPath("lucenerdd.index.textfields.terms.omitnorms")) {
-      Config.getBoolean("lucenerdd.index.textfields.terms.omitnorms")
+  protected val StringFieldsOmitNorms: Boolean = {
+    if (Config.hasPath("lucenerdd.index.stringfields.terms.omitnorms")) {
+      Config.getBoolean("lucenerdd.index.stringfields.terms.omitnorms")
     }
     else false
   }
 
-  protected val TextFieldsIndexOptions: IndexOptions = {
-    if (Config.hasPath("lucenerdd.index.textfields.options")) {
-      val indexOptions = Config.getString("lucenerdd.index.textfields.options")
+  protected val StringFieldsIndexOptions: IndexOptions = {
+    if (Config.hasPath("lucenerdd.index.stringfields.options")) {
+      val indexOptions = Config.getString("lucenerdd.index.stringfields.options")
 
       indexOptions.toLowerCase match {
         case "docs" => IndexOptions.DOCS

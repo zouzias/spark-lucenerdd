@@ -54,7 +54,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
 
-    if (s != null) doc.add(new Field(DefaultFieldName, s, CustomTextFieldType))
+    if (s != null) doc.add(new Field(DefaultFieldName, s, CustomStringFieldType))
 
     doc
   }
@@ -64,16 +64,16 @@ package object lucenerdd extends LuceneRDDConfigurable {
   }
 
   /**
-    * Custom text field type, read typesafe configuration and Lucene field type
+    * Custom text field type, reads configuration and returns Lucene field type
     */
-  private lazy val CustomTextFieldType: FieldType = {
+  private lazy val CustomStringFieldType: FieldType = {
     val fieldType = new FieldType()
-    fieldType.setStoreTermVectors(TextFieldsStoreTermVector)
-    fieldType.setStoreTermVectorPositions(TextFieldsStoreTermPositions)
-    fieldType.setOmitNorms(TextFieldsOmitNorms)
-    fieldType.setTokenized(TextFieldsAnalyzed)
+    fieldType.setStoreTermVectors(StringFieldsStoreTermVector)
+    fieldType.setStoreTermVectorPositions(StringFieldsStoreTermPositions)
+    fieldType.setOmitNorms(StringFieldsOmitNorms)
+    fieldType.setTokenized(StringFieldsAnalyzed)
     fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
-    fieldType.setIndexOptions(TextFieldsIndexOptions)
+    fieldType.setIndexOptions(StringFieldsIndexOptions)
     fieldType.freeze()
     fieldType
   }
@@ -82,7 +82,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
     s match {
       case x: String if x != null =>
-        doc.add(new Field(fieldName, x, CustomTextFieldType))
+        doc.add(new Field(fieldName, x, CustomStringFieldType))
       case x: Long if x != null =>
         doc.add(new LongField(fieldName, x, Stored))
       case x: Int if x != null =>

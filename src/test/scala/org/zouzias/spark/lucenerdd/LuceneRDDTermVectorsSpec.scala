@@ -43,7 +43,6 @@ class LuceneRDDTermVectorsSpec extends FlatSpec
 
   val First = "_1"
 
-
   "LuceneRDD.termVectors" should "return valid terms" in {
 
     val words = Array("To smile or not to smile smile",
@@ -53,20 +52,19 @@ class LuceneRDDTermVectorsSpec extends FlatSpec
       "If you tell the truth, you don't have to remember anything")
     val rdd = sc.parallelize(words)
 
-
     luceneRDD = LuceneRDD(rdd)
 
     val terms = luceneRDD.termVectors(First).collect()
 
-    terms.foreach(println)
-
+    // These terms should exist
     terms.exists(_.term.compareToIgnoreCase("time") == 0) should equal(true)
     terms.exists(_.term.compareToIgnoreCase("room") == 0) should equal(true)
     terms.exists(_.term.compareToIgnoreCase("soul") == 0) should equal(true)
     terms.exists(_.term.compareToIgnoreCase("smile") == 0) should equal(true)
 
-    terms.exists(t => (t.term.compareToIgnoreCase("smile") == 0) && t.count == 3) should equal (3)
-    terms.exists(t => (t.term.compareToIgnoreCase("becaus") == 0) && t.count == 2) should equal (3)
+    terms.exists(t => (t.term.compareToIgnoreCase("smile") == 0)
+      && t.count == 3) should equal (true)
+    terms.exists(t => (t.term.compareToIgnoreCase("becaus") == 0)
+      && t.count == 2) should equal (true)
   }
-
 }

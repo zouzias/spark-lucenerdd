@@ -18,7 +18,7 @@
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.search.BooleanClause
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 
 import scala.reflect.ClassTag
@@ -131,6 +131,20 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def moreLikeThis(fieldName: String, query: String,
                    minTermFreq: Int, minDocFreq: Int, topK: Int)
   : LuceneRDDResponsePartition
+
+  /**
+    * Returns term vectors for a partition
+    *
+    * Since each Lucene index is created per partition, docId are not unique.
+    * The partitionIndex is used to compute "global" document id from all documents
+    * over all partitions
+    *
+    * @param fieldName Field on which to compute term vectors
+    * @param idFieldName Field name which contains unique id
+    * @return Array of term vector entries
+    */
+  def termVectors(fieldName: String, idFieldName: Option[String]): Array[TermVectorEntry]
+
 
   /**
    * Restricts the entries to those satisfying a predicate

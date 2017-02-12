@@ -14,23 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark.lucenerdd.models
 
-import scala.io.Source
-import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.LuceneRDD
-val words = Source.fromFile("src/test/resources/alice.txt").getLines().map(_.trim.toLowerCase).filter(_.length > 3).toSeq
-val rdd = sc.parallelize(words)
-val luceneRDD = LuceneRDD(rdd)
-luceneRDD.cache
-luceneRDD.count
-
-
-luceneRDD.moreLikeThis("_1", "alice adventures wonderland", 1, 1, 20).take(20).foreach(println)
-
-import org.zouzias.spark.lucenerdd.matrices.TermDocMatrix
-
-
-// Construct the term-document matrix
-val terms = luceneRDD.termVectors("_1") // _1 is the default field name
-val mat = new TermDocMatrix(terms)
-
+/**
+  * A term vector entry (document id per shard, term as string, count)
+  *
+  * @param docIdPerShard Tuple2 containing (document id, partition id)
+  * @param term Term text value
+  * @param count Number of terms in the document
+  */
+case class TermVectorEntry(docIdPerShard: (String, Int), term: String, count: Long)

@@ -53,7 +53,9 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
-    if (s != null) doc.add(new TextField(DefaultFieldName, s, Stored))
+
+    if (s != null) doc.add(new Field(DefaultFieldName, s, CustomStringFieldType))
+
     doc
   }
 
@@ -61,20 +63,26 @@ package object lucenerdd extends LuceneRDDConfigurable {
     typeToDocument(doc, s"_${index}", s)
   }
 
-  def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
+  /**
+    * Custom text field type, reads configuration and returns Lucene field type
+    */
+  private lazy val CustomStringFieldType: FieldType = {
+    val fieldType = new FieldType()
+    fieldType.setStoreTermVectors(StringFieldsStoreTermVector)
+    fieldType.setStoreTermVectorPositions(StringFieldsStoreTermPositions)
+    fieldType.setOmitNorms(StringFieldsOmitNorms)
+    fieldType.setTokenized(StringFieldsAnalyzed)
+    fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
+    fieldType.setIndexOptions(StringFieldsIndexOptions)
+    fieldType.freeze()
+    fieldType
+  }
 
+  def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
 
     s match {
       case x: String if x != null =>
-        val fieldType = new FieldType()
-        fieldType.setStoreTermVectors(TextFieldsStoreTermVector)
-        fieldType.setStoreTermVectorPositions(TextFieldsStoreTermPositions)
-        fieldType.setOmitNorms(TextFieldsOmitNorms)
-        fieldType.setTokenized(TextFieldsAnalyzed)
-        fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
-        fieldType.setIndexOptions(TextFieldsIndexOptions)
-        fieldType.freeze()
-        doc.add(new Field(fieldName, x, fieldType))
+        doc.add(new Field(fieldName, x, CustomStringFieldType))
       case x: Long if x != null =>
         doc.add(new LongField(fieldName, x, Stored))
       case x: Int if x != null =>

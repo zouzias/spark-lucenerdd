@@ -266,6 +266,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
   /**
     * Lucene's More Like This (MLT) functionality
+    *
     * @param fieldName Field name
     * @param query Query text
     * @param minTermFreq Minimum term frequency
@@ -284,8 +285,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     * Return Term vector for a Lucene field
     *
     * @param fieldName Field name for term vectors
-    * @param idFieldName Lucene field that contains unique id (default set to None,
-    *                    id equals (docId, partitionId)
+    * @param idFieldName Lucene field that contains unique id:
+    *     default set to None, in which case id equals (docId, partitionId)
     * @return RDD of term vector entries,
     *         i.e., (document id, term as String, term frequency in document)
     */

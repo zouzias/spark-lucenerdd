@@ -140,9 +140,10 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
     * over all partitions
     *
     * @param fieldName Field on which to compute term vectors
-    * @return
+    * @param idFieldName Field name which contains unique id
+    * @return Array of term vector entries
     */
-  def termVectors(fieldName: String): Array[TermVectorEntry]
+  def termVectors(fieldName: String, idFieldName: Option[String]): Array[TermVectorEntry]
 
 
   /**

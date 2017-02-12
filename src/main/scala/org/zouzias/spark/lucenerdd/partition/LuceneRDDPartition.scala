@@ -56,7 +56,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()
-  logDebug("[partId=${partitionId}]Closing index writers...")
+  logDebug(s"[partId=${partitionId}]Closing index writers...")
 
 
   logDebug(s"[partId=${partitionId}]Instantiating index/facet readers")
@@ -156,7 +156,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
     LuceneRDDResponsePartition(docs)
   }
 
-  override def termVectors(fieldName: String): Array[TermVectorEntry] = {
+  override def termVectors(fieldName: String, idFieldName: Option[String])
+  : Array[TermVectorEntry] = {
       val termDocMatrix = ArrayBuffer.empty[TermVectorEntry]
 
       // Iterate over document ids
@@ -165,14 +166,22 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
       while(docId != DocIdSetIterator.NO_MORE_DOCS) {
         val termsOpt = Option(indexReader.getTermVector(docId, fieldName))
+
+        // If there is no unique id field, i.e., idFieldName = None
+        // unique id is (documentId, partitionId)
+        val uniqueDocId = idFieldName match {
+          case Some(idField) => (indexReader.document(docId).get(idField), partitionId)
+          case None => (docId.toString, partitionId)
+        }
+
         termsOpt.foreach { case terms =>
 
           // Iterate over terms of each document
           val termsIter = terms.iterator()
           while (termsIter.next() != null) {
             val termValue = termsIter.term().utf8ToString()
-            val termFreq = termsIter.totalTermFreq()
-            termDocMatrix.append(TermVectorEntry((docId, partitionId), termValue, termFreq))
+            val termFreq = termsIter.totalTermFreq()  // # of term occurrences in document
+            termDocMatrix.append(TermVectorEntry(uniqueDocId, termValue, termFreq))
           }
         }
         // Next Lucene document

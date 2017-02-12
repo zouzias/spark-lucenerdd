@@ -18,8 +18,9 @@ package org.zouzias.spark.lucenerdd.models
 
 /**
   * A term vector entry (document id per shard, term as string, count)
-  * @param docIdPerShard First is document id and second is shard id
+  *
+  * @param docIdPerShard Tuple2 containing (document id, partition id)
   * @param term Term text value
   * @param count Number of terms in the document
   */
-case class TermVectorEntry(docIdPerShard: (Int, Long), term: String, count: Long)
+case class TermVectorEntry(docIdPerShard: (String, Int), term: String, count: Long)

@@ -281,15 +281,19 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   }
 
   /**
-    * Return Term vectors
-    * @param fieldName
-    * @return
+    * Return Term vector for a Lucene field
+    *
+    * @param fieldName Field name for term vectors
+    * @param idFieldName Lucene field that contains unique id (default set to None,
+    *                    id equals (docId, partitionId)
+    * @return RDD of term vector entries,
+    *         i.e., (document id, term as String, term frequency in document)
     */
-  def termVectors(fieldName: String): RDD[TermVectorEntry] = {
+  def termVectors(fieldName: String, idFieldName: Option[String] = None): RDD[TermVectorEntry] = {
     require(StringFieldsStoreTermVector,
       "Store term vectors is not configured. Set lucenerdd.index.stringfields.termvectors to true")
     partitionsRDD.flatMap { case part =>
-      part.termVectors(fieldName)
+      part.termVectors(fieldName, idFieldName)
     }
   }
 

@@ -43,7 +43,7 @@ class TermDocMatrix(triplets: RDD[TermVectorEntry]) extends Serializable {
     */
   def rowIndexToTerm(): Map[Long, String] = indexToTerm
 
-  def computeUniqueDocId(): Map[(Int, Long), Long] = {
+  def computeUniqueDocId(): Map[(String, Int), Long] = {
     triplets.map(_.docIdPerShard).distinct().zipWithIndex()
       .collect().toMap
   }

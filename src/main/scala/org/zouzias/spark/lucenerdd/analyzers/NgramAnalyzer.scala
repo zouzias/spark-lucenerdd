@@ -22,7 +22,8 @@ import org.apache.lucene.analysis.core.{LowerCaseFilter, WhitespaceTokenizer}
 import org.apache.lucene.analysis.ngram.NGramTokenFilter
 
 /**
-  * An example with a custom Lucene analyzer (Ngrams and tokenization)
+  * An example with a custom Lucene analyzer (whitepsace tokenizer, lowerCase
+  * and Ngram tokenizer filter)
   * Creates NGramTokenizer with given min and max n-grams.
   *
   * @param minGram the smallest n-gram to generate

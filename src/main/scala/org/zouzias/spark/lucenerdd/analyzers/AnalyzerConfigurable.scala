@@ -57,6 +57,17 @@ trait AnalyzerConfigurable extends Configurable {
 
   private val AnalyzerConfigKey = "lucenerdd.analyzer.name"
 
+  private val NgramMinGramConfigKey = "lucenerdd.analyzer.ngram.mingram"
+  private val NgramMaxGramConfigKey = "lucenerdd.analyzer.ngram.maxgram"
+
+  private val NgramMinGram = if (Config.hasPath(NgramMinGramConfigKey)) {
+    Config.getInt(NgramMinGramConfigKey)
+  } else 2
+
+  private val NgramMaxGram = if (Config.hasPath(NgramMaxGramConfigKey)) {
+    Config.getInt(NgramMaxGramConfigKey)
+  } else NgramMinGram + 2 // Default is + 2
+
   protected val AnalyzerConfigName: Option[String] = if (Config.hasPath(AnalyzerConfigKey)) {
     Some(Config.getString(AnalyzerConfigKey))} else None
 
@@ -94,7 +105,7 @@ trait AnalyzerConfigurable extends Configurable {
         case "pt" => new PortugueseAnalyzer()
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
-        case "ngram" => new NgramAnalyzer(2, 4)
+        case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram)
         case _ => new StandardAnalyzer()
       }
     }

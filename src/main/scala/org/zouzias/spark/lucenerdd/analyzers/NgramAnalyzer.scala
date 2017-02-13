@@ -16,10 +16,10 @@
  */
 package org.zouzias.spark.lucenerdd.analyzers
 
-import org.apache.lucene.analysis.{Analyzer, TokenStream, Tokenizer}
+import org.apache.lucene.analysis.{Analyzer, Tokenizer}
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents
-import org.apache.lucene.analysis.core.LowerCaseFilter
-import org.apache.lucene.analysis.ngram.NGramTokenizer
+import org.apache.lucene.analysis.core.{LowerCaseFilter, WhitespaceTokenizer}
+import org.apache.lucene.analysis.ngram.NGramTokenFilter
 
 /**
   * An example with a custom Lucene analyzer (Ngrams and tokenization)
@@ -30,8 +30,9 @@ import org.apache.lucene.analysis.ngram.NGramTokenizer
   */
 class NgramAnalyzer(minGram: Int, maxGram: Int) extends Analyzer {
   override def createComponents(fieldName: String): TokenStreamComponents = {
-    val source: Tokenizer = new NGramTokenizer(minGram, maxGram)
-    val filter: TokenStream = new LowerCaseFilter(source)
-    new TokenStreamComponents(source, filter)
+    val source: Tokenizer = new WhitespaceTokenizer()
+    val lowerCase = new LowerCaseFilter(source)
+    val ngramSource = new NGramTokenFilter(lowerCase, minGram, maxGram)
+    new TokenStreamComponents(source, ngramSource)
   }
 }

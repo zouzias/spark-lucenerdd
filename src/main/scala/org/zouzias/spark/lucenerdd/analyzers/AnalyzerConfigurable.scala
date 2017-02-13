@@ -94,6 +94,7 @@ trait AnalyzerConfigurable extends Configurable {
         case "pt" => new PortugueseAnalyzer()
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
+        case "ngram" => new NgramAnalyzer(2, 4)
         case _ => new StandardAnalyzer()
       }
     }

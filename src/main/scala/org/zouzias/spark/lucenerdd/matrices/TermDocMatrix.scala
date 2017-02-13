@@ -38,11 +38,19 @@ class TermDocMatrix(triplets: RDD[TermVectorEntry]) extends Serializable {
   private lazy val nnz_ = value_.entries.count()
 
   /**
-    * Row index to term map
+    * Returns a map from the matrix row indices to terms
+    *
+    * Using this map, you can associate the rows of the matrix with terms
     * @return
     */
   def rowIndexToTerm(): Map[Long, String] = indexToTerm
 
+  /**
+    * Returns a map from (documentId, partitionId) to the matrix column indices
+    *
+    * Using this map, you can associate the columns of the matrix to the documents
+    * @return
+    */
   def computeUniqueDocId(): Map[(String, Int), Long] = {
     triplets.map(_.docIdPerShard).distinct().zipWithIndex()
       .collect().toMap

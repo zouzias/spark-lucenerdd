@@ -26,6 +26,7 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
+import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
@@ -42,6 +43,9 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   with LuceneRDDConfigurable {
 
   logInfo("Instance is created...")
+
+  /** Lucene fields */
+  private lazy val _fields: Set[String] = partitionsRDD.map(_.fields()).reduce(_ ++ _)
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -96,7 +100,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def fields(): Set[String] = {
     logInfo("Fields requested")
-    partitionsRDD.map(_.fields()).reduce(_ ++ _)
+    _fields
   }
 
   /**
@@ -292,10 +296,15 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     */
   def termVectors(fieldName: String, idFieldName: Option[String] = None): RDD[TermVectorEntry] = {
     require(StringFieldsStoreTermVector,
-      "Store term vectors is not configured. Set lucenerdd.index.stringfields.termvectors to true")
+      "Store term vectors is not configured. Set lucenerdd.index.stringfields.terms.vectors=true")
     partitionsRDD.flatMap { case part =>
       part.termVectors(fieldName, idFieldName)
     }
+  }
+
+  def indexStats(): RDD[IndexStatistics] = {
+    val flds = fields()
+    partitionsRDD.map(_.indexStats(flds))
   }
 
   /** RDD compute method. */

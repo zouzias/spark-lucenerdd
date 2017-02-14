@@ -23,6 +23,7 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search._
 import org.joda.time.DateTime
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
+import org.zouzias.spark.lucenerdd.models.indexstats.{FieldStatistics, IndexStatistics}
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
@@ -190,6 +191,15 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
       termDocMatrix.result().toArray[TermVectorEntry]
     }
+
+  override def indexStats(fields: Set[String]): IndexStatistics = {
+    val maxDocId = indexReader.maxDoc()
+    val numDocs = indexReader.numDocs()
+    val numDelDocs = indexReader.numDeletedDocs()
+    val fieldsStats = fields.map(FieldStatistics(indexReader, _)).toArray
+
+    IndexStatistics(partitionId, numDocs, maxDocId, numDelDocs, fields.size, fieldsStats)
+  }
 }
 
 object LuceneRDDPartition {

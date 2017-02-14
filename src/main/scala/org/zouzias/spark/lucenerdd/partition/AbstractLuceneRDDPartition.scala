@@ -18,6 +18,7 @@
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.search.BooleanClause
+import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 
@@ -145,6 +146,13 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
     */
   def termVectors(fieldName: String, idFieldName: Option[String]): Array[TermVectorEntry]
 
+  /**
+    * Returns statistics of the indices over all executors.
+    *
+    * @param fields Set of defined fields
+    * @return
+    */
+  def indexStats(fields: Set[String]): IndexStatistics
 
   /**
    * Restricts the entries to those satisfying a predicate

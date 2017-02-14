@@ -14,11 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark.lucenerdd.models.indexstats
 
-import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.LuceneRDD
+/**
+  * Statistics for Lucene index
+  */
+case class IndexStatistics(partitionId: Int,
+                           numDocs: Int,
+                           maxDocId: Int,
+                           numDeletedDocs: Int,
+                           numFields: Int,
+                           fieldsStatistics: Array[FieldStatistics]) {
 
-val df = spark.sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").load("src/test/resources/h1bvisa-2014.csv")
-val words = df.select("lca_case_employer_name", "lca_case_job_title", "lca_case_employer_city", "lca_case_employer_state", "lca_case_employer_postal_code")
-val luceneRDD = LuceneRDD(words)
-luceneRDD.count
+  override def toString(): String = {
+    val buf = new StringBuilder()
+    buf.append(s"partitionId: ${partitionId}\n")
+    buf.append(s"numDocs: ${numDocs}\n")
+    buf.append(s"numDeletedDocs: ${numDeletedDocs}\n")
+    buf.append(s"numFields: ${numFields}\n")
+    fieldsStatistics.foreach(buf.append(_))
+    buf.result()
+  }
+}

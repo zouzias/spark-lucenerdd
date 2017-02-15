@@ -14,13 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.config
-
-import com.typesafe.config.ConfigFactory
+package org.zouzias.spark.lucenerdd.models.indexstats
 
 /**
- * Use typesafe configuration
- */
-trait Configurable extends Serializable {
-  lazy val Config = ConfigFactory.load()
+  * Statistics for Lucene index
+  */
+case class IndexStatistics(partitionId: Int,
+                           numDocs: Int,
+                           maxDocId: Int,
+                           numDeletedDocs: Int,
+                           numFields: Int,
+                           fieldsStatistics: Array[FieldStatistics]) {
+
+  override def toString(): String = {
+    val buf = new StringBuilder()
+    buf.append(s"partitionId: ${partitionId}\n")
+    buf.append(s"numDocs: ${numDocs}\n")
+    buf.append(s"numDeletedDocs: ${numDeletedDocs}\n")
+    buf.append(s"numFields: ${numFields}\n")
+    fieldsStatistics.foreach(buf.append(_))
+    buf.result()
+  }
 }

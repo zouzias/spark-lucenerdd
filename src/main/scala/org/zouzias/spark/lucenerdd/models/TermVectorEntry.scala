@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.config
-
-import com.typesafe.config.ConfigFactory
+package org.zouzias.spark.lucenerdd.models
 
 /**
- * Use typesafe configuration
- */
-trait Configurable extends Serializable {
-  lazy val Config = ConfigFactory.load()
-}
+  * A term vector entry (document id per shard, term as string, count)
+  *
+  * @param docIdPerShard Tuple2 containing (document id, partition id)
+  * @param term Term text value
+  * @param count Number of terms in the document
+  */
+case class TermVectorEntry(docIdPerShard: (String, Int), term: String, count: Long)

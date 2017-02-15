@@ -84,7 +84,7 @@ val luceneV = "5.5.3"
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "2.1.0"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
-sparkComponents ++= Seq("core", "sql")
+sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
 // This is necessary because of how we explicitly specify Spark dependencies
 // for tests rather than using the sbt-spark-package plugin to provide them.
@@ -101,7 +101,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.7"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.3"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.4"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 
@@ -133,7 +133,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.5.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.6.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

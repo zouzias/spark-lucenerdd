@@ -26,8 +26,9 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
+import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
@@ -42,6 +43,9 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   with LuceneRDDConfigurable {
 
   logInfo("Instance is created...")
+
+  /** Lucene fields */
+  private lazy val _fields: Set[String] = partitionsRDD.map(_.fields()).reduce(_ ++ _)
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 
@@ -96,7 +100,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def fields(): Set[String] = {
     logInfo("Fields requested")
-    partitionsRDD.map(_.fields()).reduce(_ ++ _)
+    _fields
   }
 
   /**
@@ -266,6 +270,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
   /**
     * Lucene's More Like This (MLT) functionality
+    *
     * @param fieldName Field name
     * @param query Query text
     * @param minTermFreq Minimum term frequency
@@ -278,6 +283,28 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   : LuceneRDDResponse = {
     logInfo(s"MoreLikeThis field: ${fieldName}, query: ${query}")
     partitionMapper(_.moreLikeThis(fieldName, query, minTermFreq, minDocFreq, topK), topK)
+  }
+
+  /**
+    * Return Term vector for a Lucene field
+    *
+    * @param fieldName Field name for term vectors
+    * @param idFieldName Lucene field that contains unique id:
+    *     default set to None, in which case id equals (docId, partitionId)
+    * @return RDD of term vector entries,
+    *         i.e., (document id, term as String, term frequency in document)
+    */
+  def termVectors(fieldName: String, idFieldName: Option[String] = None): RDD[TermVectorEntry] = {
+    require(StringFieldsStoreTermVector,
+      "Store term vectors is not configured. Set lucenerdd.index.stringfields.terms.vectors=true")
+    partitionsRDD.flatMap { case part =>
+      part.termVectors(fieldName, idFieldName)
+    }
+  }
+
+  def indexStats(): RDD[IndexStatistics] = {
+    val flds = fields()
+    partitionsRDD.map(_.indexStats(flds))
   }
 
   /** RDD compute method. */
@@ -313,8 +340,8 @@ object LuceneRDD extends Versionable {
    */
   def apply[T : ClassTag](elems: RDD[T])
     (implicit conv: T => Document): LuceneRDD[T] = {
-    val partitions = elems.mapPartitions[AbstractLuceneRDDPartition[T]](
-      iter => Iterator(LuceneRDDPartition(iter)),
+    val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId)),
       preservesPartitioning = true)
     new LuceneRDD[T](partitions)
   }

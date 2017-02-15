@@ -56,7 +56,7 @@ object LuceneQueryHelpers extends Serializable {
     stream.reset()
     val buffer = ListBuffer.empty[String]
     while (stream.incrementToken()) {
-      buffer.append(cattr.toString())
+      buffer.append(cattr.toString)
     }
     stream.end()
     stream.close()

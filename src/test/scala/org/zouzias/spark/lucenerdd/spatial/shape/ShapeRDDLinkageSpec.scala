@@ -18,18 +18,13 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
-import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.{ShapeRDD, ShapeRDDKryoRegistrator}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
-// Required for implicit Document conversion
-import org.zouzias.spark.lucenerdd._
-
-case class City(name: String, x: Double, y: Double)
-
-class ShapeLuceneRDDLinkageSpec extends FlatSpec
+class ShapeRDDLinkageSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext
@@ -40,34 +35,31 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
   val Radius: Double = 5D
 
-  var pointLuceneRDD: ShapeLuceneRDD[_, _] = _
+  var pointRDD: ShapeRDD[_, _] = _
 
-  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+  override val conf = ShapeRDDKryoRegistrator.registerKryoClasses(new SparkConf().
     setMaster("local[*]").
     setAppName("test").
     set("spark.ui.enabled", "false").
     set("spark.app.id", appID))
 
   override def afterEach() {
-    pointLuceneRDD.close()
+    pointRDD.close()
   }
 
-  "ShapeLuceneRDD.linkByKnn" should "link correctly k-nearest neighbors (knn)" in {
+  "ShapeRDD.linkByKnn" should "link correctly k-nearest neighbors (knn)" in {
 
     val citiesRDD = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
-    pointLuceneRDD.cache()
+    pointRDD = ShapeRDD(citiesRDD)
+    pointRDD.cache()
 
     val linker = (x: ((Double, Double), String)) => x._1
 
-    val linkage = pointLuceneRDD.linkByKnn(citiesRDD, linker, k)
+    val linkage = pointRDD.linkByKnn(citiesRDD, linker, k)
 
     linkage.count() should equal(cities.length)
 
     linkage.collect().foreach{ case (city, knnResults) =>
-
-      // top result should be linked with its query result
-      city._2 should equal(knnResults.head.doc.textField("_1").head)
 
       // Must return only at most k results
       knnResults.length should be <= k
@@ -78,17 +70,18 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     }
   }
 
-  "ShapeLuceneRDD.linkByRadius" should "link correctly countries with capitals" in {
+  "ShapeRDD.linkByRadius" should "link correctly countries with capitals" in {
 
     val Radius = 50.0
     val sparkSession = SparkSession.builder.getOrCreate()
     import sparkSession.implicits._
-    val countriesRDD = sparkSession.read.parquet("data/countries-poly.parquet")
+    val countriesRDD: Dataset[(String, String)] = sparkSession.read
+      .parquet("data/countries-poly.parquet")
       .select("name", "shape")
       .map(row => (row.getString(1), row.getString(0)))
 
-    pointLuceneRDD = ShapeLuceneRDD(countriesRDD)
-    pointLuceneRDD.cache()
+    pointRDD = ShapeRDD(countriesRDD)
+    pointRDD.cache()
 
     val capitals = sparkSession.read.parquet("data/capitals.parquet")
       .select("name", "shape")
@@ -106,40 +99,35 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       (coords(0).toDouble, coords(1).toDouble)
     }
 
-    val linkage = pointLuceneRDD.linkByRadius(capitals.rdd, coords, Radius).collect()
+    val linkage = pointRDD.postLinker(pointRDD.linkByRadius(capitals.rdd, coords, Radius))
+      .collect()
 
-    linkage.length should equal(capitals.count)
 
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Bern" && docTextFieldEq(results, "_1", "Switzerland")} should equal(true)
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Berlin" && docTextFieldEq(results, "_1", "Germany")} should equal(true)
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Ottawa" && docTextFieldEq(results, "_1", "Canada")} should equal(true)
-    linkage.exists{case (cap, results) =>
-      cap._2 == "Paris" && docTextFieldEq(results, "_1", "France")} should equal(true)
+    linkage.exists{ case ((_, capital), (_, country)) =>
+      capital.compareToIgnoreCase("dublin") == 0 && country
+        .toString.compareToIgnoreCase("Ireland") == 0} should equal(true)
 
+    linkage.exists{ case ((_, capital), (_, country)) =>
+      capital.compareToIgnoreCase("madrid") == 0 && country
+        .toString.compareToIgnoreCase("spain") == 0} should equal(true)
   }
 
-  "ShapeLuceneRDD.linkDataFrameByKnn" should "link correctly k-nearest neighbors (knn)" in {
+  "ShapeRDD.linkDataFrameByKnn" should "link correctly k-nearest neighbors (knn)" in {
 
     val sparkSession = SparkSession.builder.getOrCreate()
     import sparkSession.implicits._
     val citiesRDD = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(citiesRDD)
-    pointLuceneRDD.cache()
+    pointRDD = ShapeRDD(citiesRDD)
+    pointRDD.cache()
 
     val citiesDF = citiesRDD.map(x => City(x._2, x._1._1, x._1._2)).toDF
     val linker = (x: Row) => (x.getDouble(1), x.getDouble(2))
 
-    val linkage = pointLuceneRDD.linkDataFrameByKnn(citiesDF, linker, k)
+    val linkage = pointRDD.linkDataFrameByKnn(citiesDF, linker, k)
 
-    linkage.count() should equal(cities.size)
+    linkage.count() should equal(cities.length)
 
     linkage.collect().foreach { case (city, knnResults) =>
-
-      // top result should be linked with its query result
-      docTextFieldEq(knnResults, "_1", city.getString(0)) should equal(true)
 
       // Must return only at most k results
       knnResults.length should be <= k
@@ -150,5 +138,4 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     }
 
   }
-
 }

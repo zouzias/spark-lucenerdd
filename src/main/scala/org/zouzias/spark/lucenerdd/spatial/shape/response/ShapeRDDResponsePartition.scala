@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark.lucenerdd.spatial.shape.response
 
-import org.zouzias.spark.lucenerdd.spatial.shape._
-import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.LuceneRDD
-import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
-val df = spark.read.format("com.databricks.spark.csv").option("header", "false").option("inferSchema", "true").option("delimiter", "\t").load("src/test/resources/spatial/CH.txt")
-val swissCities = df.select("_c0", "_c1", "_c5", "_c4").map(row => ((row.getDouble(2), row.getDouble(3)), row.getString(1).toLowerCase()))
-val shapes = ShapeLuceneRDD(swissCities.rdd)
-shapes.count
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+
+
+case class ShapeRDDResponsePartition(results: Iterator[SparkScoreDoc])
+  extends Iterable[SparkScoreDoc] {
+  override def iterator(): Iterator[SparkScoreDoc] = results
+}

@@ -14,24 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.shape
+package org.zouzias.spark.lucenerdd.spatial.shape.rdds
 
 import com.spatial4j.core.shape.Shape
 import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
-import org.apache.spark.rdd.RDD
-import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.xerial.snappy.Snappy
+import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
-import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneRDDPartition, ShapeLuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
+import org.zouzias.spark.lucenerdd.spatial.shape.partition.AbstractShapeLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.spatial.shape.partition.impl.ShapeLuceneRDDPartition
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD.PointType
 
 import scala.reflect.ClassTag
 import scala.util.Try

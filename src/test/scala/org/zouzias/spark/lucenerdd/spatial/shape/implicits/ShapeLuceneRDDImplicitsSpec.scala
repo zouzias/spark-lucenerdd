@@ -20,10 +20,11 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.spatial.shape.{ShapeLuceneRDD, _}
+import org.zouzias.spark.lucenerdd.spatial.shape._
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
 
 class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   with Matchers

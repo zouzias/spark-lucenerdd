@@ -16,26 +16,25 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
-import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
-import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD
 import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeLuceneRDD.PointType
+import org.zouzias.spark.lucenerdd.spatial.shape.rdds.ShapeRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.response.ShapeRDDResponsePartition
 
 import scala.reflect.ClassTag
 
 /**
- * Partition class for [[ShapeLuceneRDD]]
- *
- * @tparam K Spatial type
- * @tparam V Document type
+ * Partition class for [[ShapeRDD]]
+ * @tparam K Spatial parameter (geo-shape)
+ * @tparam V Additional information associated with shape
  */
-private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Serializable {
+private[shape] abstract class AbstractShapeRDDPartition[K, V] extends Serializable {
 
   protected implicit def kTag: ClassTag[K]
   protected implicit def vTag: ClassTag[V]
 
   def size: Long
 
-  def iterator: Iterator[(K, V)]
+  def iterator: Iterator[(Long, (K, V))]
 
   def isDefined(key: K): Boolean
 
@@ -49,7 +48,7 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @param searchString Lucene Query string
    * @return
    */
-  def knnSearch(point: PointType, k: Int, searchString: String): LuceneRDDResponsePartition
+  def knnSearch(point: PointType, k: Int, searchString: String): ShapeRDDResponsePartition
 
   /**
    * Search for points within a circle
@@ -60,7 +59,7 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @return
    */
   def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
-  : LuceneRDDResponsePartition
+  : ShapeRDDResponsePartition
 
   /**
    * Spatial search with arbitrary shape
@@ -71,7 +70,7 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @return
    */
   def spatialSearch(shapeAsString: String, k: Int, operationName: String)
-  : LuceneRDDResponsePartition
+  : ShapeRDDResponsePartition
 
   /**
    * Spatial search with point
@@ -82,7 +81,7 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @return
    */
   def spatialSearch(point: PointType, k: Int, operationName: String)
-  : LuceneRDDResponsePartition
+  : ShapeRDDResponsePartition
 
   /**
    * Bounding box search with point and radius
@@ -94,7 +93,7 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @return
    */
   def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
-  : LuceneRDDResponsePartition
+  : ShapeRDDResponsePartition
 
   /**
    * Bounding box search with lower left and upper right corners
@@ -106,7 +105,7 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @return
    */
   def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int, operationName: String)
-  : LuceneRDDResponsePartition
+  : ShapeRDDResponsePartition
 
   /**
    * Restricts the entries to those satisfying a predicate
@@ -114,5 +113,5 @@ private[shape] abstract class AbstractShapeLuceneRDDPartition[K, V] extends Seri
    * @param pred Predicate to filter on
    * @return
    */
-  def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V]
+  def filter(pred: (K, V) => Boolean): AbstractShapeRDDPartition[K, V]
 }

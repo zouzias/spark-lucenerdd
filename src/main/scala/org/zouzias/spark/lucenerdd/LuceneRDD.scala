@@ -26,6 +26,7 @@ import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
+import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
@@ -38,11 +39,14 @@ import scala.reflect.ClassTag
  *
  * @tparam T
  */
-class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
+class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
+                             protected val indexAnalyzer: String,
+                             protected val queryAnalyzer: String)
   extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
   with LuceneRDDConfigurable {
 
   logInfo("Instance is created...")
+  setName("LuceneRDD")
 
   /** Lucene fields */
   private lazy val _fields: Set[String] = partitionsRDD.map(_.fields()).reduce(_ ++ _)
@@ -77,8 +81,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     }
     this
   }
-
-  setName("LuceneRDD")
 
   /**
    * Maps partition results
@@ -316,7 +318,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
       partition.map(_.filter(pred)), preservesPartitioning = true
     )
-    new LuceneRDD(newPartitionRDD)
+    new LuceneRDD(newPartitionRDD, indexAnalyzer, queryAnalyzer)
   }
 
   def exists(elem: T): Boolean = {
@@ -329,7 +331,12 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   }
 }
 
-object LuceneRDD extends Versionable {
+object LuceneRDD extends Versionable
+  with AnalyzerConfigurable {
+
+  /** Get the configured analyzers or fallback to English */
+  private val GetOrEnIndex = IndexAnalyzerConfigName.getOrElse("en")
+  private val GetOrEnQuery = QueryAnalyzerConfigName.getOrElse("en")
 
   /**
    * Instantiate a LuceneRDD given an RDD[T]
@@ -338,36 +345,60 @@ object LuceneRDD extends Versionable {
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T])
+  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String)
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
-      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId)),
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new LuceneRDD[T](partitions)
+    new LuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer)
+  }
+
+  def apply[T : ClassTag](elems: RDD[T])
+                         (implicit conv: T => Document): LuceneRDD[T] = {
+    val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, GetOrEnIndex, GetOrEnQuery)),
+      preservesPartitioning = true)
+    new LuceneRDD[T](partitions, GetOrEnIndex, GetOrEnQuery)
   }
 
   /**
    * Instantiate a LuceneRDD with an iterable
    *
    * @param elems Elements to index
+   * @param indexAnalyzer Index Analyzer name
+   * @param queryAnalyzer Query Analyzer name
    * @param sc Spark Context
    * @tparam T Input type
    * @return
    */
   def apply[T : ClassTag]
-  (elems: Iterable[T])(implicit sc: SparkContext, conv: T => Document)
+  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String)
+  (implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {
-    apply[T](sc.parallelize[T](elems.toSeq))
+    apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer)
   }
 
   /**
    * Instantiate a LuceneRDD with DataFrame
    *
    * @param dataFrame Spark DataFrame
-   * @return
+   * @param indexAnalyzer Index Analyzer name
+   * @param queryAnalyzer Query Analyzer name
+    * @return
    */
+  def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String)
+  : LuceneRDD[Row] = {
+    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer)
+  }
+
+  /**
+    * Constructor with default analyzers
+    *
+    * @param dataFrame Input DataFrame
+    * @return
+    */
   def apply(dataFrame: DataFrame)
   : LuceneRDD[Row] = {
-    apply[Row](dataFrame.rdd)
+    apply[Row](dataFrame.rdd, GetOrEnIndex, GetOrEnQuery)
   }
 }

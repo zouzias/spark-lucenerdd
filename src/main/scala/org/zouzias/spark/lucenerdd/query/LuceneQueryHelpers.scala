@@ -50,7 +50,7 @@ object LuceneQueryHelpers extends Serializable {
    * @param analyzer Analyzer to utilize
    * @return
    */
-  private def analyzeTerms(text: String)(implicit analyzer: Analyzer): List[String] = {
+  private def analyzeTerms(text: String, analyzer: Analyzer): List[String] = {
     val stream = analyzer.tokenStream(null, new StringReader(text))
     val cattr = stream.addAttribute(classOf[CharTermAttribute])
     stream.reset()
@@ -85,8 +85,7 @@ object LuceneQueryHelpers extends Serializable {
    * @param analyzer
    * @return
    */
-  def parseQueryString(searchString: String)
-                      (implicit analyzer: Analyzer): Query = {
+  def parseQueryString(searchString: String, analyzer: Analyzer): Query = {
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
 
     // See http://goo.gl/L8sbrB
@@ -107,9 +106,9 @@ object LuceneQueryHelpers extends Serializable {
    */
   def searchParser(indexSearcher: IndexSearcher,
                    searchString: String,
-                   topK: Int)(implicit analyzer: Analyzer)
+                   topK: Int, analyzer: Analyzer)
   : Seq[SparkScoreDoc] = {
-    val q = parseQueryString(searchString)(analyzer)
+    val q = parseQueryString(searchString, analyzer)
     indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
@@ -128,7 +127,7 @@ object LuceneQueryHelpers extends Serializable {
                         facetsConfig: FacetsConfig,
                         searchString: String,
                         facetField: String,
-                        topK: Int)(implicit analyzer: Analyzer): SparkFacetResult = {
+                        topK: Int, analyzer: Analyzer): SparkFacetResult = {
     // Prepare the query
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
     val q: Query = queryParser.parse(searchString)
@@ -248,10 +247,10 @@ object LuceneQueryHelpers extends Serializable {
   def phraseQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,
-                  topK: Int)
-                 (implicit analyzer: Analyzer): Seq[SparkScoreDoc] = {
+                  topK: Int,
+                  analyzer: Analyzer): Seq[SparkScoreDoc] = {
     val builder = new PhraseQuery.Builder()
-    val terms = analyzeTerms(fieldText)
+    val terms = analyzeTerms(fieldText, analyzer)
     terms.foreach( token => builder.add(new Term(fieldName, token)))
     LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
   }
@@ -284,19 +283,20 @@ object LuceneQueryHelpers extends Serializable {
 
   /**
     * Lucene's More Like This (MLT) functionality
-    * @param indexSearcher
-    * @param fieldName
-    * @param query
-    * @param minTermFreq
-    * @param minDocFreq
-    * @param topK
-    * @param analyzer
+    *
+    * @param indexSearcher Index searcher
+    * @param fieldName Field on which MLT is applied
+    * @param query Lucene query string
+    * @param minTermFreq Minimum term frequency
+    * @param minDocFreq Minimum document frequency
+    * @param topK Number of returned results
+    * @param analyzer Lucene analyzer
     * @return
     */
   def moreLikeThis(indexSearcher: IndexSearcher, fieldName: String,
                    query: String,
-                   minTermFreq: Int, minDocFreq: Int, topK: Int)
-                  (implicit analyzer: Analyzer)
+                   minTermFreq: Int, minDocFreq: Int, topK: Int,
+                   analyzer: Analyzer)
   : Iterator[SparkScoreDoc] = {
     val mlt = new MoreLikeThis(indexSearcher.getIndexReader)
     mlt.setMinTermFreq(minTermFreq)

@@ -55,10 +55,10 @@ import org.zouzias.spark.lucenerdd.config.Configurable
  */
 trait AnalyzerConfigurable extends Configurable {
 
-  private val AnalyzerConfigKey = "lucenerdd.analyzer.name"
-
-  private val NgramMinGramConfigKey = "lucenerdd.analyzer.ngram.mingram"
-  private val NgramMaxGramConfigKey = "lucenerdd.analyzer.ngram.maxgram"
+  private val IndexAnalyzerConfigKey = "lucenerdd.index.analyzer.name"
+  private val QueryAnalyzerConfigKey = "lucenerdd.query.analyzer.name"
+  private val NgramMinGramConfigKey = "lucenerdd.index.analyzer.ngram.mingram"
+  private val NgramMaxGramConfigKey = "lucenerdd.index.analyzer.ngram.maxgram"
 
   private val NgramMinGram = if (Config.hasPath(NgramMinGramConfigKey)) {
     Config.getInt(NgramMinGramConfigKey)
@@ -68,13 +68,17 @@ trait AnalyzerConfigurable extends Configurable {
     Config.getInt(NgramMaxGramConfigKey)
   } else NgramMinGram + 2 // Default is + 2
 
-  protected val AnalyzerConfigName: Option[String] = if (Config.hasPath(AnalyzerConfigKey)) {
-    Some(Config.getString(AnalyzerConfigKey))} else None
+  protected val IndexAnalyzerConfigName: Option[String] =
+    if (Config.hasPath(IndexAnalyzerConfigKey)) {
+    Some(Config.getString(IndexAnalyzerConfigKey))} else None
 
-    protected val Analyzer: Analyzer = {
+  protected val QueryAnalyzerConfigName: Option[String] =
+    if (Config.hasPath(QueryAnalyzerConfigKey)) {
+      Some(Config.getString(QueryAnalyzerConfigKey))} else None
 
-      if (AnalyzerConfigName.isDefined) {
-        AnalyzerConfigName.get match {
+  protected def getAnalyzer(analyzerName: Option[String]): Analyzer = {
+    if (analyzerName.isDefined) {
+      analyzerName.get match {
         case "whitespace" => new WhitespaceAnalyzer()
         case "ar" => new ArabicAnalyzer()
         case "bg" => new BulgarianAnalyzer()

@@ -34,8 +34,10 @@ import scala.reflect.ClassTag
  * LuceneRDD with faceted functionality
  */
 class FacetedLuceneRDD[T: ClassTag]
-  (override protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
-  extends LuceneRDD[T](partitionsRDD) {
+  (override protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
+   override val indexAnalyzer: String,
+   override val queryAnalyzer: String)
+  extends LuceneRDD[T](partitionsRDD, indexAnalyzer, queryAnalyzer) {
 
   setName("FacetedLuceneRDD")
 
@@ -123,12 +125,12 @@ object FacetedLuceneRDD extends Versionable {
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T])
+  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String = "en", queryAnalyzer: String = "en")
                          (implicit conv: T => Document): FacetedLuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
-      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId)),
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new FacetedLuceneRDD[T](partitions)
+    new FacetedLuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer)
   }
 
   /**

@@ -17,6 +17,7 @@
 
 package org.zouzias.spark.lucenerdd.partition
 
+import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
@@ -28,18 +29,37 @@ import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
+import org.zouzias.spark.lucenerdd.LuceneRDD
 
 import scala.reflect.{ClassTag, _}
 import scala.collection.mutable.ArrayBuffer
 
+/**
+  * A partition of [[LuceneRDD]]
+  *
+  * @param iter
+  * @param partitionId
+  * @param indexAnalyzerName
+  * @param queryAnalyzerName
+  * @param docConversion
+  * @param kTag
+  * @tparam T the type associated with each entry in the set.
+  */
 private[lucenerdd] class LuceneRDDPartition[T]
-(private val iter: Iterator[T], private val partitionId: Int)
+(private val iter: Iterator[T],
+ private val partitionId: Int,
+ private val indexAnalyzerName: String,
+ private val queryAnalyzerName: String)
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
   with IndexWithTaxonomyWriter {
 
   logInfo(s"[partId=${partitionId}] Partition is created...")
+
+  override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
+
+  private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
@@ -94,7 +114,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
   }
 
   override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
-    new LuceneRDDPartition(iterOriginal.filter(pred), partitionId)(docConversion, kTag)
+    new LuceneRDDPartition(iterOriginal.filter(pred),
+      partitionId, indexAnalyzerName, queryAnalyzerName)(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): LuceneRDDResponsePartition = {
@@ -105,7 +126,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def query(searchString: String,
                      topK: Int): LuceneRDDResponsePartition = {
-    val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK)(Analyzer)
+    val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK, QueryAnalyzer)
 
     LuceneRDDResponsePartition(results.toIterator)
   }
@@ -135,7 +156,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
   override def phraseQuery(fieldName: String, fieldText: String,
                            topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers
-      .phraseQuery(indexSearcher, fieldName, fieldText, topK)(Analyzer)
+      .phraseQuery(indexSearcher, fieldName, fieldText, topK, QueryAnalyzer)
 
     LuceneRDDResponsePartition(results.toIterator)
   }
@@ -146,14 +167,14 @@ private[lucenerdd] class LuceneRDDPartition[T]
     LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader, FacetsConfig,
       searchString,
       facetField + FacetedLuceneRDD.FacetTextFieldSuffix,
-      topK)(Analyzer)
+      topK, QueryAnalyzer)
   }
 
   override def moreLikeThis(fieldName: String, query: String,
                             minTermFreq: Int, minDocFreq: Int, topK: Int)
   : LuceneRDDResponsePartition = {
     val docs = LuceneQueryHelpers.moreLikeThis(indexSearcher, fieldName,
-      query, minTermFreq, minDocFreq, topK)(Analyzer)
+      query, minTermFreq, minDocFreq, topK, QueryAnalyzer)
     LuceneRDDResponsePartition(docs)
   }
 
@@ -203,8 +224,25 @@ private[lucenerdd] class LuceneRDDPartition[T]
 }
 
 object LuceneRDDPartition {
-  def apply[T: ClassTag](iter: Iterator[T], partitionId: Int)(implicit docConversion: T => Document)
+
+  /**
+    * Constructor for [[LuceneRDDPartition]]
+    *
+    * @param iter
+    * @param partitionId
+    * @param indexAnalyzer
+    * @param queryAnalyzer
+    * @param docConversion
+    * @tparam T
+    * @return
+    */
+  def apply[T: ClassTag](iter: Iterator[T],
+                         partitionId: Int,
+                         indexAnalyzer: String,
+                         queryAnalyzer: String)
+                        (implicit docConversion: T => Document)
   : LuceneRDDPartition[T] = {
-    new LuceneRDDPartition[T](iter, partitionId)(docConversion, classTag[T])
+    new LuceneRDDPartition[T](iter, partitionId,
+      indexAnalyzer, queryAnalyzer)(docConversion, classTag[T])
   }
 }

@@ -355,10 +355,7 @@ object LuceneRDD extends Versionable
 
   def apply[T : ClassTag](elems: RDD[T])
                          (implicit conv: T => Document): LuceneRDD[T] = {
-    val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
-      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, GetOrEnIndex, GetOrEnQuery)),
-      preservesPartitioning = true)
-    new LuceneRDD[T](partitions, GetOrEnIndex, GetOrEnQuery)
+   apply(elems, GetOrEnIndex, GetOrEnQuery)
   }
 
   /**

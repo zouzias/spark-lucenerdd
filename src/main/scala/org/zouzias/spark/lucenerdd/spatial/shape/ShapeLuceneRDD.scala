@@ -332,24 +332,44 @@ object ShapeLuceneRDD extends Versionable
    * @param elems RDD of type T
    * @return
    */
-  def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
-                                     (implicit shapeConv: K => Shape,
-                                      docConverter: V => Document)
+  def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)],
+                                      indexAnalyzer: String,
+                                      queryAnalyzer: String)
+                                     (implicit shapeConv: K => Shape, docConverter: V => Document)
   : ShapeLuceneRDD[K, V] = {
     val partitions = elems.mapPartitions[AbstractShapeLuceneRDDPartition[K, V]](
-      iter => Iterator(ShapeLuceneRDDPartition[K, V](iter, GetOrEnIndex, GetOrEnQuery)),
+      iter => Iterator(ShapeLuceneRDDPartition[K, V](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new ShapeLuceneRDD(partitions, GetOrEnIndex, GetOrEnQuery)
+    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer)
   }
 
-  def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)])
-                                     (implicit shapeConv: K => Shape,
-                                      docConverter: V => Document)
+  def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
+                                     (implicit shapeConv: K => Shape, docConverter: V => Document)
+  : ShapeLuceneRDD[K, V] = {
+    apply[K, V](elems, GetOrEnIndex, GetOrEnQuery)
+  }
+
+  /**
+    * Constructor for [[Dataset]]
+    */
+  def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)],
+                                      indexAnalyzer: String,
+                                      queryAnalyzer: String)
+                                     (implicit shapeConv: K => Shape, docConverter: V => Document)
   : ShapeLuceneRDD[K, V] = {
     val partitions = elems.rdd.mapPartitions[AbstractShapeLuceneRDDPartition[K, V]](
-      iter => Iterator(ShapeLuceneRDDPartition[K, V](iter, GetOrEnIndex, GetOrEnQuery)),
+      iter => Iterator(ShapeLuceneRDDPartition[K, V](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new ShapeLuceneRDD(partitions, GetOrEnIndex, GetOrEnQuery)
+    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer)
+  }
+
+  /**
+    * Constructor for [[Dataset]]
+    */
+  def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)])
+                                     (implicit shapeConv: K => Shape, docConverter: V => Document)
+  : ShapeLuceneRDD[K, V] = {
+    apply[K, V](elems, GetOrEnIndex, GetOrEnQuery)
   }
 
   /**
@@ -369,13 +389,18 @@ object ShapeLuceneRDD extends Versionable
    * @return
    */
   def apply(df : DataFrame, shapeField: String)
-                                     (implicit shapeConv: String => Shape,
-                                      docConverter: Row => Document)
+           (implicit shapeConv: String => Shape, docConverter: Row => Document)
+  : ShapeLuceneRDD[String, Row] = {
+    apply(df, shapeField, GetOrEnIndex, GetOrEnQuery)
+  }
+
+  def apply(df : DataFrame, shapeField: String, indexAnalyzer: String, queryAnalyzer: String)
+           (implicit shapeConv: String => Shape, docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
     val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
       .mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
-      iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter, GetOrEnIndex, GetOrEnQuery)),
+      iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new ShapeLuceneRDD(partitions, GetOrEnIndex, GetOrEnQuery)
+    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer)
   }
 }

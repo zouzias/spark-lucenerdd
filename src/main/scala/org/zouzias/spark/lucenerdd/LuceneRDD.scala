@@ -351,7 +351,7 @@ object LuceneRDD extends Versionable
 
   def apply[T : ClassTag](elems: RDD[T])
                          (implicit conv: T => Document): LuceneRDD[T] = {
-   apply(elems, GetOrEnIndex, GetOrEnQuery)
+   apply(elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
   /**
@@ -392,6 +392,7 @@ object LuceneRDD extends Versionable
     */
   def apply(dataFrame: DataFrame)
   : LuceneRDD[Row] = {
-    apply[Row](dataFrame.rdd, GetOrEnIndex, GetOrEnQuery)
+    apply[Row](dataFrame.rdd,
+      getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 }

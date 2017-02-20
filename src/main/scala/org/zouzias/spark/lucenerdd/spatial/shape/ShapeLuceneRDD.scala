@@ -342,7 +342,7 @@ object ShapeLuceneRDD extends Versionable
   def apply[K: ClassTag, V: ClassTag](elems: RDD[(K, V)])
                                      (implicit shapeConv: K => Shape, docConverter: V => Document)
   : ShapeLuceneRDD[K, V] = {
-    apply[K, V](elems, GetOrEnIndex, GetOrEnQuery)
+    apply[K, V](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
   /**
@@ -365,7 +365,7 @@ object ShapeLuceneRDD extends Versionable
   def apply[K: ClassTag, V: ClassTag](elems: Dataset[(K, V)])
                                      (implicit shapeConv: K => Shape, docConverter: V => Document)
   : ShapeLuceneRDD[K, V] = {
-    apply[K, V](elems, GetOrEnIndex, GetOrEnQuery)
+    apply[K, V](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
   /**
@@ -387,7 +387,8 @@ object ShapeLuceneRDD extends Versionable
   def apply(df : DataFrame, shapeField: String)
            (implicit shapeConv: String => Shape, docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
-    apply(df, shapeField, GetOrEnIndex, GetOrEnQuery)
+    apply(df, shapeField,
+      getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
   def apply(df : DataFrame, shapeField: String, indexAnalyzer: String, queryAnalyzer: String)

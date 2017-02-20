@@ -62,8 +62,7 @@ trait AnalyzerConfigurable extends Configurable {
 
 
   /** Get the configured analyzers or fallback to English */
-  protected val GetOrEnIndex = IndexAnalyzerConfigName.getOrElse("en")
-  protected val GetOrEnQuery = QueryAnalyzerConfigName.getOrElse("en")
+  protected def getOrElseEn(analyzerName: Option[String]): String = analyzerName.getOrElse("en")
 
   private val NgramMinGram = if (Config.hasPath(NgramMinGramConfigKey)) {
     Config.getInt(NgramMinGramConfigKey)

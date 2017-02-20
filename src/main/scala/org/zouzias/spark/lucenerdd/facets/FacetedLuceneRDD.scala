@@ -138,7 +138,7 @@ object FacetedLuceneRDD extends Versionable
 
   def apply[T : ClassTag](elems: RDD[T])(implicit conv: T => Document)
   : FacetedLuceneRDD[T] = {
-    apply[T](elems, GetOrEnIndex, GetOrEnQuery)
+    apply[T](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
   /**
@@ -176,7 +176,7 @@ object FacetedLuceneRDD extends Versionable
 
   def apply(dataFrame: DataFrame)
   : FacetedLuceneRDD[Row] = {
-    apply(dataFrame.rdd, GetOrEnIndex, GetOrEnQuery)
+    apply(dataFrame.rdd, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
 

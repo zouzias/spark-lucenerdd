@@ -121,10 +121,6 @@ object FacetedLuceneRDD extends Versionable
   val FacetTextFieldSuffix = "_facet"
   val FacetNumericFieldSuffix = "_numFacet"
 
-  /** Get the configured analyzers or fallback to English */
-  private val GetOrEnIndex = IndexAnalyzerConfigName.getOrElse("en")
-  private val GetOrEnQuery = QueryAnalyzerConfigName.getOrElse("en")
-
   /**
    * Instantiate a FacetedLuceneRDD given an RDD[T]
    *

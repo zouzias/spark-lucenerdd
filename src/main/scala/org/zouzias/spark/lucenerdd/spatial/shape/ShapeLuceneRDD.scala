@@ -322,10 +322,6 @@ object ShapeLuceneRDD extends Versionable
   /** Type for a point */
   type PointType = (Double, Double)
 
-  /** Get the configured analyzers or fallback to English */
-  private val GetOrEnIndex = IndexAnalyzerConfigName.getOrElse("en")
-  private val GetOrEnQuery = QueryAnalyzerConfigName.getOrElse("en")
-
   /**
    * Instantiate a ShapeLuceneRDD given an RDD[T]
    *

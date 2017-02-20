@@ -60,6 +60,11 @@ trait AnalyzerConfigurable extends Configurable {
   private val NgramMinGramConfigKey = "lucenerdd.index.analyzer.ngram.mingram"
   private val NgramMaxGramConfigKey = "lucenerdd.index.analyzer.ngram.maxgram"
 
+
+  /** Get the configured analyzers or fallback to English */
+  protected val GetOrEnIndex = IndexAnalyzerConfigName.getOrElse("en")
+  protected val GetOrEnQuery = QueryAnalyzerConfigName.getOrElse("en")
+
   private val NgramMinGram = if (Config.hasPath(NgramMinGramConfigKey)) {
     Config.getInt(NgramMinGramConfigKey)
   } else 2

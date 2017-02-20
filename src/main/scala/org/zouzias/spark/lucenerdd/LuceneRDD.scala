@@ -334,10 +334,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 object LuceneRDD extends Versionable
   with AnalyzerConfigurable {
 
-  /** Get the configured analyzers or fallback to English */
-  private val GetOrEnIndex = IndexAnalyzerConfigName.getOrElse("en")
-  private val GetOrEnQuery = QueryAnalyzerConfigName.getOrElse("en")
-
   /**
    * Instantiate a LuceneRDD given an RDD[T]
    *

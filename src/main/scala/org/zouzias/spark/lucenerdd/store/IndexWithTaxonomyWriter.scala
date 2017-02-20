@@ -16,6 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.store
 
+import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyWriter
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
@@ -27,8 +28,10 @@ import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 trait IndexWithTaxonomyWriter extends IndexStorable
   with AnalyzerConfigurable {
 
+  protected def indexAnalyzer(): Analyzer
+
   protected lazy val indexWriter = new IndexWriter(IndexDir,
-    new IndexWriterConfig(Analyzer)
+    new IndexWriterConfig(indexAnalyzer())
       .setOpenMode(OpenMode.CREATE))
 
   protected lazy val taxoWriter = new DirectoryTaxonomyWriter(TaxonomyDir)

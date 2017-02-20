@@ -18,9 +18,11 @@ package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
 import com.spatial4j.core.distance.DistanceUtils
 import com.spatial4j.core.shape.Shape
+import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.{Document, StoredField}
-import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
-import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader, DirectoryTaxonomyWriter}
+import org.apache.lucene.index.IndexWriterConfig.OpenMode
+import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
@@ -28,14 +30,15 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
-import org.zouzias.spark.lucenerdd.spatial.shape.grids.PrefixTreeLoader
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._
 
 private[shape] class ShapeLuceneRDDPartition[K, V]
-  (private val iter: Iterator[(K, V)])
+  (private val iter: Iterator[(K, V)],
+   private val indexAnalyzerName: String,
+   private val queryAnalyzerName: String)
   (override implicit val kTag: ClassTag[K],
    override implicit val vTag: ClassTag[V])
   (implicit shapeConversion: K => Shape,
@@ -43,6 +46,10 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   extends AbstractShapeLuceneRDDPartition[K, V]
     with IndexWithTaxonomyWriter
     with SpatialStrategy {
+
+  override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
+
+  private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 
   private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
 
@@ -89,7 +96,8 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
    * @return
    */
   override def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V] = {
-    ShapeLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)))
+    ShapeLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)),
+      indexAnalyzerName, queryAnalyzerName)
   }
 
   override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
@@ -134,7 +142,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     // false = ascending dist
     val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
 
-    val query = LuceneQueryHelpers.parseQueryString(searchString)(Analyzer)
+    val query = LuceneQueryHelpers.parseQueryString(searchString, QueryAnalyzer)
     val docs = indexSearcher.search(query, k, distSort)
 
     // Here we sorted on it, and the distance will get
@@ -199,9 +207,24 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
 object ShapeLuceneRDDPartition {
 
-  def apply[K: ClassTag, V: ClassTag](iter: Iterator[(K, V)])
+  /**
+    * Constructor for [[ShapeLuceneRDDPartition]]
+    *
+    * @param iter Iterator over data
+    * @param indexAnalyzer Index analyzer
+    * @param queryAnalyzer Query analyzer
+    * @param shapeConv Implicit conversion to Shape
+    * @param docConv Implicit convertion to Lucene document
+    * @tparam K
+    * @tparam V
+    * @return
+    */
+  def apply[K: ClassTag, V: ClassTag](iter: Iterator[(K, V)],
+                                      indexAnalyzer: String,
+                                      queryAnalyzer: String)
   (implicit shapeConv: K => Shape, docConv: V => Document)
   : ShapeLuceneRDDPartition[K, V] = {
-    new ShapeLuceneRDDPartition[K, V](iter) (classTag[K], classTag[V]) (shapeConv, docConv)
+    new ShapeLuceneRDDPartition[K, V](iter,
+      indexAnalyzer, queryAnalyzer)(classTag[K], classTag[V]) (shapeConv, docConv)
   }
 }

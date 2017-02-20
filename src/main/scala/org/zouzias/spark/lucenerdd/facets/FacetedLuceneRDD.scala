@@ -22,7 +22,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.LuceneRDD
+import org.zouzias.spark.lucenerdd.LuceneRDD.{IndexAnalyzerConfigName, QueryAnalyzerConfigName}
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
+import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponse
@@ -34,8 +36,10 @@ import scala.reflect.ClassTag
  * LuceneRDD with faceted functionality
  */
 class FacetedLuceneRDD[T: ClassTag]
-  (override protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]])
-  extends LuceneRDD[T](partitionsRDD) {
+  (override protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
+   override val indexAnalyzer: String,
+   override val queryAnalyzer: String)
+  extends LuceneRDD[T](partitionsRDD, indexAnalyzer, queryAnalyzer) {
 
   setName("FacetedLuceneRDD")
 
@@ -110,7 +114,8 @@ class FacetedLuceneRDD[T: ClassTag]
 
 }
 
-object FacetedLuceneRDD extends Versionable {
+object FacetedLuceneRDD extends Versionable
+  with AnalyzerConfigurable {
 
   /** All faceted fields are suffixed with _facet */
   val FacetTextFieldSuffix = "_facet"
@@ -123,12 +128,17 @@ object FacetedLuceneRDD extends Versionable {
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T])
+  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String)
                          (implicit conv: T => Document): FacetedLuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
-      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId)),
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new FacetedLuceneRDD[T](partitions)
+    new FacetedLuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer)
+  }
+
+  def apply[T : ClassTag](elems: RDD[T])(implicit conv: T => Document)
+  : FacetedLuceneRDD[T] = {
+    apply[T](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
 
   /**
@@ -140,7 +150,15 @@ object FacetedLuceneRDD extends Versionable {
    * @return
    */
   def apply[T : ClassTag]
-  (elems: Iterable[T])(implicit sc: SparkContext, conv: T => Document)
+  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String)
+  (implicit sc: SparkContext, conv: T => Document)
+  : FacetedLuceneRDD[T] = {
+    apply(sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer)
+  }
+
+  def apply[T : ClassTag]
+  (elems: Iterable[T])
+  (implicit sc: SparkContext, conv: T => Document)
   : FacetedLuceneRDD[T] = {
     apply(sc.parallelize[T](elems.toSeq))
   }
@@ -151,8 +169,15 @@ object FacetedLuceneRDD extends Versionable {
    * @param dataFrame Spark DataFrame
    * @return
    */
+  def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String)
+  : FacetedLuceneRDD[Row] = {
+    apply(dataFrame.rdd, indexAnalyzer, queryAnalyzer)
+  }
+
   def apply(dataFrame: DataFrame)
   : FacetedLuceneRDD[Row] = {
-    apply(dataFrame.rdd)
+    apply(dataFrame.rdd, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
+
+
 }

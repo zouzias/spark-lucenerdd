@@ -20,6 +20,8 @@ import com.twitter.algebird.TopKMonoid
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
@@ -75,5 +77,22 @@ private[lucenerdd] class LuceneRDDResponse
     val monoid = new TopKMonoid[SparkScoreDoc](sz)(ordering)
     partitionsRDD.map(monoid.build(_))
       .reduce(monoid.plus).items.toArray
+  }
+
+  def toDF()(implicit sqlContext: SQLContext): DataFrame = {
+    val strfields = first().doc.getTextFields.toSeq
+    val numFields = first().doc.getNumericFields.toSeq
+
+    val schema = StructType(strfields.map(StructField(_, StringType, nullable = true))
+      ++ numFields.map(StructField(_, DoubleType))) // FIXME: type should not be Double uniformly
+
+    val rows = this.map { elem =>
+      val strValues = Row.fromSeq(strfields.map(elem.doc.textField(_)))
+      val numValues = Row.fromSeq(numFields.map(elem.doc.numericField(_)))
+
+      Row.merge(strValues, numValues)
+    }
+
+    sqlContext.createDataFrame(rows, schema)
   }
 }

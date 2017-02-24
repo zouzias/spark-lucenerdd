@@ -20,7 +20,7 @@ import com.twitter.algebird.TopKMonoid
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 import org.apache.spark.sql.types._
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
@@ -79,6 +79,15 @@ private[lucenerdd] class LuceneRDDResponse
       .reduce(monoid.plus).items.toArray
   }
 
+  /**
+    * Converts [[LuceneRDDResponse]] to [[DataFrame]]
+    *
+    * Infers the type of each field using the most frequently appeared type per field
+    *
+    * @param sampleRatio Sample percentage to inspect for deciding on infered types.
+    * @param sqlContext [[SQLContext]]
+    * @return
+    */
   def toDF(sampleRatio: Double = 0.01)(implicit sqlContext: SQLContext): DataFrame = {
 
     val total = this.asInstanceOf[RDD[SparkScoreDoc]].count()
@@ -86,6 +95,7 @@ private[lucenerdd] class LuceneRDDResponse
     val types = if (total <= 10) inferTypes(this.asInstanceOf[RDD[SparkScoreDoc]])
     else inferTypes(sample)
 
+    // Convert to Spark SQL DataFrame types
     val schema = types.map{ case (fieldName, tp) =>
       tp match {
         case TextType => StructField(fieldName, StringType)
@@ -96,48 +106,41 @@ private[lucenerdd] class LuceneRDDResponse
       }
     }.toSeq
 
+    // Additional fields of [[SparkScoreDoc]] with known types
+    val schemaWithExtraFields = schema ++ Seq(StructField("__docid__", IntegerType),
+      StructField("__score__", org.apache.spark.sql.types.DoubleType),
+      StructField("__shardIndex__", IntegerType))
+
+    // Convert values to Spark SQL Row
     val rows: RDD[Row] = this.map { elem =>
-      Row.fromSeq(schema.map(x => elem.doc.field(x.name)))
+      Row.fromSeq(schema.map(x => elem.doc.field(x.name))
+        ++ Seq(elem.docId, elem.score, elem.shardIndex))
     }
 
-    sqlContext.createDataFrame(rows, StructType(schema))
+    sqlContext.createDataFrame(rows, StructType(schemaWithExtraFields))
   }
 
 
   /**
-    * Return field types
+    * Infer the types of each field of a [[SparkScoreDoc]]
     *
     * @param d
     * @return
     */
   private def inferTypes(d: SparkScoreDoc): Iterable[(String, FieldType)] = {
     val textFieldTypes = d.doc.getTextFields.map(x => x -> TextType)
-    val numFields = d.doc.getNumericFields
-    val numFieldTypes = numFields
+    val numFieldTypes = d.doc.getNumericFields
       .map(fieldName => fieldName -> inferNumericType(d.doc.numericField(fieldName)))
 
     textFieldTypes ++ numFieldTypes
   }
 
-  def inferTypes(sample: Double): Map[String, FieldType] = {
-    val types = this.asInstanceOf[RDD[SparkScoreDoc]].sample(false, sample)
-      .flatMap(inferTypes).map(x => x -> 1L)
-      .reduceByKey(_ + _)
-      .map(x => (x._1._1, (x._2, x._1._2)))
-
-    types.foldByKey((0L, TextType))( (x, y) => if (x._1 >= y._1) x else y)
-      .map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
-  }
-
-  def typeFreq(docs: RDD[SparkScoreDoc]): RDD[(String, (Long, FieldType))] = {
-    val types = docs
-      .flatMap(inferTypes).map(x => x -> 1L)
-      .reduceByKey(_ + _)
-      .map(x => (x._1._1, (x._2, x._1._2)))
-
-    types.reduceByKey((x, y) => if (x._1 >= y._1) x else y)
-  }
-
+  /**
+    * Infers types of scored documents, i.e., [[SparkScoreDoc]]
+    *
+    * @param docs RDD of [[SparkScoreDoc]]
+    * @return Map of field name to its inferred type
+    */
   def inferTypes(docs: RDD[SparkScoreDoc]): Map[String, FieldType] = {
     val types = docs
       .flatMap(inferTypes).map(x => x -> 1L)
@@ -149,32 +152,15 @@ private[lucenerdd] class LuceneRDDResponse
   }
 
 
-  def inferNumericType(num: Option[Number]): FieldType = {
+  private def inferNumericType(num: Option[Number]): FieldType = {
     num match {
       case None => TextType
       case Some(n) =>
-        if (n.intValue() != null) {
-          IntType
-        }
-        else if (n.longValue() != null) {
-          LongType
-        }
-        else if (n.doubleValue() != null) {
-          DoubleType
-        }
-        else if (n.floatValue() != null) {
-          FloatType
-        }
-        else {
-          TextType
-        }
+        if (Option(n.intValue()).isDefined) { IntType }
+        else if (Option(n.longValue()).isDefined) { LongType }
+        else if (Option(n.doubleValue()).isDefined) { DoubleType }
+        else if (Option(n.floatValue()).isDefined) { FloatType }
+        else { TextType }
     }
   }
 }
-
-sealed trait FieldType extends Serializable
-object TextType extends FieldType
-object IntType extends FieldType
-object DoubleType extends FieldType
-object LongType extends FieldType
-object FloatType extends FieldType

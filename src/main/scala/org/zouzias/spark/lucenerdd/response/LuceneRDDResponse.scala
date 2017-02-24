@@ -161,7 +161,7 @@ private[lucenerdd] class LuceneRDDResponse
       case None => TextType
       case Some(n) =>
         if (n.isInstanceOf[Integer]) { IntType }
-        else if ( n.isInstanceOf[Long]) { LongType }
+        else if (n.isInstanceOf[Long]) { LongType }
         else if (n.isInstanceOf[Double]) { DoubleType }
         else if (n.isInstanceOf[Float]) { FloatType }
         else { TextType }

@@ -18,9 +18,12 @@ package org.zouzias.spark.lucenerdd.response
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
+import org.apache.spark.sql.types.{IntegerType, StringType}
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
 import org.zouzias.spark.lucenerdd._
+import org.zouzias.spark.lucenerdd.testing.FavoriteCaseClass
 
 class LuceneRDDResponseSpec extends FlatSpec with Matchers
   with BeforeAndAfterEach
@@ -33,7 +36,6 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     set("spark.app.id", appID))
 
   def randomString(length: Int): String = scala.util.Random.alphanumeric.take(length).mkString
-  val array = (1 to 24).map(randomString(_))
 
   var luceneRDD: LuceneRDD[_] = _
 
@@ -46,7 +48,7 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
     val result = luceneRDD.query("*:*", 10)
-    result.take(2).size should be (2)
+    result.take(2).length should be (2)
   }
 
   "LuceneRDDResponseSpec.collect()" should "return all elements" in {
@@ -54,7 +56,38 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
     val result = luceneRDD.query("*:*", 10)
-    result.collect().length should be (array.size)
+    result.collect().length should be (array.length)
   }
 
+  "LuceneRDDResponseSpec.toDF()" should "convert to DataFrame" in {
+    val sqlContext = SparkSession.builder().getOrCreate().sqlContext
+    val elem = Array("fear", "death", "water", "fire", "house")
+      .zipWithIndex.map{ case (str, index) =>
+      FavoriteCaseClass(str, index, 10L, 10e-6F, s"${str}@gmail.com")}
+    val rdd = sc.parallelize(elem)
+    luceneRDD = LuceneRDD(rdd)
+    val result = luceneRDD.query("*:*", 10).toDF(1.0)(sqlContext)
+    val schema = result.schema
+
+    schema.nonEmpty should equal(true)
+    schema.fieldNames.contains("name") should equal(true)
+    schema.fieldNames.contains("age") should equal(true)
+    schema.fieldNames.contains("myLong") should equal(true)
+    schema.fieldNames.contains("myFloat") should equal(true)
+    schema.fieldNames.contains("email") should equal(true)
+
+    // Extra auxiliary fields that must exist on the DataFrame
+    schema.fieldNames.contains("__docid__") should equal(true)
+    schema.fieldNames.contains("__score__") should equal(true)
+    schema.fieldNames.contains("__shardIndex__") should equal(true)
+
+
+    schema.fields(schema.fieldIndex("name")).dataType should equal(StringType)
+    schema.fields(schema.fieldIndex("age")).dataType should equal(IntegerType)
+    schema.fields(schema.fieldIndex("myLong")).dataType should
+      equal(org.apache.spark.sql.types.LongType)
+    schema.fields(schema.fieldIndex("myFloat")).dataType should
+      equal(org.apache.spark.sql.types.FloatType)
+    schema.fields(schema.fieldIndex("email")).dataType should equal(StringType)
+  }
 }

@@ -21,7 +21,7 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
-import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
@@ -79,20 +79,93 @@ private[lucenerdd] class LuceneRDDResponse
       .reduce(monoid.plus).items.toArray
   }
 
-  def toDF()(implicit sqlContext: SQLContext): DataFrame = {
-    val strfields = first().doc.getTextFields.toSeq
-    val numFields = first().doc.getNumericFields.toSeq
+  def toDF(sampleRatio: Double = 0.01)(implicit sqlContext: SQLContext): DataFrame = {
 
-    val schema = StructType(strfields.map(StructField(_, StringType, nullable = true))
-      ++ numFields.map(StructField(_, DoubleType))) // FIXME: type should not be Double uniformly
+    val total = this.asInstanceOf[RDD[SparkScoreDoc]].count()
+    val sample = this.asInstanceOf[RDD[SparkScoreDoc]].sample(false, sampleRatio)
+    val types = if (total <= 10) inferTypes(this.asInstanceOf[RDD[SparkScoreDoc]])
+    else inferTypes(sample)
 
-    val rows = this.map { elem =>
-      val strValues = Row.fromSeq(strfields.map(elem.doc.textField(_)))
-      val numValues = Row.fromSeq(numFields.map(elem.doc.numericField(_)))
+    val schema = types.map{ case (fieldName, tp) =>
+      tp match {
+        case TextType => StructField(fieldName, StringType)
+        case IntType => StructField(fieldName, IntegerType)
+        case LongType => StructField(fieldName, org.apache.spark.sql.types.LongType)
+        case DoubleType => StructField(fieldName, org.apache.spark.sql.types.DoubleType)
+        case FloatType => StructField(fieldName, org.apache.spark.sql.types.FloatType)
+      }
+    }.toSeq
 
-      Row.merge(strValues, numValues)
+    val rows: RDD[Row] = this.map { elem =>
+      Row.fromSeq(schema.map(x => elem.doc.field(x.name)))
     }
 
-    sqlContext.createDataFrame(rows, schema)
+    sqlContext.createDataFrame(rows, StructType(schema))
+  }
+
+
+  /**
+    * Return field types
+    *
+    * @param d
+    * @return
+    */
+  private def inferTypes(d: SparkScoreDoc): Iterable[(String, FieldType)] = {
+    val textFieldTypes = d.doc.getTextFields.map(x => x -> TextType)
+    val numFields = d.doc.getNumericFields
+    val numFieldTypes = numFields
+      .map(fieldName => fieldName -> inferNumericType(d.doc.numericField(fieldName)))
+
+    textFieldTypes ++ numFieldTypes
+  }
+
+  def inferTypes(sample: Double): Map[String, FieldType] = {
+    val types = this.asInstanceOf[RDD[SparkScoreDoc]].sample(false, sample)
+      .flatMap(inferTypes).map(x => x -> 1L)
+      .reduceByKey(_ + _)
+      .map(x => (x._1._1, (x._2, x._1._2)))
+
+    types.foldByKey((0L, TextType))( (x, y) => if (x._1 >= y._1) x else y)
+      .map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
+  }
+
+  def inferTypes(docs: RDD[SparkScoreDoc]): Map[String, FieldType] = {
+    val types = docs
+      .flatMap(inferTypes).map(x => x -> 1L)
+      .reduceByKey(_ + _)
+      .map(x => (x._1._1, (x._2, x._1._2)))
+
+    types.foldByKey((0L, TextType))( (x, y) => if (x._1 >= y._1) x else y)
+      .map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
+  }
+
+
+  def inferNumericType(num: Option[Number]): FieldType = {
+    num match {
+      case None => TextType
+      case Some(n) =>
+        if (Option(n.intValue()).isDefined) {
+          IntType
+        }
+        else if (Option(n.longValue()).isDefined) {
+          LongType
+        }
+        else if (Option(n.doubleValue()).isDefined) {
+          DoubleType
+        }
+        else if (Option(n.floatValue()).isDefined) {
+          FloatType
+        }
+        else {
+          TextType
+        }
+    }
   }
 }
+
+sealed trait FieldType extends Serializable
+object TextType extends FieldType
+object IntType extends FieldType
+object DoubleType extends FieldType
+object LongType extends FieldType
+object FloatType extends FieldType

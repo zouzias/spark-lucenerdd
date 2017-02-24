@@ -30,16 +30,8 @@ import scala.collection.JavaConverters._
  */
 class SparkDoc(doc: Document) extends Serializable {
 
-  private val stringFields: Map[String, String] = doc.getFields().asScala.flatMap( field =>
-    if (field.stringValue() != null && field.name() != null) {
-      Some((field.name(), field.stringValue()))
-    }
-    else {
-      None
-    }
-  ).toMap[String, String]
-
-  private val numberFields: Map[String, Number] = doc.getFields().asScala.flatMap( field =>
+  private lazy val numberFields: Map[String, Number] = doc.getFields().asScala
+    .flatMap( field =>
     if (field.numericValue() != null && field.name() != null) {
       Some((field.name(), field.numericValue()))
     }
@@ -47,6 +39,19 @@ class SparkDoc(doc: Document) extends Serializable {
       None
     }
   ).toMap[String, Number]
+
+  private lazy val stringFields: Map[String, String] = doc.getFields().asScala
+    .flatMap( field =>
+      if (field.name() != null &&
+        field.stringValue() != null &&
+        !numberFields.keySet.contains(field.name())) {
+        // add if not contained in numeric fields
+        Some((field.name(), field.stringValue()))
+      }
+      else {
+        None
+      }
+    ).toMap[String, String]
 
   def getFields: Set[String] = {
     getTextFields ++ getNumericFields
@@ -58,6 +63,10 @@ class SparkDoc(doc: Document) extends Serializable {
 
   def getNumericFields: Set[String] = {
     numberFields.keySet
+  }
+
+  def field(fieldName: String): Any = {
+    numberFields.getOrElse(fieldName, stringFields.getOrElse(fieldName, "NULL"))
   }
 
   def textField(fieldName: String): Option[String] = {

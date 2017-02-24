@@ -30,7 +30,7 @@ import scala.collection.JavaConverters._
  */
 class SparkDoc(doc: Document) extends Serializable {
 
-  private lazy val numberFields: Map[String, Number] = doc.getFields().asScala
+  private val numberFields: Map[String, Number] = doc.getFields().asScala
     .flatMap( field =>
     if (field.numericValue() != null && field.name() != null) {
       Some((field.name(), field.numericValue()))
@@ -40,7 +40,7 @@ class SparkDoc(doc: Document) extends Serializable {
     }
   ).toMap[String, Number]
 
-  private lazy val stringFields: Map[String, String] = doc.getFields().asScala
+  private val stringFields: Map[String, String] = doc.getFields().asScala
     .flatMap( field =>
       if (field.name() != null &&
         field.stringValue() != null &&

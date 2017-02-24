@@ -129,14 +129,23 @@ private[lucenerdd] class LuceneRDDResponse
       .map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
   }
 
+  def typeFreq(docs: RDD[SparkScoreDoc]): RDD[(String, (Long, FieldType))] = {
+    val types = docs
+      .flatMap(inferTypes).map(x => x -> 1L)
+      .reduceByKey(_ + _)
+      .map(x => (x._1._1, (x._2, x._1._2)))
+
+    types.reduceByKey((x, y) => if (x._1 >= y._1) x else y)
+  }
+
   def inferTypes(docs: RDD[SparkScoreDoc]): Map[String, FieldType] = {
     val types = docs
       .flatMap(inferTypes).map(x => x -> 1L)
       .reduceByKey(_ + _)
       .map(x => (x._1._1, (x._2, x._1._2)))
 
-    types.foldByKey((0L, TextType))( (x, y) => if (x._1 >= y._1) x else y)
-      .map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
+    val mostFreqTypes = types.reduceByKey((x, y) => if (x._1 >= y._1) x else y)
+    mostFreqTypes.map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
   }
 
 
@@ -144,16 +153,16 @@ private[lucenerdd] class LuceneRDDResponse
     num match {
       case None => TextType
       case Some(n) =>
-        if (Option(n.intValue()).isDefined) {
+        if (n.intValue() != null) {
           IntType
         }
-        else if (Option(n.longValue()).isDefined) {
+        else if (n.longValue() != null) {
           LongType
         }
-        else if (Option(n.doubleValue()).isDefined) {
+        else if (n.doubleValue() != null) {
           DoubleType
         }
-        else if (Option(n.floatValue()).isDefined) {
+        else if (n.floatValue() != null) {
           FloatType
         }
         else {

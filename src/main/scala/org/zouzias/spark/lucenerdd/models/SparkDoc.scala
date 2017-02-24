@@ -66,7 +66,7 @@ class SparkDoc(doc: Document) extends Serializable {
   }
 
   def field(fieldName: String): Any = {
-    numberFields.getOrElse(fieldName, stringFields.getOrElse(fieldName, "NULL"))
+    numberFields.getOrElse(fieldName, stringFields.getOrElse(fieldName, Nil))
   }
 
   def textField(fieldName: String): Option[String] = {

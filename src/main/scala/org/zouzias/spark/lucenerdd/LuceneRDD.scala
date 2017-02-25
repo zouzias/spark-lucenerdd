@@ -371,6 +371,13 @@ object LuceneRDD extends Versionable
     apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer)
   }
 
+  def apply[T : ClassTag]
+  (elems: Iterable[T])
+  (implicit sc: SparkContext, conv: T => Document)
+  : LuceneRDD[T] = {
+    apply[T](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
+  }
+
   /**
    * Instantiate a LuceneRDD with DataFrame
    *

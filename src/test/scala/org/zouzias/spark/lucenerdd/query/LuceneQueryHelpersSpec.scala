@@ -16,6 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
+import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Field.Store
 import org.apache.lucene.document._
 import org.apache.lucene.facet.FacetField
@@ -23,7 +24,6 @@ import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
@@ -39,6 +39,8 @@ class LuceneQueryHelpersSpec extends FlatSpec
     .map(_.toLowerCase()).toSeq
 
   private val MaxFacetValue: Int = 10
+
+  override def indexAnalyzer: Analyzer = getAnalyzer(Some("en"))
 
   countries.zipWithIndex.foreach { case (elem, index) =>
     val doc = convertToDoc(index % MaxFacetValue, elem)
@@ -75,7 +77,7 @@ class LuceneQueryHelpersSpec extends FlatSpec
 
   "LuceneQueryHelpers.facetedTextSearch" should "return correct facet counts" in {
     val facets = LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader,
-      FacetsConfig, "*:*", TestFacetName, 100)(Analyzer)
+      FacetsConfig, "*:*", TestFacetName, 100, indexAnalyzer)
 
     facets.facetName should equal(TestFacetName)
     facets.facets.size should equal(MaxFacetValue)

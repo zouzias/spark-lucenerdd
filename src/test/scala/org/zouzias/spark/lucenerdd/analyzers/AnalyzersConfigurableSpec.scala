@@ -23,7 +23,8 @@ class AnalyzersConfigurableSpec extends FlatSpec with Matchers
   with BeforeAndAfterEach
   with AnalyzerConfigurable {
 
-  "AnalyzersConfigurable.Analyzer" should "be english by default" in {
-   Analyzer.isInstanceOf[EnglishAnalyzer] should equal(true)
+  "AnalyzersConfigurable.getAnalyzer" should "return english analyzer with 'en' input" in {
+    val englishAnalyzer = getAnalyzer(Some("en"))
+    englishAnalyzer.isInstanceOf[EnglishAnalyzer] should equal(true)
   }
 }

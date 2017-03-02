@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zouzias.spark.lucenerdd.response
 
-import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.LuceneRDD
-
-val df = spark.sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").load("src/test/resources/h1bvisa-2014.csv")
-val words = df.select("lca_case_employer_name", "lca_case_job_title", "lca_case_employer_city", "lca_case_employer_state", "lca_case_employer_postal_code")
-val luceneRDD = LuceneRDD(df.sample(true, 0.01))
-luceneRDD.count
+sealed trait FieldType extends Serializable
+object TextType extends FieldType
+object IntType extends FieldType
+object DoubleType extends FieldType
+object LongType extends FieldType
+object FloatType extends FieldType

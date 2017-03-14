@@ -101,7 +101,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.7"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.4"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.0"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 

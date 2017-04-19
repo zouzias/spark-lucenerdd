@@ -14,13 +14,13 @@ before_cache:
 matrix:
   include:
     - jdk: openjdk7
-      scala: 2.11.9
+      scala: 2.11.11
       env: TEST_SPARK_VERSION="2.1.0" LUCENE_ANALYZER="en"
     - jdk: oraclejdk8
-      scala: 2.11.9
+      scala: 2.11.11
       env: TEST_SPARK_VERSION="2.1.0" LUCENE_ANALYZER="en"
     - jdk: oraclejdk8
-      scala: 2.11.9
+      scala: 2.11.11
       env: TEST_SPARK_VERSION="2.1.0" LUCENE_ANALYZER="whitespace"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test

@@ -20,9 +20,7 @@ import com.spatial4j.core.distance.DistanceUtils
 import com.spatial4j.core.shape.Shape
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.{Document, StoredField}
-import org.apache.lucene.facet.taxonomy.directory.{DirectoryTaxonomyReader, DirectoryTaxonomyWriter}
-import org.apache.lucene.index.IndexWriterConfig.OpenMode
-import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
+import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime

@@ -88,6 +88,4 @@ trait LuceneRDDConfigurable extends Configurable {
     }
     else IndexOptions.DOCS_AND_FREQS_AND_POSITIONS  // Default
   }
-
-
 }

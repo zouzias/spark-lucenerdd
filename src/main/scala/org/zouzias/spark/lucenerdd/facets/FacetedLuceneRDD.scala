@@ -110,8 +110,6 @@ class FacetedLuceneRDD[T: ClassTag]
     }.toMap[String, SparkFacetResult]
     (aggrTopDocs, aggrFacets)
   }
-
-
 }
 
 object FacetedLuceneRDD extends Versionable
@@ -178,6 +176,4 @@ object FacetedLuceneRDD extends Versionable
   : FacetedLuceneRDD[Row] = {
     apply(dataFrame.rdd, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
   }
-
-
 }

@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.analysis.Analyzer
@@ -78,7 +77,6 @@ private[lucenerdd] class LuceneRDDPartition[T]
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()
   logDebug(s"[partId=${partitionId}]Closing index writers...")
-
 
   logDebug(s"[partId=${partitionId}]Instantiating index/facet readers")
   private val indexReader = DirectoryReader.open(IndexDir)

@@ -48,28 +48,28 @@ package object facets {
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    doc.add(new IntField(DefaultFieldName, v, Stored))
+    doc.add(new IntPoint(DefaultFieldName, v))
     addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
-    doc.add(new LongField(DefaultFieldName, v, Stored))
+    doc.add(new LongPoint(DefaultFieldName, v))
     addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
-    doc.add(new DoubleField(DefaultFieldName, v, Stored))
+    doc.add(new DoublePoint(DefaultFieldName, v))
     addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
-    doc.add(new FloatField(DefaultFieldName, v, Stored))
+    doc.add(new FloatPoint(DefaultFieldName, v))
     addTextFacetField(doc, DefaultFieldName, v.toString)
     doc
   }
@@ -91,19 +91,23 @@ package object facets {
         doc.add(new TextField(fName, x, Stored))
         addTextFacetField(doc, fName, x)
       case x: Long =>
-        doc.add(new LongField(fName, x, Stored))
+        doc.add(new LongPoint(fName, x))
+        doc.add(new StoredField(fName, x))
         doc.add(new NumericDocValuesField(s"${fName} ${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x))
       case x: Int =>
-        doc.add(new IntField(fName, x, Stored))
+        doc.add(new IntPoint(fName, x))
+        doc.add(new StoredField(fName, x))
         doc.add(new NumericDocValuesField(s"${fName}${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x.toLong))
       case x: Float =>
-        doc.add(new FloatField(fName, x, Stored))
+        doc.add(new FloatPoint(fName, x))
+        doc.add(new StoredField(fName, x))
         doc.add(new FloatDocValuesField(s"${fName}${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x))
       case x: Double =>
-        doc.add(new DoubleField(fName, x, Stored))
+        doc.add(new DoublePoint(fName, x))
+        doc.add(new StoredField(fName, x))
         doc.add(new DoubleDocValuesField(s"${fName}${FacetedLuceneRDD.FacetNumericFieldSuffix}",
           x))
     }

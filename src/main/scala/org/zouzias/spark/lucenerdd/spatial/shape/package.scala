@@ -18,8 +18,8 @@ package org.zouzias.spark.lucenerdd.spatial
 
 import java.io.StringReader
 
-import com.spatial4j.core.shape.Shape
 import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
+import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
 

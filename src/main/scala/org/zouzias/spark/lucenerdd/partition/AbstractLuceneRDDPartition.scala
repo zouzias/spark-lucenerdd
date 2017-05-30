@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.search.BooleanClause
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc, TermVectorEntry}
+import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 
 import scala.reflect.ClassTag

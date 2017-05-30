@@ -16,9 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.models
 
-import com.twitter.algebird.MapMonoid
 import org.apache.lucene.document.Document
-
 import scala.collection.JavaConverters._
 
 /**

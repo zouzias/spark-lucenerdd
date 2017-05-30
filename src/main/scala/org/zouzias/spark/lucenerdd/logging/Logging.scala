@@ -27,7 +27,7 @@ import org.apache.spark.util.Utils
  * logging messages at different levels using methods that only evaluate parameters lazily if the
  * log level is enabled.
  *
- * COPIED From Spark's codebase
+ * Note: This is COPIED from Spark's codebase
  */
 trait Logging {
 

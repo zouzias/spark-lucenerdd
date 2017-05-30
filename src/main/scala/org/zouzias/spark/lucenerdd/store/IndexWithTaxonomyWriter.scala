@@ -23,7 +23,7 @@ import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 
 /**
- * Index and Taxonomy Writer
+ * Index and Taxonomy Writer used for facet queries
  */
 trait IndexWithTaxonomyWriter extends IndexStorable
   with AnalyzerConfigurable {

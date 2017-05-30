@@ -74,5 +74,4 @@ package object shape extends ContextLoader{
     val polygon = GeometryFactory.createPolygon(coordinates)
     ctx.makeShape(polygon)
   }
-
 }

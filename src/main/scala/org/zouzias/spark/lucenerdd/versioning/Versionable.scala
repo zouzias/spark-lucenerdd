@@ -17,7 +17,7 @@
 package org.zouzias.spark.lucenerdd.versioning
 
 /**
-  * Read version from sbt
+  * Reads version from sbt and makes version available to Spark
   */
 trait Versionable {
 

@@ -92,4 +92,5 @@ class TermDocMatrix(triplets: RDD[TermVectorEntry]) extends Serializable {
   def numCols(): Long = value_.numCols()
 
   def value(): CoordinateMatrix = value_
+
 }

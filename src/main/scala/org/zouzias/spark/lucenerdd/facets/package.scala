@@ -22,12 +22,23 @@ import org.apache.spark.sql.Row
 
 import scala.reflect.ClassTag
 
-
+/**
+  * Contains implicit conversion to [[org.apache.lucene.document.Document]]
+  * which prepares the index for faceted search as well.
+  */
 package object facets {
 
   private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
 
+  /**
+    * Adds extra field on index with suffix [[FacetedLuceneRDD.FacetTextFieldSuffix]]
+    * This fiels is used on faceted queries
+    *
+    * @param doc Input document
+    * @param fieldName Field name
+    * @param fieldValue Field value to be indexed
+    */
   private def addTextFacetField(doc: Document, fieldName: String, fieldValue: String): Unit = {
     if ( fieldValue.nonEmpty) { // Issues with empty strings on facets
       doc.add(new FacetField(s"${fieldName}${FacetedLuceneRDD.FacetTextFieldSuffix}",

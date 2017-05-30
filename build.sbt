@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.11.8"
-crossScalaVersions := Seq("2.11.8")
+scalaVersion := "2.11.11"
+crossScalaVersions := Seq("2.11.11")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -82,7 +82,7 @@ pomExtra := (
 val luceneV = "5.5.4"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.1.0"
+sparkVersion := "2.1.1"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -96,12 +96,12 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic" % "3.0.1"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.1" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic" % "3.0.3"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.3" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.7"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.12.4"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.0"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.2.1"
 
@@ -133,7 +133,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${testSparkVersion.value}_0.6.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.1.0_0.6.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

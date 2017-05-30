@@ -21,8 +21,6 @@ import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
-import scala.io.Source
-
 class LuceneRDDSearchSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach

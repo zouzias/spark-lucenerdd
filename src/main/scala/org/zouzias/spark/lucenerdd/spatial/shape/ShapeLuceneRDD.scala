@@ -52,6 +52,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
 
   logInfo("Instance is created...")
   logInfo(s"Number of partitions: ${partitionsRDD.count()}")
+  setName("ShapeLuceneRDD")
 
   override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
 

@@ -34,6 +34,8 @@ private[lucenerdd] class LuceneRDDResponse
   extends RDD[SparkScoreDoc](partitionsRDD.context,
     List(new OneToOneDependency(partitionsRDD))) {
 
+  setName("LuceneRDDResponse")
+
   @DeveloperApi
   override def compute(split: Partition, context: TaskContext)
   : Iterator[SparkScoreDoc] = {

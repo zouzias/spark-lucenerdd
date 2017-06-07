@@ -22,11 +22,11 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.LuceneRDD
-import org.zouzias.spark.lucenerdd.LuceneRDD.{IndexAnalyzerConfigName, QueryAnalyzerConfigName}
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkFacetResult
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
+import org.zouzias.spark.lucenerdd.query.SimilarityConfigurable
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponse
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
@@ -38,8 +38,9 @@ import scala.reflect.ClassTag
 class FacetedLuceneRDD[T: ClassTag]
   (override protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
    override val indexAnalyzer: String,
-   override val queryAnalyzer: String)
-  extends LuceneRDD[T](partitionsRDD, indexAnalyzer, queryAnalyzer) {
+   override val queryAnalyzer: String,
+   override val similarity: String)
+  extends LuceneRDD[T](partitionsRDD, indexAnalyzer, queryAnalyzer, similarity) {
 
   setName("FacetedLuceneRDD")
 
@@ -113,7 +114,8 @@ class FacetedLuceneRDD[T: ClassTag]
 }
 
 object FacetedLuceneRDD extends Versionable
-  with AnalyzerConfigurable {
+  with AnalyzerConfigurable
+  with SimilarityConfigurable {
 
   /** All faceted fields are suffixed with _facet */
   val FacetTextFieldSuffix = "_facet"
@@ -126,17 +128,20 @@ object FacetedLuceneRDD extends Versionable
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String)
+  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String,
+                          similarity: String)
                          (implicit conv: T => Document): FacetedLuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
-      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer)),
+      (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer,
+        similarity)),
       preservesPartitioning = true)
-    new FacetedLuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer)
+    new FacetedLuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer, similarity)
   }
 
   def apply[T : ClassTag](elems: RDD[T])(implicit conv: T => Document)
   : FacetedLuceneRDD[T] = {
-    apply[T](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
+    apply[T](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic())
   }
 
   /**
@@ -148,10 +153,10 @@ object FacetedLuceneRDD extends Versionable
    * @return
    */
   def apply[T : ClassTag]
-  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String)
+  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String, similarity: String)
   (implicit sc: SparkContext, conv: T => Document)
   : FacetedLuceneRDD[T] = {
-    apply(sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer)
+    apply(sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity)
   }
 
   def apply[T : ClassTag]
@@ -167,13 +172,14 @@ object FacetedLuceneRDD extends Versionable
    * @param dataFrame Spark DataFrame
    * @return
    */
-  def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String)
+  def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String, similarity: String)
   : FacetedLuceneRDD[Row] = {
-    apply(dataFrame.rdd, indexAnalyzer, queryAnalyzer)
+    apply(dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity: String)
   }
 
   def apply(dataFrame: DataFrame)
   : FacetedLuceneRDD[Row] = {
-    apply(dataFrame.rdd, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName))
+    apply(dataFrame.rdd, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic())
   }
 }

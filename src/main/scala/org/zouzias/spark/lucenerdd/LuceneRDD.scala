@@ -341,6 +341,9 @@ object LuceneRDD extends Versionable
    * Instantiate a LuceneRDD given an RDD[T]
    *
    * @param elems RDD of type T
+   * @param indexAnalyzer Index Analyzer name
+   * @param queryAnalyzer Query Analyzer name
+   * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
    * @tparam T Generic type
    * @return
    */
@@ -366,6 +369,7 @@ object LuceneRDD extends Versionable
    * @param elems Elements to index
    * @param indexAnalyzer Index Analyzer name
    * @param queryAnalyzer Query Analyzer name
+   * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
    * @param sc Spark Context
    * @tparam T Input type
    * @return
@@ -393,6 +397,7 @@ object LuceneRDD extends Versionable
    * @param dataFrame Spark DataFrame
    * @param indexAnalyzer Index Analyzer name
    * @param queryAnalyzer Query Analyzer name
+   * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
     * @return
    */
   def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String, similarity: String)
@@ -401,7 +406,7 @@ object LuceneRDD extends Versionable
   }
 
   /**
-    * Constructor with default analyzers
+    * Constructor with default index, query analyzers and Lucene similarity
     *
     * @param dataFrame Input DataFrame
     * @return

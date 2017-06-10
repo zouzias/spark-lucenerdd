@@ -147,7 +147,10 @@ object FacetedLuceneRDD extends Versionable
   /**
    * Instantiate a FacetedLuceneRDD with an iterable
    *
-   * @param elems
+   * @param elems Iterable of documents
+   * @param indexAnalyzer Index Analyzer name
+   * @param queryAnalyzer Query Analyzer name
+   * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
    * @param sc
    * @tparam T
    * @return
@@ -170,6 +173,9 @@ object FacetedLuceneRDD extends Versionable
    * Instantiate a FacetedLuceneRDD with DataFrame
    *
    * @param dataFrame Spark DataFrame
+   * @param indexAnalyzer Index Analyzer name
+   * @param queryAnalyzer Query Analyzer name
+   * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
    * @return
    */
   def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String, similarity: String)

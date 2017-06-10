@@ -19,13 +19,13 @@ package org.zouzias.spark.lucenerdd.partition
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
-import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.{DirectoryReader, IndexReader}
 import org.apache.lucene.search._
 import org.joda.time.DateTime
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.models.indexstats.{FieldStatistics, IndexStatistics}
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
-import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import org.zouzias.spark.lucenerdd.LuceneRDD
@@ -48,11 +48,13 @@ private[lucenerdd] class LuceneRDDPartition[T]
 (private val iter: Iterator[T],
  private val partitionId: Int,
  private val indexAnalyzerName: String,
- private val queryAnalyzerName: String)
+ private val queryAnalyzerName: String,
+ private val similarityName: String)
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
-  with IndexWithTaxonomyWriter {
+  with IndexWithTaxonomyWriter
+  with SimilarityConfigurable {
 
   logInfo(s"[partId=${partitionId}] Partition is created...")
 
@@ -80,7 +82,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   logDebug(s"[partId=${partitionId}]Instantiating index/facet readers")
   private val indexReader = DirectoryReader.open(IndexDir)
-  private val indexSearcher = new IndexSearcher(indexReader)
+  private lazy val indexSearcher = initializeIndexSearcher(indexReader)
   private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
   logDebug(s"[partId=${partitionId}]Index readers instantiated successfully")
   logInfo(s"[partId=${partitionId}]Indexed ${size} documents")
@@ -95,6 +97,12 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def isDefined(elem: T): Boolean = {
     iterOriginal.contains(elem)
+  }
+
+  private def initializeIndexSearcher(indexReader: IndexReader): IndexSearcher = {
+    val searcher = new IndexSearcher(indexReader)
+    searcher.setSimilarity(getSimilarity(Some(similarityName)))
+    searcher
   }
 
   override def multiTermQuery(docMap: Map[String, String],
@@ -113,7 +121,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
     new LuceneRDDPartition(iterOriginal.filter(pred),
-      partitionId, indexAnalyzerName, queryAnalyzerName)(docConversion, kTag)
+      partitionId, indexAnalyzerName, queryAnalyzerName, similarityName)(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): LuceneRDDResponsePartition = {
@@ -230,6 +238,7 @@ object LuceneRDDPartition {
     * @param partitionId
     * @param indexAnalyzer
     * @param queryAnalyzer
+    * @param similarityName
     * @param docConversion
     * @tparam T
     * @return
@@ -237,10 +246,11 @@ object LuceneRDDPartition {
   def apply[T: ClassTag](iter: Iterator[T],
                          partitionId: Int,
                          indexAnalyzer: String,
-                         queryAnalyzer: String)
+                         queryAnalyzer: String,
+                         similarityName: String)
                         (implicit docConversion: T => Document)
   : LuceneRDDPartition[T] = {
     new LuceneRDDPartition[T](iter, partitionId,
-      indexAnalyzer, queryAnalyzer)(docConversion, classTag[T])
+      indexAnalyzer, queryAnalyzer, similarityName)(docConversion, classTag[T])
   }
 }

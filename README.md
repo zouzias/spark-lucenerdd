@@ -112,5 +112,3 @@ sbt compile assembly
 ```
 
 The above will create an assembly jar containing spark-lucenerdd functionality under `target/scala-*/spark-lucenerdd-assembly-*.jar`
-
-To make the spark-lucenerdd available, you have to assembly the project and add the JAR on you Spark shell or submit scripts.

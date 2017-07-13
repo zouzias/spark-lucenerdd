@@ -1,5 +1,6 @@
 language: scala
 sudo: false
+dist: trusty
 cache:
   directories:
   - $HOME/.sbt/0.13/dependency
@@ -16,6 +17,12 @@ matrix:
     - jdk: oraclejdk8
       scala: 2.11.11
       env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="en"
+    - jdk: openjdk8
+      scala: 2.11.11
+      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="en"
+    - jdk: openjdk8
+      scala: 2.11.11
+      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="whitespace"
     - jdk: oraclejdk8
       scala: 2.11.11
       env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="whitespace"

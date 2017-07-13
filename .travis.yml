@@ -13,9 +13,6 @@ before_cache:
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
 matrix:
   include:
-    - jdk: openjdk7
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="en"
     - jdk: oraclejdk8
       scala: 2.11.11
       env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="en"

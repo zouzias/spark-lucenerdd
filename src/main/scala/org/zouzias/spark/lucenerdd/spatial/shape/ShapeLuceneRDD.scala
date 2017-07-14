@@ -16,14 +16,16 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
-import com.spatial4j.core.shape.Shape
+
 import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{DataFrame, Row}
+import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
@@ -34,7 +36,6 @@ import org.zouzias.spark.lucenerdd.spatial.shape.partition.{AbstractShapeLuceneR
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
-import scala.util.Try
 
 /**
  * ShapeLuceneRDD for geospatial and full-text search queries

@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
-import com.spatial4j.core.io.ShapeIO
+import org.locationtech.spatial4j.io.ShapeIO
 
 trait ShapeLuceneRDDConfigurable extends LuceneRDDConfigurable {
 

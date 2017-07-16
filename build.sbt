@@ -100,7 +100,7 @@ val scalactic                 = "org.scalactic"                  %% "scalactic" 
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.3" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.1"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "1.8.2"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.0"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.6"
 
@@ -137,7 +137,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.0_0.7.1" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"${sparkVersion.value}_0.7.2" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

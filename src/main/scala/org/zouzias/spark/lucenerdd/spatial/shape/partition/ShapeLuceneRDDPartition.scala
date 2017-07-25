@@ -16,14 +16,14 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
-import com.spatial4j.core.distance.DistanceUtils
-import com.spatial4j.core.shape.Shape
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.{Document, StoredField}
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
+import org.locationtech.spatial4j.distance.DistanceUtils
+import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition

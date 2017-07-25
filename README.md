@@ -3,7 +3,7 @@
 [![Master](https://travis-ci.org/zouzias/spark-lucenerdd.svg?branch=master)](https://travis-ci.org/zouzias/spark-lucenerdd)
 [![codecov](https://codecov.io/gh/zouzias/spark-lucenerdd/branch/master/graph/badge.svg)](https://codecov.io/gh/zouzias/spark-lucenerdd)
 [![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
-[![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.11:0.2.8.svg?color=yellowgreen)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.11/)
+[![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.11:0.3.0.svg?color=yellowgreen)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.11/)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spark-lucenerdd/Lobby)
 
 
@@ -48,7 +48,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.2.8"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.3.0"
 ```
 
 Using Maven:
@@ -57,7 +57,7 @@ Using Maven:
 <dependency>
     <groupId>org.zouzias</groupId>
     <artifactId>spark-lucenerdd_2.11</artifactId>
-    <version>0.2.8</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -65,7 +65,7 @@ This library can also be added to Spark jobs launched through `spark-shell` or `
 For example, to include it when starting the spark shell:
 
 ```
-$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.2.8
+$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.3.0
 ```
 
 Unlike using `--jars`, using `--packages` ensures that this library and its dependencies will be added to the classpath.
@@ -75,10 +75,11 @@ The `--packages` argument can also be used with `bin/spark-submit`.
 The project has the following compatibility with Apache Spark:
 
 spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
-------------------------- | ------------ | -------------------------- | ----- | ----
-0.2.9-SNAPSHOT            |             | >= 2.1.1           | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
-0.2.8 | 2017-05-30   | >= 2.1.1           | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released 
-0.1.0 | 2016-09-26   | 1.4.x, 1.5.x, 1.6.x  | [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
+------------------------- | --------------- | -------------------------- | ----- | ----
+0.3.1-SNAPSHOT            |                 | >= 2.2.0, >=JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
+0.3.0                     |  2017-07-14     | >= 2.2.0, >=JVM 8  | [tagv0.3.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.0) | Released
+0.2.8                     | 2017-05-30      |  2.1.x, JVM        | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released 
+0.1.0                     | 2016-09-26      | 1.4.x, 1.5.x, 1.6.x| [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 
 ### Project Status and Limitations
 

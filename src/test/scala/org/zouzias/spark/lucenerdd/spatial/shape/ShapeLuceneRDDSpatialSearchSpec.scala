@@ -19,8 +19,8 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 import java.io.StringWriter
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import com.spatial4j.core.distance.DistanceUtils
 import org.apache.spark.SparkConf
+import org.locationtech.spatial4j.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader

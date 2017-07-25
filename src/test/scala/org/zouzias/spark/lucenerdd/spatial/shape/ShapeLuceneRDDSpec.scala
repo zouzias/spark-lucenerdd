@@ -19,9 +19,9 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 import java.io.StringWriter
 
 import com.holdenkarau.spark.testing.SharedSparkContext
-import com.spatial4j.core.distance.DistanceUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.locationtech.spatial4j.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
@@ -158,5 +158,4 @@ class ShapeLuceneRDDSpec extends FlatSpec
     map.contains("sbtVersion") should equal(true)
     map.contains("builtAtString") should equal(true)
   }
-
 }

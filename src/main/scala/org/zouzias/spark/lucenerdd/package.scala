@@ -29,25 +29,37 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
-    if (v != null) doc.add(new IntField(DefaultFieldName, v, Stored))
+    if (v != null) {
+      doc.add(new IntPoint(DefaultFieldName, v))
+      doc.add(new StoredField(DefaultFieldName, v))
+    }
     doc
   }
 
   implicit def longToDocument(v: Long): Document = {
     val doc = new Document
-    if (v != null) doc.add(new LongField(DefaultFieldName, v, Stored))
+    if (v != null) {
+      doc.add(new LongPoint(DefaultFieldName, v))
+      doc.add(new StoredField(DefaultFieldName, v))
+    }
     doc
   }
 
   implicit def doubleToDocument(v: Double): Document = {
     val doc = new Document
-    if (v != null)  doc.add(new DoubleField(DefaultFieldName, v, Stored))
+    if (v != null) {
+      doc.add(new DoublePoint(DefaultFieldName, v))
+      doc.add(new StoredField(DefaultFieldName, v))
+    }
     doc
   }
 
   implicit def floatToDocument(v: Float): Document = {
     val doc = new Document
-    if (v != null) doc.add(new FloatField(DefaultFieldName, v, Stored))
+    if (v != null) {
+      doc.add(new FloatPoint(DefaultFieldName, v))
+      doc.add(new StoredField(DefaultFieldName, v))
+    }
     doc
   }
 
@@ -55,7 +67,6 @@ package object lucenerdd extends LuceneRDDConfigurable {
     val doc = new Document
 
     if (s != null) doc.add(new Field(DefaultFieldName, s, CustomStringFieldType))
-
     doc
   }
 
@@ -83,14 +94,19 @@ package object lucenerdd extends LuceneRDDConfigurable {
     s match {
       case x: String if x != null =>
         doc.add(new Field(fieldName, x, CustomStringFieldType))
+        doc.add(new StoredField(fieldName, x))
       case x: Long if x != null =>
-        doc.add(new LongField(fieldName, x, Stored))
+        doc.add(new LongPoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case x: Int if x != null =>
-        doc.add(new IntField(fieldName, x, Stored))
+        doc.add(new IntPoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case x: Float if x != null =>
-        doc.add(new FloatField(fieldName, x, Stored))
+        doc.add(new FloatPoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case x: Double if x != null =>
-        doc.add(new DoubleField(fieldName, x, Stored))
+        doc.add(new DoublePoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case _ => Unit
     }
     doc

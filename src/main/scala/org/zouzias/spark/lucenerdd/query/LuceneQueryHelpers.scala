@@ -70,9 +70,9 @@ object LuceneQueryHelpers extends Serializable {
    * @return
    */
   def fields(indexSearcher: IndexSearcher): Set[String] = {
-    indexSearcher.search(MatchAllDocs, 1).scoreDocs.flatMap(x =>
+    indexSearcher.search(MatchAllDocs, 10).scoreDocs.flatMap(x =>
       indexSearcher.getIndexReader.document(x.doc)
-      .getFields().asScala
+      .iterator().asScala
     ).map{ case doc =>
       doc.name()
     }.toSet[String]

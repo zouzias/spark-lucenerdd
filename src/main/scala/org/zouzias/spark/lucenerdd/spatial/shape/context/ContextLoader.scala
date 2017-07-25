@@ -18,8 +18,8 @@ package org.zouzias.spark.lucenerdd.spatial.shape.context
 
 import java.io.{StringReader, StringWriter}
 
-import com.spatial4j.core.context.jts.JtsSpatialContext
-import com.spatial4j.core.shape.Shape
+import org.locationtech.spatial4j.context.jts.JtsSpatialContext
+import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 
 trait ContextLoader extends ShapeLuceneRDDConfigurable{

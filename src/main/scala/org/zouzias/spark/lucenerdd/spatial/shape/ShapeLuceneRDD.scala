@@ -115,11 +115,11 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
         val queriesB = partitionsRDD.context.broadcast(collectedQueries)
 
         partitionsRDD.mapPartitions { partitions =>
-            partitions.flatMap { partition =>
-              queriesB.value.map { case (index, (x, y)) =>
-                  (index, topKMonoid.build(mapper((x, y), partition)))
-                }
+          partitions.flatMap { partition =>
+            queriesB.value.map { case (index, (x, y)) =>
+              (index, topKMonoid.build(mapper((x, y), partition)))
             }
+          }
         }
     }
 

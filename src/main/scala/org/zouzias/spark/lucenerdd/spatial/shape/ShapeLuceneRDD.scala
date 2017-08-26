@@ -101,24 +101,13 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     val queries = that.map(pointFunctor)
 
-    val concatenated: RDD[String] = queries.zipWithIndex().mapPartitions { case iter =>
-      if (iter.nonEmpty) {
-        val all = iter.map { case ((x, y), ind) => s"${ind}#${x}#${y}" }
-          .reduceLeft((a, b) => s"${a}|${b}")
+    val concatenated: RDD[Array[((Double, Double), Long)]] = queries.zipWithIndex().glom()
 
-        Iterator(all)
-      }
-      else {
-        Iterator[String]()
-      }
-    }
     val resultsByPart = concatenated.cartesian(partitionsRDD)
-      .flatMap { case (qs, lucene) =>
-        qs.split('|').filter(_.nonEmpty).par.map { case x =>
-          val arr = x.split('#')
-          (arr(0).toLong,
-            topKMonoid.build(mapper((arr(1).toDouble, arr(2).toDouble), lucene)))
-        }.toIterator
+      .flatMap { case (queries, lucene) =>
+        queries.map{ case (query, ind) =>
+          (ind, topKMonoid.build(mapper((query._1, query._2), lucene)))
+        }
       }
 
     logDebug("Merge topK linkage results")

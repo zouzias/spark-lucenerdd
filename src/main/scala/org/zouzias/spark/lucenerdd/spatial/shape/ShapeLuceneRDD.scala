@@ -16,13 +16,13 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
+import com.spatial4j.core.shape.Shape
 import com.twitter.algebird.TopKMonoid
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
-import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable

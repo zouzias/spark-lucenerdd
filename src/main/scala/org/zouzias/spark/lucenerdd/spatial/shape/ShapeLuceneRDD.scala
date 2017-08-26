@@ -99,9 +99,15 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     val queries = that.map(pointFunctor)
 
     val concatenated: RDD[String] = queries.zipWithIndex().mapPartitions { case iter =>
-      val all = iter.map { case ((x, y), ind) => s"${ind}#${x}#${y}"}
-        .reduce( (a, b) => s"${a}|${b}")
-      Iterator(all)
+      if (iter.nonEmpty) {
+        val all = iter.map { case ((x, y), ind) => s"${ind}#${x}#${y}" }
+          .reduceLeft((a, b) => s"${a}|${b}")
+
+        Iterator(all)
+      }
+      else {
+        Iterator[String]()
+      }
     }
     val resultsByPart = concatenated.cartesian(partitionsRDD)
       .flatMap { case (qs, lucene) =>

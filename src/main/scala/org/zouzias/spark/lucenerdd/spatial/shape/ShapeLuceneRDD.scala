@@ -98,12 +98,12 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     val queries = that.map(pointFunctor)
 
-    val concated: RDD[String] = queries.zipWithIndex().map(_.swap).mapPartitions { case iter =>
-      val all = iter.map { case (ind, (x, y)) => s"${ind}#${x}#${y}"}
+    val concatenated: RDD[String] = queries.zipWithIndex().mapPartitions { case iter =>
+      val all = iter.map { case ((x, y), ind) => s"${ind}#${x}#${y}"}
         .reduce( (a, b) => s"${a}|${b}")
       Iterator(all)
     }
-    val resultsByPart = concated.cartesian(partitionsRDD)
+    val resultsByPart = concatenated.cartesian(partitionsRDD)
       .flatMap { case (qs, lucene) =>
         qs.split('|').filter(_.nonEmpty).par.map { case x =>
           val arr = x.split('#')

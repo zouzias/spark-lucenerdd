@@ -74,7 +74,7 @@ The `--packages` argument can also be used with `bin/spark-submit`.
 ### Compatibility
 The project has the following compatibility with Apache Spark:
 
-spark-lucenerdd      | Release Date | Spark compatibility | Notes | Status
+Artifact                  | Release Date    | Spark compatibility | Notes | Status
 ------------------------- | --------------- | -------------------------- | ----- | ----
 0.3.1-SNAPSHOT            |                 | >= 2.2.0, >=JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
 0.3.0                     |  2017-07-14     | >= 2.2.0, >=JVM 8  | [tagv0.3.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.0) | Released

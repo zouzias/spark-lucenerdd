@@ -173,18 +173,16 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     logInfo("Collecting query points to driver")
     val otherWithIndex = other.zipWithIndex().map(_.swap)
-    val queries = otherWithIndex.mapValues(searchQueryGen).collect()
-    val queriesB = partitionsRDD.context.broadcast(queries)
+    val queries = otherWithIndex.mapValues(searchQueryGen).glom()
 
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions(partitions =>
-      partitions.flatMap { case partition =>
-        queriesB.value.par.map { case (index, qr) =>
-          (index, topKMonoid.build(partition.query(qr, topK)))
-        }
-      })
+    val resultsByPart = queries.cartesian(partitionsRDD)
+      .flatMap { case (qs, part) =>
+        qs.map(q => (q._1, topKMonoid.build(part.query(q._2, topK))))
+      }
 
     logInfo("Compute topK linkage per partition")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)
+
     otherWithIndex.join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
   }

@@ -56,5 +56,12 @@ trait ShapeLuceneRDDConfigurable extends LuceneRDDConfigurable {
     }
     else ShapeIO.WKT
   }
+
+  protected val getLinkerMethod: String = {
+    if (Config.hasPath("lucenerdd.spatial.linker.method ")) {
+      Config.getString("lucenerdd.spatial.linker.method ")
+    }
+    else "collectbroadcast"  // collectbroadcast by default
+  }
 }
 

@@ -26,7 +26,7 @@ import org.apache.spark._
 import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
@@ -49,7 +49,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    val queryAnalyzerName: String,
    val similarity: String)
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-    with LuceneRDDConfigurable {
+    with ShapeLuceneRDDConfigurable {
 
   logInfo("Instance is created...")
   logInfo(s"Number of partitions: ${partitionsRDD.count()}")
@@ -99,16 +99,31 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     logDebug("Linker requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
-    val queries = that.map(pointFunctor)
+    val queries = that.map(pointFunctor).zipWithIndex()
 
-    val concatenated: RDD[Array[((Double, Double), Long)]] = queries.zipWithIndex().glom()
+    val resultsByPart = getLinkerMethod match {
+      case "cartesian" =>
+        val concatenated = queries.glom()
 
-    val resultsByPart = concatenated.cartesian(partitionsRDD)
-      .flatMap { case (queries, lucene) =>
-        queries.map{ case (query, ind) =>
-          (ind, topKMonoid.build(mapper((query._1, query._2), lucene)))
+        concatenated.cartesian(partitionsRDD)
+          .flatMap { case (qs, lucene) =>
+            qs.map { case (query, ind) =>
+              (ind, topKMonoid.build(mapper((query._1, query._2), lucene)))
+            }
+          }
+      case _ =>
+        val thatWithIndex = queries.map(_.swap)
+        val collectedQueries = thatWithIndex.collect()
+        val queriesB = partitionsRDD.context.broadcast(collectedQueries)
+
+        partitionsRDD.mapPartitions { partitions =>
+            partitions.flatMap { partition =>
+              queriesB.value.map { case (index, (x, y)) =>
+                  (index, topKMonoid.build(mapper((x, y), partition)))
+                }
+            }
         }
-      }
+    }
 
     logDebug("Merge topK linkage results")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)

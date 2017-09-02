@@ -197,7 +197,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
         resultsByPart
     }
 
-    logInfo("Compute topK linkage per partition")
+    logInfo("Computing top-k linkage per partition")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)
 
     queriesWithIndex.join(results).values

@@ -88,4 +88,11 @@ trait LuceneRDDConfigurable extends Configurable {
     }
     else IndexOptions.DOCS_AND_FREQS_AND_POSITIONS  // Default
   }
+
+  protected val getLinkerMethod: String = {
+    if (Config.hasPath("lucenerdd.linker.method ")) {
+      Config.getString("lucenerdd.linker.method ")
+    }
+    else "collectbroadcast"  // collectbroadcast by default
+  }
 }

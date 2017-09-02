@@ -93,12 +93,12 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                                   mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
                                     Iterable[SparkScoreDoc])
   : RDD[(T, Array[SparkScoreDoc])] = {
-    logDebug("Linker requested")
+    logInfo("Shape Linkage requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     val queries = that.map(pointFunctor).zipWithIndex()
 
-    val resultsByPart = getLinkerMethod match {
+    val resultsByPart = getShapeLinkerMethod match {
       case "cartesian" =>
         val concatenated = queries.glom()
 
@@ -110,6 +110,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
           }
       case _ =>
         val thatWithIndex = queries.map(_.swap)
+        logInfo("Collecting query points to driver")
         val collectedQueries = thatWithIndex.collect()
         val queriesB = partitionsRDD.context.broadcast(collectedQueries)
 
@@ -122,7 +123,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
         }
     }
 
-    logDebug("Merge topK linkage results")
+    logInfo("Computing top-k linkage per partition")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)
 
     that.zipWithIndex.map(_.swap).join(results).values

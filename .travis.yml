@@ -15,15 +15,18 @@ matrix:
   include:
     - jdk: openjdk7
       scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.1.1" LUCENE_ANALYZER="en"
+      env: TEST_SPARK_VERSION="2.1.1" LUCENE_ANALYZER="en" LINKER_METHOD="cartesian"
     - jdk: oraclejdk8
       scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.1.1" LUCENE_ANALYZER="en"
+      env: TEST_SPARK_VERSION="2.1.1" LUCENE_ANALYZER="en" LINKER_METHOD="collectbroadcast"
     - jdk: oraclejdk8
       scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.1.1" LUCENE_ANALYZER="whitespace"
+      env: TEST_SPARK_VERSION="2.1.1" LUCENE_ANALYZER="whitespace" LINKER_METHOD="collectbroadcast"
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean update -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
+  - sbt ++$TRAVIS_SCALA_VERSION clean update
+      -Dlucenerdd.linker.method=${LINKER_METHOD}
+      -Dlucenerdd.spatial.linker.method=${LINKER_METHOD}
+      -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION assembly
   - travis_wait 30 sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport

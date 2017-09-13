@@ -64,6 +64,30 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     linked.collect().exists(link => link._1 == "ita" && link._2.length == 1) should equal(true)
   }
 
+  "LuceneRDD.linkByQuery" should "correctly link with prefix query (query / )" in {
+    val leftCountries = Array("gree", "germa", "spa", "ita")
+    implicit val mySC = sc
+    val leftCountriesRDD = sc.parallelize(leftCountries)
+
+    val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
+      .map(_.toLowerCase()).toSeq)
+
+    luceneRDD = LuceneRDD(countries)
+
+    val linker = (country: String) => {
+      val term = new Term("_1", country)
+      new PrefixQuery(term)
+    }
+
+    val linked = luceneRDD.linkByQuery(leftCountriesRDD, linker, 10, "cartesian")
+
+    linked.count() should equal(leftCountries.length)
+    // Greece and Greenland should appear
+    linked.collect().exists(link => link._1 == "gree" && link._2.length == 2) should equal(true)
+    // Italy should appear
+    linked.collect().exists(link => link._1 == "ita" && link._2.length == 1) should equal(true)
+  }
+
   "LuceneRDD.linkByQuery" should "correctly link with query parser (fuzzy)" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
     implicit val mySC = sc

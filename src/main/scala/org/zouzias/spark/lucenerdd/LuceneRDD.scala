@@ -193,7 +193,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    *
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
-   * @param linkerMethod Method to perform linkage
+   * @param linkerMethod Method to perform linkage, default value from configuration
    * @tparam T1 A type
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    *
@@ -203,7 +203,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def link[T1: ClassTag](other: RDD[T1],
                          searchQueryGen: T1 => String,
                          topK: Int = DefaultTopK,
-                         linkerMethod: String)
+                         linkerMethod: String = getLinkerMethod)
     : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
 

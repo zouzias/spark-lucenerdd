@@ -135,12 +135,16 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     *
     * @param searchQueryGen Search query mapper function
     * @param topK Number of results to deduplication
+    * @param linkerMethod Method to perform linkage
+    *
     * @return
     */
-  def dedup[T1: ClassTag](searchQueryGen: T1 => String, topK: Int = DefaultTopK)
+  def dedup[T1: ClassTag](searchQueryGen: T1 => String,
+                          topK: Int = DefaultTopK,
+                          linkerMethod: String = getLinkerMethod)
   : RDD[(T1, Array[SparkScoreDoc])] = {
     // FIXME: is this asInstanceOf necessary?
-    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK)
+    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK, linkerMethod)
   }
 
   /**
@@ -149,12 +153,39 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @param other DataFrame to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
    * @param topK
+   * @param linkerMethod Method to perform linkage
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    */
-  def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
+  def linkDataFrame(other: DataFrame,
+                    searchQueryGen: Row => String,
+                    topK: Int = DefaultTopK,
+                    linkerMethod: String = getLinkerMethod)
   : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("LinkDataFrame requested")
-    link[Row](other.rdd, searchQueryGen, topK)
+    link[Row](other.rdd, searchQueryGen, topK, linkerMethod)
+  }
+
+  /**
+    * Entity linkage via Lucene query over all elements of an RDD.
+    *
+    * @param other RDD to be linked
+    * @param searchQueryGen Function that generates a Lucene Query object for each element of other
+    * @param linkerMethod Method to perform linkage
+    * @tparam T1 A type
+    * @return an RDD of Tuple2 that contains the linked search Lucene Document
+    *         in the second position
+    */
+  def linkByQuery[T1: ClassTag](other: RDD[T1],
+                                searchQueryGen: T1 => Query,
+                                topK: Int = DefaultTopK,
+                                linkerMethod: String = getLinkerMethod)
+  : RDD[(T1, Array[SparkScoreDoc])] = {
+    logInfo("LinkByQuery requested")
+    def typeToQueryString = (input: T1) => {
+      searchQueryGen(input).toString
+    }
+
+    link[T1](other, typeToQueryString, topK, linkerMethod)
   }
 
   /**
@@ -162,20 +193,25 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    *
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
+   * @param linkerMethod Method to perform linkage
    * @tparam T1 A type
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    *
    * Note: Currently the query strings of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
+  def link[T1: ClassTag](other: RDD[T1],
+                         searchQueryGen: T1 => String,
+                         topK: Int = DefaultTopK,
+                         linkerMethod: String)
     : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
     val queriesWithIndex = other.zipWithIndex().map(_.swap)
 
-    val resultsByPart = getLinkerMethod match {
+    logInfo(s"Linker method is ${linkerMethod}")
+    val resultsByPart = linkerMethod match {
       case "cartesian" =>
         val concatenated = queriesWithIndex.mapValues(searchQueryGen).glom()
 
@@ -204,25 +240,6 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
     queriesWithIndex.join(results).values
       .map(joined => (joined._1, joined._2.items.toArray))
-  }
-
-  /**
-   * Entity linkage via Lucene query over all elements of an RDD.
-   *
-   * @param other RDD to be linked
-   * @param searchQueryGen Function that generates a Lucene Query object for each element of other
-   * @tparam T1 A type
-   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
-   */
-  def linkByQuery[T1: ClassTag](other: RDD[T1],
-                                searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
-  : RDD[(T1, Array[SparkScoreDoc])] = {
-    logInfo("LinkByQuery requested")
-    def typeToQueryString = (input: T1) => {
-      searchQueryGen(input).toString
-    }
-
-    link[T1](other, typeToQueryString, topK)
   }
 
   /**

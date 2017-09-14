@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.grids
 
-import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTreeFactory
+import org.apache.lucene.spatial.prefix.tree.{SpatialPrefixTree, SpatialPrefixTreeFactory}
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 
@@ -35,7 +35,7 @@ trait PrefixTreeLoader extends ContextLoader
   protected val prefixTreeMaxDistErr: Double = getPrefixTreeMaxDistErr
 
   // This can also be constructed from SpatialPrefixTreeFactory
-  protected val grid = SpatialPrefixTreeFactory.makeSPT(
+  protected val grid: SpatialPrefixTree = SpatialPrefixTreeFactory.makeSPT(
     Map("prefixTree" -> prefixTreeName,
     "maxLevels" -> maxLevels.toString,
     "maxDistErr" -> prefixTreeMaxDistErr.toString).asJava,

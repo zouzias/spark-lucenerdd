@@ -40,6 +40,9 @@ import scala.reflect.ClassTag
  * ShapeLuceneRDD for geospatial and full-text search queries
  *
  * @param partitionsRDD Partition RDD
+ * @param indexAnalyzerName Analyzer during indexing time
+ * @param queryAnalyzerName Analyzer during query time
+ * @param similarity Query similarity (TF-IDF / BM25)
  * @tparam K Type containing the geospatial information (must be implicitly converted to [[Shape]])
  * @tparam V Type containing remaining information (must be implicitly converted to [[Document]])
  */
@@ -318,7 +321,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param operationName Intersect, contained, etc.
    * @return
    */
-  def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int,
+  def bboxSearch(lowerLeft: PointType,
+                 upperRight: PointType,
+                 k: Int,
                  operationName: String)
   : LuceneRDDResponse = {
     logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
@@ -428,7 +433,8 @@ object ShapeLuceneRDD extends Versionable
    * @param docConverter Implicit conversion for Lucene Document
    * @return
    */
-  def apply(df : DataFrame, shapeField: String)
+  def apply(df : DataFrame,
+            shapeField: String)
            (implicit shapeConv: String => Shape, docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
     apply(df, shapeField,
@@ -436,14 +442,17 @@ object ShapeLuceneRDD extends Versionable
       getOrElseClassic())
   }
 
-  def apply(df : DataFrame, shapeField: String, indexAnalyzer: String, queryAnalyzer: String,
-            similairty: String)
+  def apply(df : DataFrame,
+            shapeField: String,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String)
            (implicit shapeConv: String => Shape, docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
     val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
       .mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
       iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similairty)
+    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
   }
 }

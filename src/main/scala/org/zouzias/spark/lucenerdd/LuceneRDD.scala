@@ -36,10 +36,14 @@ import org.zouzias.spark.lucenerdd.versioning.Versionable
 import scala.reflect.ClassTag
 
 /**
- * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
- *
- * @tparam T
- */
+  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
+  *
+  * @param partitionsRDD Partitions of RDD
+  * @param indexAnalyzer Analyzer during indexing time
+  * @param queryAnalyzer Analyzer during query time
+  * @param similarity Query similarity (TF-IDF / BM25)
+  * @tparam T
+  */
 class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
                              protected val indexAnalyzer: String,
                              protected val queryAnalyzer: String,
@@ -379,7 +383,9 @@ object LuceneRDD extends Versionable
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String,
+  def apply[T : ClassTag](elems: RDD[T],
+                          indexAnalyzer: String,
+                          queryAnalyzer: String,
                           similarity: String)
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
@@ -407,7 +413,10 @@ object LuceneRDD extends Versionable
    * @return
    */
   def apply[T : ClassTag]
-  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String, similarity: String)
+  (elems: Iterable[T],
+   indexAnalyzer: String,
+   queryAnalyzer: String,
+   similarity: String)
   (implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {
     apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity)
@@ -432,7 +441,10 @@ object LuceneRDD extends Versionable
    * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
     * @return
    */
-  def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String, similarity: String)
+  def apply(dataFrame: DataFrame,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String)
   : LuceneRDD[Row] = {
     apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity)
   }

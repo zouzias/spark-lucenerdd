@@ -111,12 +111,14 @@ class LuceneRDDSpec extends FlatSpec
     luceneRDD.fields().contains("_2") should equal(true)
   }
 
+  /* 
   "LuceneRDD.fields" should "return correct fields with RDD[Map[String, String]]" in {
     val maps = List(Map( "a" -> "hello"), Map("b" -> "world"), Map("c" -> "how are you"))
     val rdd = sc.parallelize(maps)
     luceneRDD = LuceneRDD(rdd)
     luceneRDD.fields() should equal(Set("a", "b", "c"))
   }
+  */
 
   "LuceneRDD.version" should "return project sbt build information" in {
     val map = LuceneRDD.version()

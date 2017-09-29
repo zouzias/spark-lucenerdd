@@ -20,6 +20,8 @@ import com.twitter.algebird.TopK
 import com.twitter.chill.Kryo
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import org.apache.spark.sql.types._
 import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.ShapeLuceneRDDPartition
 
@@ -35,6 +37,20 @@ class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[java.lang.Integer])
     kryo.register(classOf[java.lang.Long])
     kryo.register(classOf[java.lang.Short])
+    kryo.register(classOf[StructType])
+    kryo.register(classOf[StructField])
+    kryo.register(classOf[IntegerType])
+    kryo.register(classOf[IntegerType$])
+    kryo.register(classOf[DoubleType])
+    kryo.register(classOf[DoubleType$])
+    kryo.register(classOf[FloatType])
+    kryo.register(classOf[StringType])
+    kryo.register(classOf[StringType$])
+    kryo.register(classOf[GenericRowWithSchema])
+    kryo.register(classOf[Metadata])
+    kryo.register(classOf[Object])
+    kryo.register(classOf[Array[Object]])
+    kryo.register(classOf[Array[Array[Byte]]])
     kryo.register(classOf[scala.collection.mutable.WrappedArray$ofRef])
     kryo.register(classOf[scala.collection.mutable.WrappedArray$ofFloat])
     kryo.register(classOf[scala.collection.mutable.WrappedArray$ofDouble])
@@ -47,6 +63,9 @@ class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[Array[Long]])
     kryo.register(classOf[Array[Double]])
     kryo.register(classOf[Array[Boolean]])
+    kryo.register(classOf[Array[SparkScoreDoc]])
+    kryo.register(classOf[Array[StructType]])
+    kryo.register(classOf[Array[StructField]])
     kryo.register(classOf[Range])
     kryo.register(classOf[scala.collection.immutable.Map[String, String]])
     kryo.register(classOf[scala.collection.immutable.Map[String, Number]])

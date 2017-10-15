@@ -28,7 +28,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
-import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
+import org.zouzias.spark.lucenerdd.spatial.commons.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect._

@@ -21,7 +21,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.commons.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 class ShapeLuceneRDDKnnSearchSpec extends FlatSpec

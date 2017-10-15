@@ -20,7 +20,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.commons.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 // Required for implicit Document conversion

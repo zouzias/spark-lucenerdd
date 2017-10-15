@@ -16,6 +16,434 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point
 
-class PointLuceneRDD {
+import com.twitter.algebird.TopKMonoid
+import org.apache.lucene.document.Document
+import org.apache.lucene.spatial.query.SpatialOperation
+import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.storage.StorageLevel
+import org.locationtech.spatial4j.shape.Shape
+import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
+import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
+import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
+import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD._
+import org.zouzias.spark.lucenerdd.versioning.Versionable
 
+import scala.reflect.ClassTag
+
+class PointLuceneRDD[V: ClassTag]
+  (private val partitionsRDD: RDD[AbstractPointLuceneRDDPartition[V]],
+   val indexAnalyzerName: String,
+   val queryAnalyzerName: String,
+   val similarity: String)
+  extends RDD[V](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
+    with ShapeLuceneRDDConfigurable {
+
+  logInfo("Instance is created...")
+  logInfo(s"Number of partitions: ${partitionsRDD.count()}")
+  setName("PointLuceneRDD")
+
+  override protected def getPartitions: Array[Partition] = partitionsRDD.partitions
+
+  override protected def getPreferredLocations(s: Partition): Seq[String] =
+    partitionsRDD.preferredLocations(s)
+
+  override def cache(): this.type = {
+    this.persist(StorageLevel.MEMORY_ONLY)
+  }
+
+  override def persist(newLevel: StorageLevel): this.type = {
+    partitionsRDD.persist(newLevel)
+    super.persist(newLevel)
+    this
+  }
+
+  override def unpersist(blocking: Boolean = true): this.type = {
+    partitionsRDD.unpersist(blocking)
+    super.unpersist(blocking)
+    this
+  }
+
+  override def setName(_name: String): this.type = {
+    if (partitionsRDD.name != null) {
+      partitionsRDD.setName(partitionsRDD.name + ", " + _name)
+    } else {
+      partitionsRDD.setName(_name)
+    }
+    this
+  }
+
+  setName("ShapeLuceneRDD")
+
+  private def partitionMapper(f: AbstractPointLuceneRDDPartition[V] =>
+    LuceneRDDResponsePartition): LuceneRDDResponse = {
+    new LuceneRDDResponse(partitionsRDD.map(f), SparkScoreDoc.ascending)
+  }
+
+  private def linker[T: ClassTag](that: RDD[T],
+                                  pointFunctor: T => PointType,
+                                  mapper: ( PointType, AbstractPointLuceneRDDPartition[V]) =>
+                                    Iterable[SparkScoreDoc],
+                                  linkerMethod: String)
+  : RDD[(T, Array[SparkScoreDoc])] = {
+    logInfo("Shape Linkage requested")
+
+    val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
+    val queries = that.zipWithIndex().map(_.swap)
+
+    val resultsByPart = linkerMethod match {
+      case "cartesian" =>
+        val concatenated = queries.mapValues(pointFunctor).glom()
+
+        concatenated.cartesian(partitionsRDD)
+          .flatMap { case (qs, lucene) =>
+            qs.map { case (ind, query) =>
+              (ind, topKMonoid.build(mapper((query._1, query._2), lucene)))
+            }
+          }
+      case _ =>
+        logInfo("Collecting query points to driver")
+        val collectedQueries = queries.mapValues(pointFunctor).collect()
+        val queriesB = partitionsRDD.context.broadcast(collectedQueries)
+
+        partitionsRDD.mapPartitions { partitions =>
+            partitions.flatMap { partition =>
+              queriesB.value.map { case (index, (x, y)) =>
+                  (index, topKMonoid.build(mapper((x, y), partition)))
+                }
+            }
+        }
+    }
+
+    logInfo("Computing top-k linkage per partition")
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
+
+    queries.join(results).values
+      .map(joined => (joined._1, joined._2.items.toArray))
+  }
+
+  /**
+   * Link entities based on k-nearest neighbors (Knn)
+   *
+   * Links this and that based on nearest neighbors, returns Knn
+   *
+   *
+   * @param that An RDD of entities to be linked
+   * @param pointFunctor Function that generates a point from each element of other
+   * @param linkerMethod Method to perform linkage
+   * @tparam T A type
+   * @return an RDD of Tuple2 that contains the linked results
+   *
+   * Note: Currently the query coordinates of the other RDD are collected to the driver and
+   * broadcast to the workers.
+   */
+  def linkByKnn[T: ClassTag](that: RDD[T],
+                             pointFunctor: T => PointType,
+                             topK: Int = DefaultTopK,
+                             linkerMethod: String = getShapeLinkerMethod)
+  : RDD[(T, Array[SparkScoreDoc])] = {
+    logInfo("linkByKnn requested")
+    linker[T](that, pointFunctor, (queryPoint, part) =>
+      part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString),
+      linkerMethod)
+  }
+
+  /**
+   * Link entities if their shapes are within a distance in kilometers (km)
+   *
+   * Links this and that based on distance threshold
+   *
+   * @param that An RDD of entities to be linked
+   * @param pointFunctor Function that generates a point from each element of other
+   * @param linkerMethod Method to perform linkage
+   * @tparam T A type
+   * @return an RDD of Tuple2 that contains the linked results
+   *
+   * Note: Currently the query coordinates of the other RDD are collected to the driver and
+   * broadcast to the workers.
+   */
+  def linkByRadius[T: ClassTag](that: RDD[T],
+                                pointFunctor: T => PointType,
+                                radius: Double,
+                                topK: Int = DefaultTopK,
+                                spatialOp: String = SpatialOperation.Intersects.getName,
+                                linkerMethod: String = getShapeLinkerMethod)
+  : RDD[(T, Array[SparkScoreDoc])] = {
+    logInfo("linkByRadius requested")
+    linker[T](that, pointFunctor, (queryPoint, part) =>
+      part.circleSearch(queryPoint, radius, topK, spatialOp),
+      linkerMethod)
+  }
+
+
+  /**
+   * Link with DataFrame based on k-nearest neighbors (Knn)
+   *
+   * Links this and that based on nearest neighbors, returns Knn
+   *
+   *
+   * @param other DataFrame of entities to be linked
+   * @param searchQueryGen Function that generates a point from each element of other
+    * @param topK Number of linked items
+   * @param linkerMethod Method to perform linkage
+   * @return
+   */
+  def linkDataFrameByKnn(other: DataFrame,
+                         searchQueryGen: Row => PointType,
+                         topK: Int = DefaultTopK,
+                         linkerMethod: String = getShapeLinkerMethod)
+  : RDD[(Row, Array[SparkScoreDoc])] = {
+    logInfo("linkDataFrameByKnn requested")
+    linkByKnn[Row](other.rdd, searchQueryGen, topK, linkerMethod)
+  }
+
+  /**
+   * Link entities if their shapes are within a distance in kilometers (km)
+   *
+   * Links this and that based on distance threshold
+   *
+   * @param other DataFrame of entities to be linked
+   * @param pointFunctor Function that generates a point from each element of other
+   * @param linkerMethod Method to perform linkage
+   * @return an RDD of Tuple2 that contains the linked results
+   *
+   * Note: Currently the query coordinates of the other RDD are collected to the driver and
+   * broadcast to the workers.
+   */
+  def linkDataFrameByRadius(other: DataFrame,
+                            pointFunctor: Row => PointType,
+                            radius: Double,
+                            topK: Int = DefaultTopK,
+                            spatialOp: String = SpatialOperation.Intersects.getName,
+                            linkerMethod: String = getShapeLinkerMethod)
+  : RDD[(Row, Array[SparkScoreDoc])] = {
+    logInfo("linkDataFrameByRadius requested")
+    linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp, linkerMethod)
+  }
+
+  /**
+   * K-nearest neighbors search
+   *
+   * @param queryPoint query point (X, Y)
+   * @param k number of nearest neighbor points to return
+   * @param searchString Lucene query string
+   * @return
+   */
+  def knnSearch(queryPoint: PointType, k: Int,
+                searchString: String = LuceneQueryHelpers.MatchAllDocsString)
+  : LuceneRDDResponse = {
+    logInfo(s"Knn search with query ${queryPoint} and search string ${searchString}")
+    partitionMapper(_.knnSearch(queryPoint, k, searchString))
+  }
+
+  /**
+   * Search for points within a circle
+   *
+   * @param center center of circle
+   * @param radius radius of circle in kilometers (KM)
+   * @param k number of points to return
+   * @return
+   */
+  def circleSearch(center: PointType, radius: Double, k: Int)
+  : LuceneRDDResponse = {
+    logInfo(s"Circle search with center ${center} and radius ${radius}")
+    // Points can only intersect
+    partitionMapper(_.circleSearch(center, radius, k,
+      SpatialOperation.Intersects.getName))
+  }
+
+  /**
+   * Spatial search with arbitrary shape
+   *
+   * @param shapeWKT Shape in WKT format
+   * @param k Number of element to return
+   * @param operationName
+   * @return
+   */
+  def spatialSearch(shapeWKT: String, k: Int,
+                    operationName: String = SpatialOperation.Intersects.getName)
+  : LuceneRDDResponse = {
+    logInfo(s"Spatial search with shape ${shapeWKT} and operation ${operationName}")
+    partitionMapper(_.spatialSearch(shapeWKT, k, operationName))
+  }
+
+  /**
+   * Spatial search with a single Point
+   *
+   * @param point
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def spatialSearch(point: PointType, k: Int,
+                    operationName: String)
+  : LuceneRDDResponse = {
+    logInfo(s"Spatial search with point ${point} and operation ${operationName}")
+    partitionMapper(_.spatialSearch(point, k, operationName))
+  }
+
+  /**
+   * Bounding box search with center and radius
+   *
+   * @param center given as (x, y)
+   * @param radius in kilometers (KM)
+   * @param k
+   * @param operationName
+   * @return
+   */
+  def bboxSearch(center: PointType, radius: Double, k: Int,
+                    operationName: String = SpatialOperation.Intersects.getName)
+  : LuceneRDDResponse = {
+    logInfo(s"Bounding box with center ${center}, radius ${radius}, k = ${k}")
+    partitionMapper(_.bboxSearch(center, radius, k, operationName))
+  }
+
+  /**
+   * Bounding box search with rectangle
+   * @param lowerLeft Lower left corner
+   * @param upperRight Upper right corner
+   * @param k Number of results
+   * @param operationName Intersect, contained, etc.
+   * @return
+   */
+  def bboxSearch(lowerLeft: PointType,
+                 upperRight: PointType,
+                 k: Int,
+                 operationName: String)
+  : LuceneRDDResponse = {
+    logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
+    partitionMapper(_.bboxSearch(lowerLeft, upperRight, k, operationName))
+  }
+
+  override def count(): Long = {
+    logInfo("Count requested")
+    partitionsRDD.map(_.size).reduce(_ + _)
+  }
+
+  /** RDD compute method. */
+  override def compute(part: Partition, context: TaskContext): Iterator[V] = {
+    firstParent[AbstractPointLuceneRDDPartition[V]].iterator(part, context).next.iterator
+  }
+
+  override def filter(pred: V => Boolean): PointLuceneRDD[V] = {
+    val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
+      partition.map(_.filter(pred)), preservesPartitioning = true
+    )
+    new PointLuceneRDD(newPartitionRDD, indexAnalyzerName, queryAnalyzerName, similarity)
+  }
+
+  def exists(point: PointType): Boolean = {
+    partitionsRDD.map(_.isDefined(point)).collect().exists(x => x)
+  }
+
+  def close(): Unit = {
+    logInfo(s"Closing...")
+    partitionsRDD.foreach(_.close())
+  }
+}
+
+
+object PointLuceneRDD extends Versionable
+  with AnalyzerConfigurable
+  with SimilarityConfigurable {
+
+  /** Type for a point */
+  type PointType = (Double, Double)
+
+  /**
+    * Instantiate a ShapeLuceneRDD given an RDD[T]
+    *
+    * @param elems RDD of type T
+    * @param indexAnalyzer Index Analyzer name
+    * @param queryAnalyzer Query Analyzer name
+    * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
+    * @return
+    */
+  def apply[V: ClassTag](elems: RDD[V],
+                                      indexAnalyzer: String,
+                                      queryAnalyzer: String,
+                                      similarity: String)
+                                     (implicit docConverter: V => Document)
+  : PointLuceneRDD[V] = {
+    val partitions = elems.mapPartitions[AbstractPointLuceneRDDPartition[V]](
+      iter => Iterator(PointLuceneRDDPartition[V](iter, indexAnalyzer, queryAnalyzer)),
+      preservesPartitioning = true)
+    new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
+  }
+
+  def apply[K: ClassTag, V: ClassTag](elems: RDD[V])
+                                     (implicit docConverter: V => Document)
+  : PointLuceneRDD[V] = {
+    apply[V](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic())
+  }
+
+  /**
+    * Constructor for [[Dataset]]
+    */
+  def apply[V: ClassTag](elems: Dataset[V],
+                                      indexAnalyzer: String,
+                                      queryAnalyzer: String,
+                                      similarity: String)
+                                     (implicit docConverter: V => Document)
+  : PointLuceneRDD[V] = {
+    val partitions = elems.rdd.mapPartitions[AbstractPointLuceneRDDPartition[V]](
+      iter => Iterator(PointLuceneRDDPartition[V](iter, indexAnalyzer, queryAnalyzer)),
+      preservesPartitioning = true)
+    new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
+  }
+
+  /**
+    * Constructor for [[Dataset]]
+    */
+  def apply[V: ClassTag](elems: Dataset[V])
+                                     (implicit docConverter: V => Document)
+  : PointLuceneRDD[V] = {
+    apply[V](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic())
+  }
+
+  /**
+    * Instantiate [[PointLuceneRDD]] from DataFrame with spatial column (shape format)
+    *
+    * Shape format can be one of ShapeIO.GeoJSON, ShapeIO.LEGACY, ShapeIO.POLY, ShapeIO.WKT
+    *
+    * {{
+    *  val countries = spark.read.parquet("data/countries-bbox.parquet")
+    *  val lucene = ShapeLuceneRDD(counties, "shape")
+    *
+    * }}
+    * @param df Input dataframe containing Shape as String field named "shapeField"
+    * @param shapeField Name of DataFrame column that contains Shape as String, i.e., WKT
+    * @param shapeConv Implicit convertion for spatial / shape
+    * @param docConverter Implicit conversion for Lucene Document
+    * @return
+    */
+  def apply(df : DataFrame,
+            shapeField: String)
+           (implicit shapeConv: String => Shape, docConverter: Row => Document)
+  : ShapeLuceneRDD[String, Row] = {
+    apply(df, shapeField,
+      getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic())
+  }
+
+  def apply(df : DataFrame,
+            shapeField: String,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String)
+           (implicit docConverter: Row => Document)
+  : PointLuceneRDD[Row] = {
+    val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
+      .mapPartitions[AbstractPointLuceneRDDPartition[Row]](
+      iter => Iterator(PointLuceneRDDPartition[Row](iter, indexAnalyzer, queryAnalyzer)),
+      preservesPartitioning = true)
+    new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
+  }
 }

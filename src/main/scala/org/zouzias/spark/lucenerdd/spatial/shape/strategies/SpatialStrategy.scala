@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape.strategies
 
-import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy
+import org.apache.lucene.spatial.prefix.{PrefixTreeStrategy, RecursivePrefixTreeStrategy}
 import org.zouzias.spark.lucenerdd.spatial.shape.grids.PrefixTreeLoader
 
 trait SpatialStrategy extends PrefixTreeLoader {
@@ -29,6 +29,6 @@ trait SpatialStrategy extends PrefixTreeLoader {
    * <p />
    * Note that these are initialized with a field name.
    */
-  protected val strategy = new RecursivePrefixTreeStrategy(grid,
+  protected val strategy: PrefixTreeStrategy = new RecursivePrefixTreeStrategy(grid,
     LocationDefaultField)
 }

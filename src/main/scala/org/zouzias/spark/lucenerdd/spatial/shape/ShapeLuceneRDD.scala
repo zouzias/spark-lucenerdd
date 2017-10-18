@@ -17,17 +17,16 @@
 package org.zouzias.spark.lucenerdd.spatial.shape
 
 
-import com.twitter.algebird.{TopK, TopKMonoid}
+import com.twitter.algebird.TopKMonoid
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark._
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.{DataFrame, Row}
 import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
-import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
@@ -41,6 +40,9 @@ import scala.reflect.ClassTag
  * ShapeLuceneRDD for geospatial and full-text search queries
  *
  * @param partitionsRDD Partition RDD
+ * @param indexAnalyzerName Analyzer during indexing time
+ * @param queryAnalyzerName Analyzer during query time
+ * @param similarity Query similarity (TF-IDF / BM25)
  * @tparam K Type containing the geospatial information (must be implicitly converted to [[Shape]])
  * @tparam V Type containing remaining information (must be implicitly converted to [[Document]])
  */
@@ -50,7 +52,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    val queryAnalyzerName: String,
    val similarity: String)
   extends RDD[(K, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
-    with LuceneRDDConfigurable {
+    with ShapeLuceneRDDConfigurable {
 
   logInfo("Instance is created...")
   logInfo(s"Number of partitions: ${partitionsRDD.count()}")
@@ -93,29 +95,46 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
     new LuceneRDDResponse(partitionsRDD.map(f), SparkScoreDoc.ascending)
   }
 
-  private def linker[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
-    mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
-                            Iterable[SparkScoreDoc]): RDD[(T, Array[SparkScoreDoc])] = {
-    logDebug("Linker requested")
+  private def linker[T: ClassTag](that: RDD[T],
+                                  pointFunctor: T => PointType,
+                                  mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
+                                    Iterable[SparkScoreDoc],
+                                  linkerMethod: String)
+  : RDD[(T, Array[SparkScoreDoc])] = {
+    logInfo("Shape Linkage requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
-    val thatWithIndex = that.zipWithIndex().map(_.swap)
-    val queries = thatWithIndex.mapValues(pointFunctor).collect()
-    val queriesB = partitionsRDD.context.broadcast(queries)
+    val queries = that.zipWithIndex().map(_.swap)
 
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions {
-      case partitions =>
-        partitions.flatMap { case partition =>
-          queriesB.value.par
-            .map{ case (index, (x, y)) =>
-            (index, topKMonoid.build(mapper((x, y), partition)))
+    val resultsByPart = linkerMethod match {
+      case "cartesian" =>
+        val concatenated = queries.mapValues(pointFunctor).glom()
+
+        concatenated.cartesian(partitionsRDD)
+          .flatMap { case (qs, lucene) =>
+            qs.map { case (ind, query) =>
+              (ind, topKMonoid.build(mapper((query._1, query._2), lucene)))
+            }
           }
+      case _ =>
+        logInfo("Collecting query points to driver")
+        val collectedQueries = queries.mapValues(pointFunctor).collect()
+        val queriesB = partitionsRDD.context.broadcast(collectedQueries)
+
+        partitionsRDD.mapPartitions { partitions =>
+            partitions.flatMap { partition =>
+              queriesB.value.map { case (index, (x, y)) =>
+                  (index, topKMonoid.build(mapper((x, y), partition)))
+                }
+            }
         }
     }
 
-    logDebug("Merge topK linkage results")
+    logInfo("Computing top-k linkage per partition")
     val results = resultsByPart.reduceByKey(topKMonoid.plus)
-    thatWithIndex.join(results).values.map(joined => (joined._1, joined._2.items.toArray))
+
+    queries.join(results).values
+      .map(joined => (joined._1, joined._2.items.toArray))
   }
 
   /**
@@ -126,18 +145,22 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    *
    * @param that An RDD of entities to be linked
    * @param pointFunctor Function that generates a point from each element of other
+   * @param linkerMethod Method to perform linkage
    * @tparam T A type
    * @return an RDD of Tuple2 that contains the linked results
    *
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkByKnn[T: ClassTag](that: RDD[T], pointFunctor: T => PointType,
-                           topK: Int = DefaultTopK)
+  def linkByKnn[T: ClassTag](that: RDD[T],
+                             pointFunctor: T => PointType,
+                             topK: Int = DefaultTopK,
+                             linkerMethod: String = getShapeLinkerMethod)
   : RDD[(T, Array[SparkScoreDoc])] = {
     logInfo("linkByKnn requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
-      part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString))
+      part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString),
+      linkerMethod)
   }
 
   /**
@@ -147,18 +170,24 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    *
    * @param that An RDD of entities to be linked
    * @param pointFunctor Function that generates a point from each element of other
+   * @param linkerMethod Method to perform linkage
    * @tparam T A type
    * @return an RDD of Tuple2 that contains the linked results
    *
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkByRadius[T: ClassTag](that: RDD[T], pointFunctor: T => PointType, radius: Double,
-    topK: Int = DefaultTopK, spatialOp: String = SpatialOperation.Intersects.getName)
+  def linkByRadius[T: ClassTag](that: RDD[T],
+                                pointFunctor: T => PointType,
+                                radius: Double,
+                                topK: Int = DefaultTopK,
+                                spatialOp: String = SpatialOperation.Intersects.getName,
+                                linkerMethod: String = getShapeLinkerMethod)
   : RDD[(T, Array[SparkScoreDoc])] = {
     logInfo("linkByRadius requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
-      part.circleSearch(queryPoint, radius, topK, spatialOp))
+      part.circleSearch(queryPoint, radius, topK, spatialOp),
+      linkerMethod)
   }
 
 
@@ -168,16 +197,19 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * Links this and that based on nearest neighbors, returns Knn
    *
    *
-   * @param other
-   * @param searchQueryGen
-   * @param topK
+   * @param other DataFrame of entities to be linked
+   * @param searchQueryGen Function that generates a point from each element of other
+    * @param topK Number of linked items
+   * @param linkerMethod Method to perform linkage
    * @return
    */
-  def linkDataFrameByKnn(other: DataFrame, searchQueryGen: Row => PointType,
-                         topK: Int = DefaultTopK)
+  def linkDataFrameByKnn(other: DataFrame,
+                         searchQueryGen: Row => PointType,
+                         topK: Int = DefaultTopK,
+                         linkerMethod: String = getShapeLinkerMethod)
   : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("linkDataFrameByKnn requested")
-    linkByKnn[Row](other.rdd, searchQueryGen, topK)
+    linkByKnn[Row](other.rdd, searchQueryGen, topK, linkerMethod)
   }
 
   /**
@@ -187,17 +219,21 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    *
    * @param other DataFrame of entities to be linked
    * @param pointFunctor Function that generates a point from each element of other
+   * @param linkerMethod Method to perform linkage
    * @return an RDD of Tuple2 that contains the linked results
    *
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkDataFrameByRadius(other: DataFrame, pointFunctor: Row => PointType,
-                            radius: Double, topK: Int = DefaultTopK,
-                            spatialOp: String = SpatialOperation.Intersects.getName)
+  def linkDataFrameByRadius(other: DataFrame,
+                            pointFunctor: Row => PointType,
+                            radius: Double,
+                            topK: Int = DefaultTopK,
+                            spatialOp: String = SpatialOperation.Intersects.getName,
+                            linkerMethod: String = getShapeLinkerMethod)
   : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("linkDataFrameByRadius requested")
-    linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp)
+    linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp, linkerMethod)
   }
 
   /**
@@ -285,7 +321,9 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
    * @param operationName Intersect, contained, etc.
    * @return
    */
-  def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int,
+  def bboxSearch(lowerLeft: PointType,
+                 upperRight: PointType,
+                 k: Int,
                  operationName: String)
   : LuceneRDDResponse = {
     logInfo(s"Bounding box with lower left ${lowerLeft}, upper right ${upperRight} and k = ${k}")
@@ -395,7 +433,8 @@ object ShapeLuceneRDD extends Versionable
    * @param docConverter Implicit conversion for Lucene Document
    * @return
    */
-  def apply(df : DataFrame, shapeField: String)
+  def apply(df : DataFrame,
+            shapeField: String)
            (implicit shapeConv: String => Shape, docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
     apply(df, shapeField,
@@ -403,14 +442,17 @@ object ShapeLuceneRDD extends Versionable
       getOrElseClassic())
   }
 
-  def apply(df : DataFrame, shapeField: String, indexAnalyzer: String, queryAnalyzer: String,
-            similairty: String)
+  def apply(df : DataFrame,
+            shapeField: String,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String)
            (implicit shapeConv: String => Shape, docConverter: Row => Document)
   : ShapeLuceneRDD[String, Row] = {
     val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
       .mapPartitions[AbstractShapeLuceneRDDPartition[String, Row]](
       iter => Iterator(ShapeLuceneRDDPartition[String, Row](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
-    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similairty)
+    new ShapeLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
   }
 }

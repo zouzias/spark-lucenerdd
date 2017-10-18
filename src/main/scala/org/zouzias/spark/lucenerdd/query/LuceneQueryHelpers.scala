@@ -87,11 +87,6 @@ object LuceneQueryHelpers extends Serializable {
    */
   def parseQueryString(searchString: String, analyzer: Analyzer): Query = {
     val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
-
-    // See http://goo.gl/L8sbrB
-    if (analyzer.getClass.getCanonicalName.toLowerCase().contains("whitespace")) {
-      queryParser.setLowercaseExpandedTerms(false)
-    }
     queryParser.parse(searchString)
   }
 

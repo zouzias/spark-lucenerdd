@@ -36,10 +36,14 @@ import org.zouzias.spark.lucenerdd.versioning.Versionable
 import scala.reflect.ClassTag
 
 /**
- * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
- *
- * @tparam T
- */
+  * Spark RDD with Lucene's query capabilities (term, prefix, fuzzy, phrase query)
+  *
+  * @param partitionsRDD Partitions of RDD
+  * @param indexAnalyzer Analyzer during indexing time
+  * @param queryAnalyzer Analyzer during query time
+  * @param similarity Query similarity (TF-IDF / BM25)
+  * @tparam T
+  */
 class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
                              protected val indexAnalyzer: String,
                              protected val queryAnalyzer: String,
@@ -135,12 +139,16 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     *
     * @param searchQueryGen Search query mapper function
     * @param topK Number of results to deduplication
+    * @param linkerMethod Method to perform linkage
+    *
     * @return
     */
-  def dedup[T1: ClassTag](searchQueryGen: T1 => String, topK: Int = DefaultTopK)
+  def dedup[T1: ClassTag](searchQueryGen: T1 => String,
+                          topK: Int = DefaultTopK,
+                          linkerMethod: String = getLinkerMethod)
   : RDD[(T1, Array[SparkScoreDoc])] = {
     // FIXME: is this asInstanceOf necessary?
-    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK)
+    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK, linkerMethod)
   }
 
   /**
@@ -149,12 +157,39 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @param other DataFrame to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
    * @param topK
+   * @param linkerMethod Method to perform linkage
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    */
-  def linkDataFrame(other: DataFrame, searchQueryGen: Row => String, topK: Int = DefaultTopK)
+  def linkDataFrame(other: DataFrame,
+                    searchQueryGen: Row => String,
+                    topK: Int = DefaultTopK,
+                    linkerMethod: String = getLinkerMethod)
   : RDD[(Row, Array[SparkScoreDoc])] = {
     logInfo("LinkDataFrame requested")
-    link[Row](other.rdd, searchQueryGen, topK)
+    link[Row](other.rdd, searchQueryGen, topK, linkerMethod)
+  }
+
+  /**
+    * Entity linkage via Lucene query over all elements of an RDD.
+    *
+    * @param other RDD to be linked
+    * @param searchQueryGen Function that generates a Lucene Query object for each element of other
+    * @param linkerMethod Method to perform linkage
+    * @tparam T1 A type
+    * @return an RDD of Tuple2 that contains the linked search Lucene Document
+    *         in the second position
+    */
+  def linkByQuery[T1: ClassTag](other: RDD[T1],
+                                searchQueryGen: T1 => Query,
+                                topK: Int = DefaultTopK,
+                                linkerMethod: String = getLinkerMethod)
+  : RDD[(T1, Array[SparkScoreDoc])] = {
+    logInfo("LinkByQuery requested")
+    def typeToQueryString = (input: T1) => {
+      searchQueryGen(input).toString
+    }
+
+    link[T1](other, typeToQueryString, topK, linkerMethod)
   }
 
   /**
@@ -162,52 +197,53 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    *
    * @param other RDD to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
+   * @param linkerMethod Method to perform linkage, default value from configuration
    * @tparam T1 A type
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    *
    * Note: Currently the query strings of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def link[T1: ClassTag](other: RDD[T1], searchQueryGen: T1 => String, topK: Int = DefaultTopK)
+  def link[T1: ClassTag](other: RDD[T1],
+                         searchQueryGen: T1 => String,
+                         topK: Int = DefaultTopK,
+                         linkerMethod: String = getLinkerMethod)
     : RDD[(T1, Array[SparkScoreDoc])] = {
     logInfo("Linkage requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
-    logInfo("Collecting query points to driver")
-    val otherWithIndex = other.zipWithIndex().map(_.swap)
-    val queries = otherWithIndex.mapValues(searchQueryGen).collect()
-    val queriesB = partitionsRDD.context.broadcast(queries)
+    val queriesWithIndex = other.zipWithIndex().map(_.swap)
 
-    val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] = partitionsRDD.mapPartitions(partitions =>
-      partitions.flatMap { case partition =>
-        queriesB.value.par.map { case (index, qr) =>
-          (index, topKMonoid.build(partition.query(qr, topK)))
-        }
-      })
+    logInfo(s"Linker method is ${linkerMethod}")
+    val resultsByPart = linkerMethod match {
+      case "cartesian" =>
+        val concatenated = queriesWithIndex.mapValues(searchQueryGen).glom()
 
-    logInfo("Compute topK linkage per partition")
-    val results = resultsByPart.reduceByKey(topKMonoid.plus)
-    otherWithIndex.join(results).values
-      .map(joined => (joined._1, joined._2.items.toArray))
-  }
+        concatenated.cartesian(partitionsRDD)
+          .flatMap { case (qs, part) =>
+            qs.map(q => (q._1, topKMonoid.build(part.query(q._2, topK))))
+          }
+      case _ =>
+        logInfo("Collecting query points to driver")
+        val collectedQueries = queriesWithIndex.mapValues(searchQueryGen).collect()
+        val queriesB = partitionsRDD.context.broadcast(collectedQueries)
 
-  /**
-   * Entity linkage via Lucene query over all elements of an RDD.
-   *
-   * @param other RDD to be linked
-   * @param searchQueryGen Function that generates a Lucene Query object for each element of other
-   * @tparam T1 A type
-   * @return an RDD of Tuple2 that contains the linked search Lucene Document in the second position
-   */
-  def linkByQuery[T1: ClassTag](other: RDD[T1],
-                                searchQueryGen: T1 => Query, topK: Int = DefaultTopK)
-  : RDD[(T1, Array[SparkScoreDoc])] = {
-    logInfo("LinkByQuery requested")
-    def typeToQueryString = (input: T1) => {
-      searchQueryGen(input).toString
+        val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] =
+          partitionsRDD.mapPartitions(partitions =>
+          partitions.flatMap { partition =>
+            queriesB.value.map { case (index, qr) =>
+              (index, topKMonoid.build(partition.query(qr, topK)))
+            }
+          })
+
+        resultsByPart
     }
 
-    link[T1](other, typeToQueryString, topK)
+    logInfo("Computing top-k linkage per partition")
+    val results = resultsByPart.reduceByKey(topKMonoid.plus)
+
+    queriesWithIndex.join(results).values
+      .map(joined => (joined._1, joined._2.items.toArray))
   }
 
   /**
@@ -347,7 +383,9 @@ object LuceneRDD extends Versionable
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String,
+  def apply[T : ClassTag](elems: RDD[T],
+                          indexAnalyzer: String,
+                          queryAnalyzer: String,
                           similarity: String)
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
@@ -375,7 +413,10 @@ object LuceneRDD extends Versionable
    * @return
    */
   def apply[T : ClassTag]
-  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String, similarity: String)
+  (elems: Iterable[T],
+   indexAnalyzer: String,
+   queryAnalyzer: String,
+   similarity: String)
   (implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {
     apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity)
@@ -400,7 +441,10 @@ object LuceneRDD extends Versionable
    * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
     * @return
    */
-  def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String, similarity: String)
+  def apply(dataFrame: DataFrame,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String)
   : LuceneRDD[Row] = {
     apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity)
   }

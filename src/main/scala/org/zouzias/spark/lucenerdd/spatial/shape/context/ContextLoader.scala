@@ -19,16 +19,17 @@ package org.zouzias.spark.lucenerdd.spatial.shape.context
 import java.io.{StringReader, StringWriter}
 
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext
+import org.locationtech.spatial4j.io.{ShapeReader, ShapeWriter}
 import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 
 trait ContextLoader extends ShapeLuceneRDDConfigurable{
 
-  protected val LocationDefaultField = getLocationFieldName
+  protected val LocationDefaultField: String = getLocationFieldName
 
-  protected lazy val shapeReader = ctx.getFormats.getReader(getShapeFormat)
+  protected lazy val shapeReader: ShapeReader = ctx.getFormats.getReader(getShapeFormat)
 
-  protected lazy val shapeWriter = ctx.getFormats.getWriter(getShapeFormat)
+  protected lazy val shapeWriter: ShapeWriter = ctx.getFormats.getWriter(getShapeFormat)
 
   protected def shapeToString(shape: Shape): String = {
     val writer = new StringWriter()

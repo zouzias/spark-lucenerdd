@@ -19,7 +19,7 @@ resolvers += "bintray-spark-packages" at "https://dl.bintray.com/spark-packages/
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.4")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.5")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
 
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
 

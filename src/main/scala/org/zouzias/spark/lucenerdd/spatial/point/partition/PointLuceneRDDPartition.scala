@@ -16,15 +16,26 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point.partition
 
-import org.apache.lucene.document.Document
+import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.document.{Document, StoredField}
+import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
+import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
+import org.joda.time.DateTime
+import org.locationtech.spatial4j.distance.DistanceUtils
+import org.locationtech.spatial4j.shape.Shape
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
+import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.commons.strategies.SpatialStrategy
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
 import scala.reflect.{ClassTag, classTag}
 
 
-private[shape] class PointLuceneRDDPartition[V]
-(private val iter: Iterator[V],
+private[point] class PointLuceneRDDPartition[V]
+(private val iter: Iterator[(PointType, V)],
  private val indexAnalyzerName: String,
  private val queryAnalyzerName: String)
 (override implicit val vTag: ClassTag[V])
@@ -32,85 +43,163 @@ private[shape] class PointLuceneRDDPartition[V]
   extends AbstractPointLuceneRDDPartition[V]
     with IndexWithTaxonomyWriter
     with SpatialStrategy {
-  override def size = ???
 
-  override def iterator = ???
+  override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
-  override def isDefined(point: (Double, Double)) = ???
+  private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 
-  /**
-    * Nearest neighbour search
-    *
-    * @param point        query point
-    * @param k            number of neighbors to return
-    * @param searchString Lucene Query string
-    * @return
-    */
-  override def knnSearch(point: (Double, Double), k: Int, searchString: String) = ???
+  private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
 
-  /**
-    * Search for points within a circle
-    *
-    * @param center center of circle
-    * @param radius radius of circle in kilometers (KM)
-    * @param k      number of points to return
-    * @return
-    */
-  override def circleSearch(center: (Double, Double), radius: Double, k: Int, operationName: String) = ???
+    // Potentially more than one shape in this field is supported by some
+    // strategies; see the Javadoc of the SpatialStrategy impl to see.
+    shapes.foreach{ case shape =>
+      strategy.createIndexableFields(shape).foreach{ case field =>
+        doc.add(field)
+      }
 
-  /**
-    * Spatial search with arbitrary shape
-    *
-    * @param shapeAsString Shape object represented as String
-    * @param k             Number of results to return
-    * @param operationName Operation name, i.e., intersect, within, etc
-    * @return
-    */
-  override def spatialSearch(shapeAsString: String, k: Int, operationName: String) = ???
+      doc.add(new StoredField(strategy.getFieldName, shapeToString(shape)))
+    }
 
-  /**
-    * Spatial search with point
-    *
-    * @param point         Query point
-    * @param k             Number of result to return
-    * @param operationName Operation name, i.e., intersect, within, etc
-    * @return
-    */
-  override def spatialSearch(point: (Double, Double), k: Int, operationName: String) = ???
+    doc
+  }
 
-  /**
-    * Bounding box search with point and radius
-    *
-    * @param center        given as (x, y)
-    * @param radius        distance from center in kilometers (KM)
-    * @param k             Number of results to return
-    * @param operationName Operation name, i.e., intersect, within, etc
-    * @return
-    */
-  override def bboxSearch(center: (Double, Double), radius: Double, k: Int, operationName: String) = ???
+  private val (iterOriginal, iterIndex) = iter.duplicate
 
-  /**
-    * Bounding box search with lower left and upper right corners
-    *
-    * @param lowerLeft     Lower left point
-    * @param upperRight    Upper left point
-    * @param k             Number of results
-    * @param operationName Operation name, i.e., intersect, within, etc
-    * @return
-    */
-  override def bboxSearch(lowerLeft: (Double, Double),
-                          upperRight: (Double, Double),
-                          k: Int, operationName: String) = ???
+  private val startTime = new DateTime(System.currentTimeMillis())
+  logInfo(s"Indexing process initiated at ${startTime}...")
+  iterIndex.foreach { case (p, value) =>
+    // (implicitly) convert type K to Shape and V to a Lucene document
+    val doc = docConversion(value)
+    val docWithLocation = decorateWithLocation(doc, Iterable(ctx.makePoint(p._1, p._2)))
+    indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
+  }
+  private val endTime = new DateTime(System.currentTimeMillis())
+  logInfo(s"Indexing process completed at ${endTime}...")
+  logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
+
+  // Close the indexWriter and taxonomyWriter (for faceted search)
+  closeAllWriters()
+
+  private val indexReader = DirectoryReader.open(IndexDir)
+  private val indexSearcher = new IndexSearcher(indexReader)
+
+  override def size: Long = iterOriginal.size.toLong
 
   /**
     * Restricts the entries to those satisfying a predicate
     *
-    * @param pred Predicate to filter on
+    * @param pred
     * @return
     */
-  override def filter(pred: V => Boolean) = ???
+  override def filter(pred: (PointType, V) => Boolean):
+  AbstractPointLuceneRDDPartition[V] = {
+    PointLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)),
+      indexAnalyzerName, queryAnalyzerName)
+  }
 
-  override protected def indexAnalyzer() = ???
+  override def isDefined(key: PointType): Boolean = iterOriginal.exists(_._1 == key)
+
+  override def iterator: Iterator[(PointType, V)] = iterOriginal
+
+  private def docLocation(scoreDoc: ScoreDoc): Option[Shape] = {
+    val shapeString = indexReader.document(scoreDoc.doc)
+      .getField(strategy.getFieldName)
+      .stringValue()
+
+    try{
+      Some(stringToShape(shapeString))
+    }
+    catch {
+      case _: Throwable => None
+    }
+  }
+
+  override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
+  : LuceneRDDResponsePartition = {
+    logInfo(s"circleSearch [center:${center}, operation:${operationName}]")
+    val args = new SpatialArgs(SpatialOperation.get(operationName),
+      ctx.makeCircle(center._1, center._2,
+        DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
+
+    val query = strategy.makeQuery(args)
+    val docs = indexSearcher.search(query, k)
+    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+  }
+
+  override def knnSearch(point: PointType, k: Int, searchString: String)
+  : LuceneRDDResponsePartition = {
+    logInfo(s"knnSearch [center:${point}, searchQuery:${searchString}]")
+
+    // Match all, order by distance ascending
+    val pt = ctx.makePoint(point._1, point._2)
+
+    // the distance (in km)
+    val valueSource = strategy.makeDistanceValueSource(pt, DistanceUtils.DEG_TO_KM)
+
+    // false = ascending dist
+    val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
+
+    val query = LuceneQueryHelpers.parseQueryString(searchString, QueryAnalyzer)
+    val docs = indexSearcher.search(query, k, distSort)
+
+    // Here we sorted on it, and the distance will get
+    // computed redundantly.  If the distance is only needed for the top-X
+    // search results then that's not a big deal. Alternatively, try wrapping
+    // the ValueSource with CachingDoubleValueSource then retrieve the value
+    // from the ValueSource now. See LUCENE-4541 for an example.
+    val result = docs.scoreDocs.map { scoreDoc => {
+      val location = docLocation(scoreDoc)
+      location match {
+        case Some(shape) =>
+          SparkScoreDoc(indexSearcher, scoreDoc,
+            ctx.calcDistance(pt, shape.getCenter).toFloat)
+        case None =>
+          SparkScoreDoc(indexSearcher, scoreDoc, -1F)
+      }
+    }
+    }
+
+    LuceneRDDResponsePartition(result.toIterator)
+  }
+
+  override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
+  : LuceneRDDResponsePartition = {
+    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
+    val shape = stringToShape(shapeAsString)
+    spatialSearch(shape, k, operationName)
+  }
+
+  private def spatialSearch(shape: Shape, k: Int, operationName: String)
+  : LuceneRDDResponsePartition = {
+    val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
+    val query = strategy.makeQuery(args)
+    val docs = indexSearcher.search(query, k)
+    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+  }
+
+  override def spatialSearch(point: PointType, k: Int, operationName: String)
+  : LuceneRDDResponsePartition = {
+    val shape = ctx.makePoint(point._1, point._2)
+    spatialSearch(shape, k, operationName)
+  }
+
+  override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
+  : LuceneRDDResponsePartition = {
+    logInfo(s"bboxSearch [center:${center}, radius: ${radius} and operation:${operationName}]")
+    val x = center._1
+    val y = center._2
+    val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)
+    val shape = ctx.makeRectangle(x - radiusKM, x + radiusKM, y - radiusKM, y + radiusKM)
+    spatialSearch(shape, k, operationName)
+  }
+
+  override def bboxSearch(lowerLeft: PointType, upperRight: PointType, k: Int, opName: String)
+  : LuceneRDDResponsePartition = {
+    val lowerLeftPt = ctx.makePoint(lowerLeft._1, lowerLeft._2)
+    val upperRightPt = ctx.makePoint(upperRight._1, upperRight._2)
+    val shape = ctx.makeRectangle(lowerLeftPt, upperRightPt)
+    spatialSearch(shape, k, opName)
+  }
 }
 
 object PointLuceneRDDPartition {
@@ -125,7 +214,7 @@ object PointLuceneRDDPartition {
     * @tparam V
     * @return
     */
-  def apply[V: ClassTag](iter: Iterator[V],
+  def apply[V: ClassTag](iter: Iterator[(PointType, V)],
                                       indexAnalyzer: String,
                                       queryAnalyzer: String)
                                      (implicit docConv: V => Document)

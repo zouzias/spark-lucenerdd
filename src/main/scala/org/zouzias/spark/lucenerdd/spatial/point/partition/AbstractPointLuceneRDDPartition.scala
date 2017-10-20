@@ -22,13 +22,13 @@ import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import scala.reflect.ClassTag
 
 
-private[shape] abstract class AbstractPointLuceneRDDPartition[V] extends Serializable {
+private[point] abstract class AbstractPointLuceneRDDPartition[V] extends Serializable {
 
   protected implicit def vTag: ClassTag[V]
 
   def size: Long
 
-  def iterator: Iterator[V]
+  def iterator: Iterator[(PointType, V)]
 
   def isDefined(point: PointType): Boolean
 
@@ -107,5 +107,5 @@ private[shape] abstract class AbstractPointLuceneRDDPartition[V] extends Seriali
    * @param pred Predicate to filter on
    * @return
    */
-  def filter(pred: V => Boolean): AbstractPointLuceneRDDPartition[V]
+  def filter(pred: (PointType, V) => Boolean): AbstractPointLuceneRDDPartition[V]
 }

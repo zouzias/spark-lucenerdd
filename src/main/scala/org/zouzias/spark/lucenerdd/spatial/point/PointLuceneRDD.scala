@@ -23,15 +23,13 @@ import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.storage.StorageLevel
-import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
+import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD._
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
@@ -41,7 +39,7 @@ class PointLuceneRDD[V: ClassTag]
    val indexAnalyzerName: String,
    val queryAnalyzerName: String,
    val similarity: String)
-  extends RDD[V](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
+  extends RDD[(PointType, V)](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
     with ShapeLuceneRDDConfigurable {
 
   logInfo("Instance is created...")
@@ -326,15 +324,15 @@ class PointLuceneRDD[V: ClassTag]
   }
 
   /** RDD compute method. */
-  override def compute(part: Partition, context: TaskContext): Iterator[V] = {
+  override def compute(part: Partition, context: TaskContext): Iterator[(PointType, V)] = {
     firstParent[AbstractPointLuceneRDDPartition[V]].iterator(part, context).next.iterator
   }
 
-  override def filter(pred: V => Boolean): PointLuceneRDD[V] = {
+  def filter(pred: (PointType, V) => Boolean): PointLuceneRDD[V] = {
     val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
       partition.map(_.filter(pred)), preservesPartitioning = true
     )
-    new PointLuceneRDD(newPartitionRDD, indexAnalyzerName, queryAnalyzerName, similarity)
+    new PointLuceneRDD[V](newPartitionRDD, indexAnalyzerName, queryAnalyzerName, similarity)
   }
 
   def exists(point: PointType): Boolean = {
@@ -364,7 +362,7 @@ object PointLuceneRDD extends Versionable
     * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
     * @return
     */
-  def apply[V: ClassTag](elems: RDD[V],
+  def apply[V: ClassTag](elems: RDD[(PointType, V)],
                                       indexAnalyzer: String,
                                       queryAnalyzer: String,
                                       similarity: String)
@@ -376,7 +374,7 @@ object PointLuceneRDD extends Versionable
     new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
   }
 
-  def apply[K: ClassTag, V: ClassTag](elems: RDD[V])
+  def apply[V: ClassTag](elems: RDD[(PointType, V)])
                                      (implicit docConverter: V => Document)
   : PointLuceneRDD[V] = {
     apply[V](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
@@ -386,7 +384,7 @@ object PointLuceneRDD extends Versionable
   /**
     * Constructor for [[Dataset]]
     */
-  def apply[V: ClassTag](elems: Dataset[V],
+  def apply[V: ClassTag](elems: Dataset[(PointType, V)],
                                       indexAnalyzer: String,
                                       queryAnalyzer: String,
                                       similarity: String)
@@ -401,7 +399,7 @@ object PointLuceneRDD extends Versionable
   /**
     * Constructor for [[Dataset]]
     */
-  def apply[V: ClassTag](elems: Dataset[V])
+  def apply[V: ClassTag](elems: Dataset[(PointType, V)])
                                      (implicit docConverter: V => Document)
   : PointLuceneRDD[V] = {
     apply[V](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
@@ -426,21 +424,22 @@ object PointLuceneRDD extends Versionable
     */
   def apply(df : DataFrame,
             shapeField: String)
-           (implicit shapeConv: String => Shape, docConverter: Row => Document)
-  : ShapeLuceneRDD[String, Row] = {
+           (implicit shapeConv: String => PointType, docConverter: Row => Document)
+  : PointLuceneRDD[Row] = {
     apply(df, shapeField,
       getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
       getOrElseClassic())
   }
+
 
   def apply(df : DataFrame,
             shapeField: String,
             indexAnalyzer: String,
             queryAnalyzer: String,
             similarity: String)
-           (implicit docConverter: Row => Document)
+           (implicit  shapeConv: String => PointType, docConverter: Row => Document)
   : PointLuceneRDD[Row] = {
-    val partitions = df.rdd.map(row => (row.getString(row.fieldIndex(shapeField)), row))
+    val partitions = df.rdd.map(row => (shapeConv(row.getString(row.fieldIndex(shapeField))), row))
       .mapPartitions[AbstractPointLuceneRDDPartition[Row]](
       iter => Iterator(PointLuceneRDDPartition[Row](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)

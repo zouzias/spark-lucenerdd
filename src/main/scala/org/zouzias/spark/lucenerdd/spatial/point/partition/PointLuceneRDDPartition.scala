@@ -23,7 +23,7 @@ import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
 import org.locationtech.spatial4j.distance.DistanceUtils
-import org.locationtech.spatial4j.shape.Shape
+import org.locationtech.spatial4j.shape.{Point, Shape}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
@@ -44,20 +44,18 @@ private[point] class PointLuceneRDDPartition[V]
     with IndexWithTaxonomyWriter
     with SpatialStrategy {
 
+  /* We index only points in [[PointLuceneRDDPartition]] */
+  strategy.setPointsOnly(true)
+
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
   private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 
-  private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
+  private def decorateWithLocation(doc: Document, point: Point): Document = {
 
-    // Potentially more than one shape in this field is supported by some
-    // strategies; see the Javadoc of the SpatialStrategy impl to see.
-    shapes.foreach{ case shape =>
-      strategy.createIndexableFields(shape).foreach{ case field =>
+    strategy.createIndexableFields(point).foreach{ field =>
         doc.add(field)
-      }
-
-      doc.add(new StoredField(strategy.getFieldName, shapeToString(shape)))
+        doc.add(new StoredField(strategy.getFieldName, shapeToString(point)))
     }
 
     doc
@@ -68,9 +66,9 @@ private[point] class PointLuceneRDDPartition[V]
   private val startTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process initiated at ${startTime}...")
   iterIndex.foreach { case (p, value) =>
-    // (implicitly) convert type K to Shape and V to a Lucene document
+    // (implicitly) convert type V to a Lucene document
     val doc = docConversion(value)
-    val docWithLocation = decorateWithLocation(doc, Iterable(ctx.makePoint(p._1, p._2)))
+    val docWithLocation = decorateWithLocation(doc, ctx.makePoint(p._1, p._2))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
   }
   private val endTime = new DateTime(System.currentTimeMillis())

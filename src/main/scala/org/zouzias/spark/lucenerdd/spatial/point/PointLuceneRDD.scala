@@ -318,6 +318,15 @@ class PointLuceneRDD[V: ClassTag]
     partitionMapper(_.bboxSearch(lowerLeft, upperRight, k, operationName))
   }
 
+  /**
+    * Returns the smallest enclosing axis aligned bounding box per partition
+    * @return
+    */
+  def boundsPerPartition(): RDD[(PointType, PointType)] = {
+    logInfo("boundsPerPartition requested")
+    partitionsRDD.map(_.bounds())
+  }
+
   override def count(): Long = {
     logInfo("Count requested")
     partitionsRDD.map(_.size).reduce(_ + _)

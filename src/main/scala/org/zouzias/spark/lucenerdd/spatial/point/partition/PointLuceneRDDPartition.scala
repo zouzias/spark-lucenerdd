@@ -112,6 +112,11 @@ private[point] class PointLuceneRDDPartition[V]
     }
   }
 
+  override def bounds(): (PointType, PointType) = {
+    val rect = strategy.getSpatialContext.getWorldBounds
+    ((rect.getMinX, rect.getMinY), (rect.getMaxX, rect.getMaxY))
+  }
+
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
     logInfo(s"circleSearch [center:${center}, operation:${operationName}]")

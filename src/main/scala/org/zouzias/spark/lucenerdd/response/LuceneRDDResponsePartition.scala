@@ -23,3 +23,9 @@ case class LuceneRDDResponsePartition(results: Iterator[SparkScoreDoc])
   extends Iterable[SparkScoreDoc] {
   override def iterator(): Iterator[SparkScoreDoc] = results
 }
+
+object LuceneRDDResponsePartition {
+  def empty(): LuceneRDDResponsePartition = {
+    LuceneRDDResponsePartition(Iterator.empty)
+  }
+}

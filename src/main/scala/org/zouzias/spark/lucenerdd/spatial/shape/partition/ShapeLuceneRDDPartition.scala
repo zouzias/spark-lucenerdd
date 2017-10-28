@@ -107,12 +107,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
                   .getField(strategy.getFieldName)
                   .stringValue()
 
-   try{
-     Some(stringToShape(shapeString))
-   }
-    catch {
-      case _: Throwable => None
-    }
+    stringToShape(shapeString)
   }
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
@@ -166,8 +161,11 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
     logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
-    val shape = stringToShape(shapeAsString)
-    spatialSearch(shape, k, operationName)
+    val shapeOpt = stringToShape(shapeAsString)
+    shapeOpt match {
+      case shape: Shape => spatialSearch(shape, k, operationName)
+      case _ => LuceneRDDResponsePartition.empty()
+    }
   }
 
   private def spatialSearch(shape: Shape, k: Int, operationName: String)

@@ -76,16 +76,14 @@ class PointLuceneRDD[V: ClassTag]
     this
   }
 
-  setName("ShapeLuceneRDD")
-
   private def partitionMapper(f: AbstractPointLuceneRDDPartition[V] =>
     LuceneRDDResponsePartition): LuceneRDDResponse = {
     new LuceneRDDResponse(partitionsRDD.map(f), SparkScoreDoc.ascending)
   }
 
-  private def linker[T: ClassTag](that: RDD[T],
-                                  pointFunctor: T => PointType,
-                                  mapper: ( PointType, AbstractPointLuceneRDDPartition[V]) =>
+  private def linker[T: ClassTag, S: ClassTag](that: RDD[T],
+                                  pointFunctor: T => S,
+                                  mapper: (S, AbstractPointLuceneRDDPartition[V]) =>
                                     Iterable[SparkScoreDoc],
                                   linkerMethod: String)
   : RDD[(T, Array[SparkScoreDoc])] = {
@@ -101,7 +99,7 @@ class PointLuceneRDD[V: ClassTag]
         concatenated.cartesian(partitionsRDD)
           .flatMap { case (qs, lucene) =>
             qs.map { case (ind, query) =>
-              (ind, topKMonoid.build(mapper((query._1, query._2), lucene)))
+              (ind, topKMonoid.build(mapper(query, lucene)))
             }
           }
       case _ =>
@@ -111,8 +109,8 @@ class PointLuceneRDD[V: ClassTag]
 
         partitionsRDD.mapPartitions { partitions =>
             partitions.flatMap { partition =>
-              queriesB.value.map { case (index, (x, y)) =>
-                  (index, topKMonoid.build(mapper((x, y), partition)))
+              queriesB.value.map { case (index, query) =>
+                  (index, topKMonoid.build(mapper(query, partition)))
                 }
             }
         }
@@ -126,38 +124,12 @@ class PointLuceneRDD[V: ClassTag]
   }
 
   /**
-   * Link entities based on k-nearest neighbors (Knn)
-   *
-   * Links this and that based on nearest neighbors, returns Knn
-   *
-   *
-   * @param that An RDD of entities to be linked
-   * @param pointFunctor Function that generates a point from each element of other
-   * @param linkerMethod Method to perform linkage
-   * @tparam T A type
-   * @return an RDD of Tuple2 that contains the linked results
-   *
-   * Note: Currently the query coordinates of the other RDD are collected to the driver and
-   * broadcast to the workers.
-   */
-  def linkByKnn[T: ClassTag](that: RDD[T],
-                             pointFunctor: T => PointType,
-                             topK: Int = DefaultTopK,
-                             linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(T, Array[SparkScoreDoc])] = {
-    logInfo("linkByKnn requested")
-    linker[T](that, pointFunctor, (queryPoint, part) =>
-      part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString),
-      linkerMethod)
-  }
-
-  /**
    * Link entities if their shapes are within a distance in kilometers (km)
    *
    * Links this and that based on distance threshold
    *
    * @param that An RDD of entities to be linked
-   * @param pointFunctor Function that generates a point from each element of other
+   * @param shapeFunctor Function that generates a point from each element of other
    * @param linkerMethod Method to perform linkage
    * @tparam T A type
    * @return an RDD of Tuple2 that contains the linked results
@@ -165,63 +137,28 @@ class PointLuceneRDD[V: ClassTag]
    * Note: Currently the query coordinates of the other RDD are collected to the driver and
    * broadcast to the workers.
    */
-  def linkByRadius[T: ClassTag](that: RDD[T],
-                                pointFunctor: T => PointType,
-                                radius: Double,
+  def linkByInstersection[T: ClassTag](that: RDD[T],
+                                shapeFunctor: T => String,
                                 topK: Int = DefaultTopK,
-                                spatialOp: String = SpatialOperation.Intersects.getName,
                                 linkerMethod: String = getShapeLinkerMethod)
   : RDD[(T, Array[SparkScoreDoc])] = {
-    logInfo("linkByRadius requested")
-    linker[T](that, pointFunctor, (queryPoint, part) =>
-      part.circleSearch(queryPoint, radius, topK, spatialOp),
+    logInfo("linkByInstersection requested")
+    linker[T, String](that, shapeFunctor, (queryShape: String, part) =>
+      part.spatialSearch(queryShape, topK, SpatialOperation.Intersects.getName),
       linkerMethod)
   }
 
 
-  /**
-   * Link with DataFrame based on k-nearest neighbors (Knn)
-   *
-   * Links this and that based on nearest neighbors, returns Knn
-   *
-   *
-   * @param other DataFrame of entities to be linked
-   * @param searchQueryGen Function that generates a point from each element of other
-    * @param topK Number of linked items
-   * @param linkerMethod Method to perform linkage
-   * @return
-   */
-  def linkDataFrameByKnn(other: DataFrame,
-                         searchQueryGen: Row => PointType,
-                         topK: Int = DefaultTopK,
-                         linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(Row, Array[SparkScoreDoc])] = {
-    logInfo("linkDataFrameByKnn requested")
-    linkByKnn[Row](other.rdd, searchQueryGen, topK, linkerMethod)
-  }
-
-  /**
-   * Link entities if their shapes are within a distance in kilometers (km)
-   *
-   * Links this and that based on distance threshold
-   *
-   * @param other DataFrame of entities to be linked
-   * @param pointFunctor Function that generates a point from each element of other
-   * @param linkerMethod Method to perform linkage
-   * @return an RDD of Tuple2 that contains the linked results
-   *
-   * Note: Currently the query coordinates of the other RDD are collected to the driver and
-   * broadcast to the workers.
-   */
-  def linkDataFrameByRadius(other: DataFrame,
-                            pointFunctor: Row => PointType,
-                            radius: Double,
-                            topK: Int = DefaultTopK,
-                            spatialOp: String = SpatialOperation.Intersects.getName,
-                            linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(Row, Array[SparkScoreDoc])] = {
-    logInfo("linkDataFrameByRadius requested")
-    linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp, linkerMethod)
+  def linkByRadius[T: ClassTag](that: RDD[T],
+                                       pointFunctor: T => PointType,
+                                       topK: Int = DefaultTopK,
+                                       radius: Double,
+                                       linkerMethod: String = getShapeLinkerMethod)
+  : RDD[(T, Array[SparkScoreDoc])] = {
+    logInfo("linkByRadius requested")
+    linker[T, PointType](that, pointFunctor, (queryPoint, part) =>
+      part.circleSearch(queryPoint, radius, topK, SpatialOperation.Intersects.getName),
+      linkerMethod)
   }
 
   /**
@@ -266,23 +203,7 @@ class PointLuceneRDD[V: ClassTag]
   def spatialSearch(shapeWKT: String, k: Int,
                     operationName: String = SpatialOperation.Intersects.getName)
   : LuceneRDDResponse = {
-    logInfo(s"Spatial search with shape ${shapeWKT} and operation ${operationName}")
     partitionMapper(_.spatialSearch(shapeWKT, k, operationName))
-  }
-
-  /**
-   * Spatial search with a single Point
-   *
-   * @param point
-   * @param k
-   * @param operationName
-   * @return
-   */
-  def spatialSearch(point: PointType, k: Int,
-                    operationName: String)
-  : LuceneRDDResponse = {
-    logInfo(s"Spatial search with point ${point} and operation ${operationName}")
-    partitionMapper(_.spatialSearch(point, k, operationName))
   }
 
   /**

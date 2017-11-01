@@ -104,17 +104,19 @@ private[point] class PointLuceneRDDPartition[V]
       .getField(strategy.getFieldName)
       .stringValue()
 
-    try{
-      Some(stringToShape(shapeString))
-    }
-    catch {
-      case _: Throwable => None
-    }
+    stringToShape(shapeString)
   }
 
   override def bounds(): (PointType, PointType) = {
-    val rect = strategy.getSpatialContext.getWorldBounds
-    ((rect.getMinX, rect.getMinY), (rect.getMaxX, rect.getMaxY))
+    var (minX, maxX, minY, maxY) = (Double.MaxValue, Double.MinValue,
+      Double.MaxValue, Double.MinValue)
+    iterOriginal.map(_._1).foreach{ case (x, y) =>
+        minX = if (x < minX) x else minX
+        maxX = if (x > maxX) x else maxX
+        minY = if (y < minY) y else minY
+        maxY = if (y > maxY) y else maxY
+    }
+    ((minX, minY), (maxX, maxY))
   }
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)
@@ -167,9 +169,11 @@ private[point] class PointLuceneRDDPartition[V]
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
-    val shape = stringToShape(shapeAsString)
-    spatialSearch(shape, k, operationName)
+    val shapeOpt = stringToShape(shapeAsString)
+    shapeOpt match {
+      case shape: Shape => spatialSearch(shape, k, operationName)
+      case _ => LuceneRDDResponsePartition.empty()
+    }
   }
 
   private def spatialSearch(shape: Shape, k: Int, operationName: String)
@@ -178,12 +182,6 @@ private[point] class PointLuceneRDDPartition[V]
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
     LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
-  }
-
-  override def spatialSearch(point: PointType, k: Int, operationName: String)
-  : LuceneRDDResponsePartition = {
-    val shape = ctx.makePoint(point._1, point._2)
-    spatialSearch(shape, k, operationName)
   }
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)

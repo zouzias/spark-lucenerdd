@@ -73,17 +73,6 @@ private[point] abstract class AbstractPointLuceneRDDPartition[V] extends Seriali
   : LuceneRDDResponsePartition
 
   /**
-   * Spatial search with point
-   *
-   * @param point Query point
-   * @param k Number of result to return
-   * @param operationName Operation name, i.e., intersect, within, etc
-   * @return
-   */
-  def spatialSearch(point: PointType, k: Int, operationName: String)
-  : LuceneRDDResponsePartition
-
-  /**
    * Bounding box search with point and radius
    *
    * @param center given as (x, y)

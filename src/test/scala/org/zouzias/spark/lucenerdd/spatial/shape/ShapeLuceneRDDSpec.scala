@@ -150,7 +150,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
   }
 
   "ShapeLuceneRDD.version" should "return project sbt build information" in {
-    val map = LuceneRDD.version()
+    val map = ShapeLuceneRDD.version()
     map.contains("name") should equal(true)
     map.contains("builtAtMillis") should equal(true)
     map.contains("scalaVersion") should equal(true)

@@ -163,8 +163,10 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
     val shapeOpt = stringToShape(shapeAsString)
     shapeOpt match {
-      case shape: Shape => spatialSearch(shape, k, operationName)
-      case _ => LuceneRDDResponsePartition.empty()
+      case Some(shape) => spatialSearch(shape, k, operationName)
+      case None =>
+        log.error("Input shape does not have a valid format. Returning empty results")
+        LuceneRDDResponsePartition.empty()
     }
   }
 

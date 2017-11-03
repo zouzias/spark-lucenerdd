@@ -108,6 +108,7 @@ private[point] class PointLuceneRDDPartition[V]
   }
 
   override def bounds(): (PointType, PointType) = {
+    // TODO: Perform the following using monoids
     var (minX, maxX, minY, maxY) = (Double.MaxValue, Double.MinValue,
       Double.MaxValue, Double.MinValue)
     iterOriginal.map(_._1).foreach{ case (x, y) =>
@@ -171,8 +172,10 @@ private[point] class PointLuceneRDDPartition[V]
   : LuceneRDDResponsePartition = {
     val shapeOpt = stringToShape(shapeAsString)
     shapeOpt match {
-      case shape: Shape => spatialSearch(shape, k, operationName)
-      case _ => LuceneRDDResponsePartition.empty()
+      case Some(shape) => spatialSearch(shape, k, operationName)
+      case _ =>
+        log.error("Input shape does not have a valid format. Returning empty results")
+        LuceneRDDResponsePartition.empty()
     }
   }
 

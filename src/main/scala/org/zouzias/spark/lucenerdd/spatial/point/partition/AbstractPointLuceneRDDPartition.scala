@@ -36,7 +36,7 @@ private[point] abstract class AbstractPointLuceneRDDPartition[V] extends Seriali
 
   /**
     * Return smallest enclosing axis aligned bounding box
-    * @return ( (min_x, min_y), (max_x, max_y))
+    * @return ( (minX, minY), (maxX, maxY))
     */
   def bounds(): (PointType, PointType)
 

@@ -76,9 +76,14 @@ private[lucenerdd] class LuceneRDDResponse
 
   override def collect(): Array[SparkScoreDoc] = {
     val sz = partitionsRDD.map(_.size).sum().toInt
-    val monoid = new TopKMonoid[SparkScoreDoc](sz)(ordering)
-    partitionsRDD.map(monoid.build(_))
-      .reduce(monoid.plus).items.toArray
+    sz match {
+      case 0 => Array.empty[SparkScoreDoc]
+      case s =>
+        // Total size must be positive for [[TopKMonoid]]
+        val monoid = new TopKMonoid[SparkScoreDoc](s)(ordering)
+        partitionsRDD.map(monoid.build(_))
+          .reduce(monoid.plus).items.toArray
+    }
   }
 
   /**

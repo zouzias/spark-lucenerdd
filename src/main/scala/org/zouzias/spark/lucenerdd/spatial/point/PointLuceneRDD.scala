@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point
 
-import com.twitter.algebird.TopKMonoid
+import com.twitter.algebird._
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
@@ -248,6 +248,14 @@ class PointLuceneRDD[V: ClassTag]
     partitionsRDD.map(_.bounds())
   }
 
+  def bounds(): (PointType, PointType) = {
+    logInfo("bounds requested")
+    import com.twitter.algebird.GeneratedTupleAggregator._
+    map(_._1)
+      .mapPartitions(iter => Iterator(PointLuceneRDD.boundingBoxAgg(iter)))
+      .reduce(PointLuceneRDD.boundingBoxAgg.reduce)
+  }
+
   override def count(): Long = {
     logInfo("Count requested")
     partitionsRDD.map(_.size).reduce(_ + _)
@@ -375,4 +383,8 @@ object PointLuceneRDD extends Versionable
       preservesPartitioning = true)
     new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
   }
+
+  /** Algebird bounding box aggregator */
+  val boundingBoxAgg = Tuple2(Aggregator.min[PointType], Aggregator.max[PointType])
+
 }

@@ -28,6 +28,7 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.commons.strategies.SpatialStrategy
+import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
@@ -108,16 +109,8 @@ private[point] class PointLuceneRDDPartition[V]
   }
 
   override def bounds(): (PointType, PointType) = {
-    // TODO: Perform the following using monoids
-    var (minX, maxX, minY, maxY) = (Double.MaxValue, Double.MinValue,
-      Double.MaxValue, Double.MinValue)
-    iterOriginal.map(_._1).foreach{ case (x, y) =>
-        minX = if (x < minX) x else minX
-        maxX = if (x > maxX) x else maxX
-        minY = if (y < minY) y else minY
-        maxY = if (y > maxY) y else maxY
-    }
-    ((minX, minY), (maxX, maxY))
+    import com.twitter.algebird.GeneratedTupleAggregator._
+    PointLuceneRDD.boundingBoxAgg(iterOriginal.map(_._1))
   }
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)

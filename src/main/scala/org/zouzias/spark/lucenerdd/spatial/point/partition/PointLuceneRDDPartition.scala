@@ -109,8 +109,8 @@ private[point] class PointLuceneRDDPartition[V]
   }
 
   override def bounds(): (PointType, PointType) = {
-    import com.twitter.algebird.GeneratedTupleAggregator._
-    PointLuceneRDD.boundingBoxAgg(iterOriginal.map(_._1))
+    iterOriginal.map(_._1).map(x => (x, x))
+        .reduce(PointLuceneRDD.boundingBoxMonoid.plus)
   }
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)

@@ -28,6 +28,7 @@ import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
+import org.zouzias.spark.lucenerdd.spatial.commons.{MaxPointMonoid, MinPointMonoid}
 import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
@@ -87,7 +88,7 @@ class PointLuceneRDD[V: ClassTag]
                                     Iterable[SparkScoreDoc],
                                   linkerMethod: String)
   : RDD[(T, Array[SparkScoreDoc])] = {
-    logInfo("Shape Linkage requested")
+    logInfo("Point Linkage requested")
 
     val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     val queries = that.zipWithIndex().map(_.swap)
@@ -250,10 +251,10 @@ class PointLuceneRDD[V: ClassTag]
 
   def bounds(): (PointType, PointType) = {
     logInfo("bounds requested")
-    import com.twitter.algebird.GeneratedTupleAggregator._
-    map(_._1)
-      .mapPartitions(iter => Iterator(PointLuceneRDD.boundingBoxAgg(iter)))
-      .reduce(PointLuceneRDD.boundingBoxAgg.reduce)
+    boundsPerPartition()
+      .reduce { case (x, y) =>
+        (MinPointMonoid.plus(x._1, y._1), MaxPointMonoid.plus(x._2, y._2))
+      }
   }
 
   override def count(): Long = {
@@ -385,6 +386,7 @@ object PointLuceneRDD extends Versionable
   }
 
   /** Algebird bounding box aggregator */
-  val boundingBoxAgg = Tuple2(Aggregator.min[PointType], Aggregator.max[PointType])
+
+  val boundingBoxMonoid = new Tuple2Monoid()(MinPointMonoid, MaxPointMonoid)
 
 }

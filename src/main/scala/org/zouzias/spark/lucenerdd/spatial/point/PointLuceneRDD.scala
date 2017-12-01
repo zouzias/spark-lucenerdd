@@ -307,7 +307,9 @@ object PointLuceneRDD extends Versionable
                                       similarity: String)
                                      (implicit docConverter: V => Document)
   : PointLuceneRDD[V] = {
-    val partitions = elems.mapPartitions[AbstractPointLuceneRDDPartition[V]](
+    val partitions = elems
+      .sortBy(item => item._1._1) // Sort by x-axis
+      .mapPartitions[AbstractPointLuceneRDDPartition[V]](
       iter => Iterator(PointLuceneRDDPartition[V](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)
     new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
@@ -329,9 +331,11 @@ object PointLuceneRDD extends Versionable
                                       similarity: String)
                                      (implicit docConverter: V => Document)
   : PointLuceneRDD[V] = {
-    val partitions = elems.rdd.mapPartitions[AbstractPointLuceneRDDPartition[V]](
-      iter => Iterator(PointLuceneRDDPartition[V](iter, indexAnalyzer, queryAnalyzer)),
-      preservesPartitioning = true)
+    val partitions = elems.rdd
+        .sortBy(item => item._1._1) // Sort by x-axis
+        .mapPartitions[AbstractPointLuceneRDDPartition[V]](
+          iter => Iterator(PointLuceneRDDPartition[V](iter, indexAnalyzer, queryAnalyzer)),
+          preservesPartitioning = true)
     new PointLuceneRDD(partitions, indexAnalyzer, queryAnalyzer, similarity)
   }
 
@@ -355,13 +359,13 @@ object PointLuceneRDD extends Versionable
     *  val lucene = ShapeLuceneRDD(counties, "shape")
     *
     * }}
-    * @param df Input dataframe containing Shape as String field named "shapeField"
+    * @param df Input DataFrame containing Shape as String field named "shapeField"
     * @param shapeField Name of DataFrame column that contains Shape as String, i.e., WKT
-    * @param shapeConv Implicit convertion for spatial / shape
+    * @param shapeConv Implicit conversion for spatial / shape
     * @param docConverter Implicit conversion for Lucene Document
     * @return
     */
-  def apply(df : DataFrame,
+  def apply(df: DataFrame,
             shapeField: String)
            (implicit shapeConv: String => PointType, docConverter: Row => Document)
   : PointLuceneRDD[Row] = {
@@ -371,14 +375,15 @@ object PointLuceneRDD extends Versionable
   }
 
 
-  def apply(df : DataFrame,
+  def apply(df: DataFrame,
             shapeField: String,
             indexAnalyzer: String,
             queryAnalyzer: String,
             similarity: String)
-           (implicit  shapeConv: String => PointType, docConverter: Row => Document)
+           (implicit shapeConv: String => PointType, docConverter: Row => Document)
   : PointLuceneRDD[Row] = {
     val partitions = df.rdd.map(row => (shapeConv(row.getString(row.fieldIndex(shapeField))), row))
+        .sortBy(item => item._1._1) // Sort by x-axis
       .mapPartitions[AbstractPointLuceneRDDPartition[Row]](
       iter => Iterator(PointLuceneRDDPartition[Row](iter, indexAnalyzer, queryAnalyzer)),
       preservesPartitioning = true)

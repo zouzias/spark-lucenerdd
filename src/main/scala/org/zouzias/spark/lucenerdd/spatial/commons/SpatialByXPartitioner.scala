@@ -16,13 +16,25 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.commons
 
-import com.twitter.algebird.Monoid
+import org.apache.spark.Partitioner
 import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 
-object MinPointMonoid extends Monoid[PointType] {
-  override def zero: PointType = (Double.MinValue, Double.MinValue)
+import scala.util.Random
 
-  override def plus(x: PointType, y: PointType): PointType = {
-    (Math.min(x._1, y._1), Math.min(x._2, y._2))
+/**
+  * Spark RDD [[Partitioner]] based on the x-axis and bounds per partition
+  * @param boundsPerPart Bounds of x-axis (minX, maxX) per RDD's partition
+  */
+case class SpatialByXPartitioner(boundsPerPart: Array[(Double, Double)]) extends Partitioner {
+  override def numPartitions: Int = boundsPerPart.length
+
+  override def getPartition(key: Any): Int = {
+    val keyPoint = key.asInstanceOf[PointType]
+    val indexOpt = boundsPerPart.indexWhere{ case (minX, maxX) =>
+      minX <= keyPoint._1 && keyPoint._1 <= maxX
+    }
+
+    // If key is not assigned to a partition, randomly assign the key
+    if (indexOpt == -1) Random.nextInt(numPartitions) else indexOpt
   }
 }

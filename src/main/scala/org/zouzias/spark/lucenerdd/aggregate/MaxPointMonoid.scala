@@ -14,12 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.commons
+package org.zouzias.spark.lucenerdd.aggregate
 
 import com.twitter.algebird.Monoid
 import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 
+/**
+  * Maximum point [[Monoid]] used for spatial linkage
+  *
+  * Keeps the maximum value per coordinate
+  */
 object MaxPointMonoid extends Monoid[PointType] {
+
   override def zero: PointType = (Double.MaxValue, Double.MaxValue)
 
   override def plus(x: PointType, y: PointType): PointType = {

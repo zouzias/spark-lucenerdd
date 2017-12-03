@@ -19,16 +19,17 @@ package org.zouzias.spark.lucenerdd.spatial.point
 import com.twitter.algebird._
 import org.apache.lucene.document.Document
 import org.apache.lucene.spatial.query.SpatialOperation
-import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
+import org.apache.spark.{OneToOneDependency, Partition, Partitioner, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.storage.StorageLevel
+import org.zouzias.spark.lucenerdd.aggregate.{MaxPointMonoid, MinPointMonoid}
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
-import org.zouzias.spark.lucenerdd.spatial.commons.{MaxPointMonoid, MinPointMonoid}
+import org.zouzias.spark.lucenerdd.spatial.commons.SpatialByXPartitioner
 import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.point.partition.{AbstractPointLuceneRDDPartition, PointLuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
@@ -198,7 +199,7 @@ class PointLuceneRDD[V: ClassTag]
    *
    * @param shapeWKT Shape in WKT format
    * @param k Number of element to return
-   * @param operationName
+   * @param operationName Spatial operation name, i.e., intersection, contained, etc.
    * @return
    */
   def spatialSearch(shapeWKT: String, k: Int,
@@ -213,7 +214,7 @@ class PointLuceneRDD[V: ClassTag]
    * @param center given as (x, y)
    * @param radius in kilometers (KM)
    * @param k
-   * @param operationName
+   * @param operationName Spatial operation name, i.e., intersection, contained, etc.
    * @return
    */
   def bboxSearch(center: PointType, radius: Double, k: Int,
@@ -228,7 +229,7 @@ class PointLuceneRDD[V: ClassTag]
    * @param lowerLeft Lower left corner
    * @param upperRight Upper right corner
    * @param k Number of results
-   * @param operationName Intersect, contained, etc.
+   * @param operationName Spatial operation name, i.e., intersection, contained, etc.
    * @return
    */
   def bboxSearch(lowerLeft: PointType,
@@ -255,6 +256,15 @@ class PointLuceneRDD[V: ClassTag]
       .reduce { case (x, y) =>
         (MinPointMonoid.plus(x._1, y._1), MaxPointMonoid.plus(x._2, y._2))
       }
+  }
+
+  /**
+    * Returns an x-axis spatial [[Partitioner]] that is used in link related methods
+    * @return Spark [[Partitioner]]
+    */
+  def spatialPartitioner(): Partitioner = {
+    val bpp = boundsPerPartition().map(x => (x._1._1, x._2._1)).collect()
+    SpatialByXPartitioner(bpp)
   }
 
   override def count(): Long = {

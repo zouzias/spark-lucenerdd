@@ -83,74 +83,6 @@ class PointLuceneRDD[V: ClassTag]
     new LuceneRDDResponse(partitionsRDD.map(f), SparkScoreDoc.ascending)
   }
 
-  private def linker[T: ClassTag, S: ClassTag](that: RDD[T],
-                                  pointFunctor: T => S,
-                                  mapper: (S, AbstractPointLuceneRDDPartition[V]) =>
-                                    Iterable[SparkScoreDoc],
-                                  linkerMethod: String)
-  : RDD[(T, Array[SparkScoreDoc])] = {
-    logInfo("Point Linkage requested")
-
-    val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
-    val queries = that.zipWithIndex().map(_.swap)
-
-    val resultsByPart = linkerMethod match {
-      case "cartesian" =>
-        val concatenated = queries.mapValues(pointFunctor).glom()
-
-        concatenated.cartesian(partitionsRDD)
-          .flatMap { case (qs, lucene) =>
-            qs.map { case (ind, query) =>
-              (ind, topKMonoid.build(mapper(query, lucene)))
-            }
-          }
-      case _ =>
-        logInfo("Collecting query points to driver")
-        val collectedQueries = queries.mapValues(pointFunctor).collect()
-        val queriesB = partitionsRDD.context.broadcast(collectedQueries)
-
-        partitionsRDD.mapPartitions { partitions =>
-            partitions.flatMap { partition =>
-              queriesB.value.map { case (index, query) =>
-                  (index, topKMonoid.build(mapper(query, partition)))
-                }
-            }
-        }
-    }
-
-    logInfo("Computing top-k linkage per partition")
-    val results = resultsByPart.reduceByKey(topKMonoid.plus)
-
-    queries.join(results).values
-      .map(joined => (joined._1, joined._2.items.toArray))
-  }
-
-  /**
-   * Link entities if their shapes are within a distance in kilometers (km)
-   *
-   * Links this and that based on distance threshold
-   *
-   * @param that An RDD of entities to be linked
-   * @param shapeFunctor Function that generates a point from each element of other
-   * @param linkerMethod Method to perform linkage
-   * @tparam T A type
-   * @return an RDD of Tuple2 that contains the linked results
-   *
-   * Note: Currently the query coordinates of the other RDD are collected to the driver and
-   * broadcast to the workers.
-   */
-  def linkByInstersection[T: ClassTag](that: RDD[T],
-                                shapeFunctor: T => String,
-                                topK: Int = DefaultTopK,
-                                linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(T, Array[SparkScoreDoc])] = {
-    logInfo("linkByInstersection requested")
-    linker[T, String](that, shapeFunctor, (queryShape: String, part) =>
-      part.spatialSearch(queryShape, topK, SpatialOperation.Intersects.getName),
-      linkerMethod)
-  }
-
-
   def linkByRadius[T: ClassTag](that: RDD[T],
                                        pointFunctor: T => PointType,
                                        topK: Int = DefaultTopK,
@@ -158,9 +90,27 @@ class PointLuceneRDD[V: ClassTag]
                                        linkerMethod: String = getShapeLinkerMethod)
   : RDD[(T, Array[SparkScoreDoc])] = {
     logInfo("linkByRadius requested")
-    linker[T, PointType](that, pointFunctor, (queryPoint, part) =>
-      part.circleSearch(queryPoint, radius, topK, SpatialOperation.Intersects.getName),
-      linkerMethod)
+
+    val partitioner = SpatialByXPartitioner(boundsPerPartition()
+      .map(x => (x._1._1, x._2._1)).collect()
+    )
+
+    val queries = that.zipWithIndex().map(_.swap)
+    val queriesPart = queries.mapValues(pointFunctor).partitionBy(partitioner)
+
+    val coGrouped = partitionsRDD.zipPartitions(queriesPart, preservesPartitioning = true)
+      {case tp =>
+        val queries = tp._2.toArray
+
+        tp._1.flatMap{lucene =>
+          queries.map{q =>
+            (q._1,
+              lucene.circleSearch(q._2, radius, topK, linkerMethod).toArray)
+          }
+        }
+      }
+
+    queries.join(coGrouped).values
   }
 
   /**
@@ -403,5 +353,4 @@ object PointLuceneRDD extends Versionable
   /** Algebird bounding box aggregator */
 
   val boundingBoxMonoid = new Tuple2Monoid()(MinPointMonoid, MaxPointMonoid)
-
 }

@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.11.11"
-crossScalaVersions := Seq("2.11.11")
+scalaVersion := "2.11.12"
+crossScalaVersions := Seq("2.11.12")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -79,10 +79,10 @@ pomExtra := (
   </developers>
 )
 
-val luceneV = "7.1.0"
+val luceneV = "7.2.1"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.2.0"
+sparkVersion := "2.2.1"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -96,8 +96,8 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic" % "3.0.4"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.4" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.5"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.5" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.3"
@@ -137,7 +137,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${sparkVersion.value}_0.7.4" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.0_0.8.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

@@ -14,27 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.commons
+package org.zouzias.spark.lucenerdd.models
 
-import org.apache.spark.Partitioner
 import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 
-import scala.util.Random
-
 /**
-  * Spark RDD [[Partitioner]] based on the x-axis and bounds per partition
-  * @param boundsPerPart Bounds of x-axis (minX, maxX) per RDD's partition
+  * Bounding box described as lower-left and upper right point
+  *
+  * @param lowerLeft The lowest-left point, i.e., (min_X, min_Y)
+  * @param upperRight The upper-right point, i.e., (max_X, max_Y)
   */
-case class SpatialByXPartitioner(boundsPerPart: Array[PointType]) extends Partitioner {
-  override def numPartitions: Int = boundsPerPart.length
-
-  override def getPartition(key: Any): Int = {
-    val keyPoint = key.asInstanceOf[PointType]
-    val indexOpt = boundsPerPart.indexWhere{ case (minX, maxX) =>
-      minX <= keyPoint._1 && keyPoint._1 <= maxX
-    }
-
-    // If key is not assigned to a partition, randomly assign the key
-    if (indexOpt == -1) Random.nextInt(numPartitions) else indexOpt
-  }
-}
+case class BoundingBox(lowerLeft: PointType, upperRight: PointType)

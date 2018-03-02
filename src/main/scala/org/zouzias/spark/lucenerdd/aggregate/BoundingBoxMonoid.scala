@@ -14,27 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.commons
+package org.zouzias.spark.lucenerdd.aggregate
 
-import org.apache.spark.Partitioner
+import com.twitter.algebird.Monoid
+import org.zouzias.spark.lucenerdd.models.BoundingBox
 import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 
-import scala.util.Random
 
 /**
-  * Spark RDD [[Partitioner]] based on the x-axis and bounds per partition
-  * @param boundsPerPart Bounds of x-axis (minX, maxX) per RDD's partition
+  * Bounding box monoid based on [[BoundingBox]]
   */
-case class SpatialByXPartitioner(boundsPerPart: Array[PointType]) extends Partitioner {
-  override def numPartitions: Int = boundsPerPart.length
+object BoundingBoxMonoid extends Monoid[BoundingBox] {
 
-  override def getPartition(key: Any): Int = {
-    val keyPoint = key.asInstanceOf[PointType]
-    val indexOpt = boundsPerPart.indexWhere{ case (minX, maxX) =>
-      minX <= keyPoint._1 && keyPoint._1 <= maxX
-    }
+  override def zero: BoundingBox = {
+    BoundingBox((Double.MaxValue, Double.MaxValue), (Double.MinValue, Double.MinValue))
+  }
 
-    // If key is not assigned to a partition, randomly assign the key
-    if (indexOpt == -1) Random.nextInt(numPartitions) else indexOpt
+  override def plus(x: BoundingBox,
+                    y: BoundingBox): BoundingBox = {
+    BoundingBox(MinPointMonoid.plus(x.lowerLeft, y.lowerLeft),
+      MaxPointMonoid.plus(x.upperRight, y.upperRight))
   }
 }

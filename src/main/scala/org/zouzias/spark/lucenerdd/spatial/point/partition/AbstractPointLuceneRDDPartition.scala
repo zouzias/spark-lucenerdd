@@ -16,6 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.point.partition
 
+import org.zouzias.spark.lucenerdd.models.BoundingBox
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 
@@ -36,9 +37,9 @@ private[point] abstract class AbstractPointLuceneRDDPartition[V] extends Seriali
 
   /**
     * Return smallest enclosing axis aligned bounding box
-    * @return ( (minX, minY), (maxX, maxY))
+    * @return Smallest enclosing bounding box
     */
-  def bounds(): (PointType, PointType)
+  def bounds(): BoundingBox
 
   /**
    * Nearest neighbour search

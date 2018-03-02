@@ -26,9 +26,9 @@ import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
   */
 object MaxPointMonoid extends Monoid[PointType] {
 
-  override def zero: PointType = (Double.MaxValue, Double.MaxValue)
+  override def zero: PointType = (Double.MinValue, Double.MinValue)
 
-  override def plus(x: PointType, y: PointType): PointType = {
-    (Math.max(x._1, y._1), Math.max(x._2, y._2))
+  override def plus(a: PointType, b: PointType): PointType = {
+    (Math.max(a._1, b._1), Math.max(a._2, b._2))
   }
 }

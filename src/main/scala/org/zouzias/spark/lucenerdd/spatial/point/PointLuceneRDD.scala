@@ -23,10 +23,10 @@ import org.apache.spark.{OneToOneDependency, Partition, Partitioner, TaskContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.lucenerdd.aggregate.{MaxPointMonoid, MinPointMonoid}
+import org.zouzias.spark.lucenerdd.aggregate.{BoundingBoxMonoid, MaxPointMonoid, MinPointMonoid}
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{BoundingBox, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 import org.zouzias.spark.lucenerdd.spatial.commons.SpatialByXPartitioner
@@ -87,25 +87,29 @@ class PointLuceneRDD[V: ClassTag]
                                        pointFunctor: T => PointType,
                                        topK: Int = DefaultTopK,
                                        radius: Double,
-                                       linkerMethod: String = getShapeLinkerMethod)
+                                       linkerMethod: String)
   : RDD[(T, Array[SparkScoreDoc])] = {
     logInfo("linkByRadius requested")
 
-    val partitioner = SpatialByXPartitioner(boundsPerPartition()
-      .map(x => (x._1._1, x._2._1)).collect()
-    )
+    // Get bounding box per LuceneRDD's partitions points
+    val bounds: Array[PointType] = boundsPerPartition()
+      .map(x => (x.lowerLeft._1, x.upperRight._1)).collect()
+    val partitioner = SpatialByXPartitioner(bounds)
 
+    // Index queries and repartition them by above bounding boxes
     val queries = that.zipWithIndex().map(_.swap)
-    val queriesPart = queries.mapValues(pointFunctor).partitionBy(partitioner)
+    val queriesPart = queries.mapValues(pointFunctor)
+        .map(_.swap)
+        .partitionBy(partitioner)
 
     val coGrouped = partitionsRDD.zipPartitions(queriesPart, preservesPartitioning = true)
       {case tp =>
-        val queries = tp._2.toArray
+        val queries = tp._2
 
         tp._1.flatMap{lucene =>
           queries.map{q =>
-            (q._1,
-              lucene.circleSearch(q._2, radius, topK, linkerMethod).toArray)
+            (q._2,
+              lucene.circleSearch(q._1, radius, topK, linkerMethod).toArray)
           }
         }
       }
@@ -195,17 +199,15 @@ class PointLuceneRDD[V: ClassTag]
     * Returns the smallest enclosing axis aligned bounding box per partition
     * @return
     */
-  def boundsPerPartition(): RDD[(PointType, PointType)] = {
+  def boundsPerPartition(): RDD[BoundingBox] = {
     logInfo("boundsPerPartition requested")
     partitionsRDD.map(_.bounds())
   }
 
-  def bounds(): (PointType, PointType) = {
+  def bounds(): BoundingBox = {
     logInfo("bounds requested")
     boundsPerPartition()
-      .reduce { case (x, y) =>
-        (MinPointMonoid.plus(x._1, y._1), MaxPointMonoid.plus(x._2, y._2))
-      }
+      .reduce(BoundingBoxMonoid.plus)
   }
 
   /**
@@ -213,7 +215,7 @@ class PointLuceneRDD[V: ClassTag]
     * @return Spark [[Partitioner]]
     */
   def spatialPartitioner(): Partitioner = {
-    val bpp = boundsPerPartition().map(x => (x._1._1, x._2._1)).collect()
+    val bpp = boundsPerPartition().map(x => (x.lowerLeft._1, x.upperRight._1)).collect()
     SpatialByXPartitioner(bpp)
   }
 

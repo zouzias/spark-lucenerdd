@@ -24,7 +24,8 @@ import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.locationtech.spatial4j.shape.{Point, Shape}
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.aggregate.BoundingBoxMonoid
+import org.zouzias.spark.lucenerdd.models.{BoundingBox, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.commons.strategies.SpatialStrategy
@@ -66,15 +67,20 @@ private[point] class PointLuceneRDDPartition[V]
 
   private val startTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process initiated at ${startTime}...")
-  iterIndex.foreach { case (p, value) =>
+  private val boundingBox_ = iterIndex.map { case (p, value) =>
     // (implicitly) convert type V to a Lucene document
     val doc = docConversion(value)
     val docWithLocation = decorateWithLocation(doc, ctx.makePoint(p._1, p._2))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
-  }
+
+    BoundingBox(p, p)
+  }.reduce(BoundingBoxMonoid.plus)
   private val endTime = new DateTime(System.currentTimeMillis())
+
   logInfo(s"Indexing process completed at ${endTime}...")
   logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
+
+  override def bounds(): BoundingBox = boundingBox_
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()
@@ -106,11 +112,6 @@ private[point] class PointLuceneRDDPartition[V]
       .stringValue()
 
     stringToShape(shapeString)
-  }
-
-  override def bounds(): (PointType, PointType) = {
-    iterOriginal.map(_._1).map(x => (x, x))
-        .reduce(PointLuceneRDD.boundingBoxMonoid.plus)
   }
 
   override def circleSearch(center: PointType, radius: Double, k: Int, operationName: String)

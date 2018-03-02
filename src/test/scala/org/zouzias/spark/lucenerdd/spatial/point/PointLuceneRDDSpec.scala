@@ -45,7 +45,7 @@ class PointLuceneRDDSpec extends FlatSpec
     pointLuceneRDD.close()
   }
 
-  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+  override val conf: SparkConf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
     setMaster("local[*]").
     setAppName("test").
     set("spark.ui.enabled", "false").
@@ -58,7 +58,7 @@ class PointLuceneRDDSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.circleSearch(Bern._1, 300, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
     results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
@@ -84,7 +84,7 @@ class PointLuceneRDDSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.spatialSearch(circleWKT, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
     results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
@@ -160,17 +160,10 @@ class PointLuceneRDDSpec extends FlatSpec
   }
 
   "PointLuceneRDD.bounds" should "return correct bounds" in {
-    val Bern = ( (7.45, 46.95), "Bern")
-    val Zurich = ( (8.55, 47.366667), "Zurich")
-    val Laussanne = ( (6.6335, 46.519833), "Laussanne")
-    val Athens = ((23.716667, 37.966667), "Athens")
-    val Toronto = ((-79.4, 43.7), "Toronto")
-    val Milan = ((45.4646, 9.198), "Milan")
-
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = PointLuceneRDD(rdd)
-    val (minBounds, maxBounds) = pointLuceneRDD.bounds()
-    minBounds should equal((-79.4, 9.198))
-    maxBounds should equal((45.4646, 47.366667))
+    val boundingBox = pointLuceneRDD.bounds()
+    boundingBox.lowerLeft should equal((-79.4, 9.198))
+    boundingBox.upperRight should equal((45.4646, 47.366667))
   }
 }

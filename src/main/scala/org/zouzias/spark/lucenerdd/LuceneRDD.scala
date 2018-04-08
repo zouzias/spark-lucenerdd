@@ -462,4 +462,53 @@ object LuceneRDD extends Versionable
       getOrElseEn(QueryAnalyzerConfigName),
       getOrElseClassic())
   }
+
+  /**
+    * Entity linkage between two [[DataFrame]] by filtering on one or more columns.
+    *
+    * @param queries
+    * @param corpus
+    * @param rowToQueryString
+    * @param queriesPartColumns
+    * @param corpusPartColumns
+    * @param topK
+    * @param indexAnalyzer
+    * @param queryAnalyzer
+    * @param similarity
+    * @tparam T
+    * @return
+    */
+  def blockEntityLinkage(queries: DataFrame,
+                         corpus: DataFrame,
+                         rowToQueryString: Row => String,
+                         queriesPartColumns: Array[String],
+                         corpusPartColumns: Array[String],
+                         topK : Int = 3,
+                         indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
+                         queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
+                         similarity: String = getOrElseClassic())
+  : RDD[(Row, Array[SparkScoreDoc])] = {
+
+    import org.apache.spark.sql.functions._
+
+    val partColumn = "PARTITION_COLUMN"
+    val blocked = corpus.withColumn(partColumn,
+      concat(corpusPartColumns.map(corpus.col): _*))
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
+    val blockedQueries = queries.withColumn(partColumn,
+      concat(corpusPartColumns.map(corpus.col): _*))
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
+
+    val output = blockedQueries.cogroup(blocked)
+      .mapPartitionsWithIndex{ case (idx, iterKeyedByHash) =>
+        iterKeyedByHash.flatMap { case (_, (qs, lucene)) =>
+          val lucenePart = LuceneRDDPartition(lucene.toIterator, idx, indexAnalyzer,
+            queryAnalyzer, similarity)
+
+          qs.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
+        }
+    }
+
+    output
+  }
 }

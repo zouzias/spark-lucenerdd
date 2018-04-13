@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.shape.context
+package org.zouzias.spark.lucenerdd.spatial.commons.context
 
 import java.io.{StringReader, StringWriter}
 
+import com.vividsolutions.jts.io.ParseException
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext
+import org.locationtech.spatial4j.exception.InvalidShapeException
 import org.locationtech.spatial4j.io.{ShapeReader, ShapeWriter}
 import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
@@ -37,8 +39,13 @@ trait ContextLoader extends ShapeLuceneRDDConfigurable{
     writer.toString
   }
 
-  protected def stringToShape(shapeAsString: String): Shape = {
-   shapeReader.read(new StringReader(shapeAsString))
+  protected def stringToShape(shapeAsString: String): Option[Shape] = {
+   try {
+     Some(shapeReader.read(new StringReader(shapeAsString)))
+   } catch {
+     case _: ParseException => None
+     case _ : InvalidShapeException => None
+   }
   }
 
   /**

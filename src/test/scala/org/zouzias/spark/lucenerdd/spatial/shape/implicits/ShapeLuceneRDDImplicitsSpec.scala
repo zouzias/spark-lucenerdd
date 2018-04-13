@@ -23,7 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.{ShapeLuceneRDD, _}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.commons.context.ContextLoader
 
 class ShapeLuceneRDDImplicitsSpec extends FlatSpec
   with Matchers

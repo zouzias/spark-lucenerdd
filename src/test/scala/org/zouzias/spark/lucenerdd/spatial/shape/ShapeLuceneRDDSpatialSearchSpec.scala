@@ -23,7 +23,7 @@ import org.apache.spark.SparkConf
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
-import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.commons.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
 class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
@@ -135,7 +135,7 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.spatialSearch(rectangleWKT, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
     results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)

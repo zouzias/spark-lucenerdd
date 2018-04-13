@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.shape
+package org.zouzias.spark.lucenerdd.spatial.point
 
 import java.io.StringWriter
 
@@ -23,11 +23,12 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.commons.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDDKryoRegistrator
+import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
-class ShapeLuceneRDDSpec extends FlatSpec
+class PointLuceneRDDSpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext
@@ -38,26 +39,26 @@ class ShapeLuceneRDDSpec extends FlatSpec
 
   val Radius: Double = 5D
 
-  var pointLuceneRDD: ShapeLuceneRDD[_, _] = _
+  var pointLuceneRDD: PointLuceneRDD[_] = _
 
   override def afterEach() {
     pointLuceneRDD.close()
   }
 
-  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+  override val conf: SparkConf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
     setMaster("local[*]").
     setAppName("test").
     set("spark.ui.enabled", "false").
     set("spark.app.id", appID))
 
-  "ShapeLuceneRDD.circleSearch" should "return correct results" in {
+  "PointLuceneRDD.circleSearch" should "return correct results" in {
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(rdd)
+    pointLuceneRDD = PointLuceneRDD(rdd)
 
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.circleSearch(Bern._1, 300, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
     results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
@@ -68,9 +69,9 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.spatialSearch(circle)" should "return correct results" in {
+  "PointLuceneRDD.spatialSearch(circle)" should "return correct results" in {
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(rdd)
+    pointLuceneRDD = PointLuceneRDD(rdd)
 
     val point = ctx.makePoint(Bern._1._1, Bern._1._2)
     val circle = ctx.makeCircle(point,
@@ -83,7 +84,7 @@ class ShapeLuceneRDDSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.spatialSearch(circleWKT, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
     results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
     results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
@@ -94,9 +95,9 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.bboxSearch((Double, Double), Double)" should "return correct results" in {
+  "PointLuceneRDD.bboxSearch((Double, Double), Double)" should "return correct results" in {
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(rdd)
+    pointLuceneRDD = PointLuceneRDD(rdd)
 
     val x = Bern._1._1
     val y = Bern._1._2
@@ -116,9 +117,9 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.bboxSearch(lowerLeft, upperRight)" should "return correct results" in {
+  "PointLuceneRDD.bboxSearch(lowerLeft, upperRight)" should "return correct results" in {
     val rdd = sc.parallelize(cities)
-    pointLuceneRDD = ShapeLuceneRDD(rdd)
+    pointLuceneRDD = PointLuceneRDD(rdd)
 
     val x = Bern._1._1
     val y = Bern._1._2
@@ -139,23 +140,30 @@ class ShapeLuceneRDDSpec extends FlatSpec
     results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
   }
 
-  "ShapeLuceneRDD.apply(DF, shapeField)" should
+  "PointLuceneRDD.apply(DF, shapeField)" should
     "instantiate ShapeLuceneRDD from DataFrame and shape field name" in {
     val sparkSession = SparkSession.builder.getOrCreate()
-    import sparkSession.implicits._
     val capitals = sparkSession.read.parquet("data/capitals.parquet")
-    pointLuceneRDD = ShapeLuceneRDD(capitals, "shape")
+    pointLuceneRDD = PointLuceneRDD(capitals, "shape")
 
     pointLuceneRDD.count() > 0 should equal(true)
   }
 
-  "ShapeLuceneRDD.version" should "return project sbt build information" in {
-    val map = ShapeLuceneRDD.version()
+  "PointLuceneRDD.version" should "return project sbt build information" in {
+    val map = PointLuceneRDD.version()
     map.contains("name") should equal(true)
     map.contains("builtAtMillis") should equal(true)
     map.contains("scalaVersion") should equal(true)
     map.contains("version") should equal(true)
     map.contains("sbtVersion") should equal(true)
     map.contains("builtAtString") should equal(true)
+  }
+
+  "PointLuceneRDD.bounds" should "return correct bounds" in {
+    val rdd = sc.parallelize(cities)
+    pointLuceneRDD = PointLuceneRDD(rdd)
+    val boundingBox = pointLuceneRDD.bounds()
+    boundingBox.lowerLeft should equal((-79.4, 9.198))
+    boundingBox.upperRight should equal((45.4646, 47.366667))
   }
 }

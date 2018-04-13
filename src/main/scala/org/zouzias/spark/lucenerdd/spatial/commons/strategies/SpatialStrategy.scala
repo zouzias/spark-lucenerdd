@@ -14,18 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.response
+package org.zouzias.spark.lucenerdd.spatial.commons.strategies
 
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.apache.lucene.spatial.prefix.{PrefixTreeStrategy, RecursivePrefixTreeStrategy}
+import org.zouzias.spark.lucenerdd.spatial.commons.grids.PrefixTreeLoader
 
+trait SpatialStrategy extends PrefixTreeLoader {
 
-case class LuceneRDDResponsePartition(results: Iterator[SparkScoreDoc])
-  extends Iterable[SparkScoreDoc] {
-  override def iterator(): Iterator[SparkScoreDoc] = results
-}
-
-object LuceneRDDResponsePartition {
-  def empty(): LuceneRDDResponsePartition = {
-    LuceneRDDResponsePartition(Iterator.empty)
-  }
+  /**
+   * The Lucene spatial {@link SpatialStrategy} encapsulates an approach to
+   * indexing and searching shapes, and providing distance values for them.
+   * It's a simple API to unify different approaches. You might use more than
+   * one strategy for a shape as each strategy has its strengths and weaknesses.
+   * <p />
+   * Note that these are initialized with a field name.
+   */
+  protected val strategy: PrefixTreeStrategy = new RecursivePrefixTreeStrategy(grid,
+    LocationDefaultField)
 }

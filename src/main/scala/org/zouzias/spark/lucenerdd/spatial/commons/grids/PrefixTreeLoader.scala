@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.shape.grids
+package org.zouzias.spark.lucenerdd.spatial.commons.grids
 
 import org.apache.lucene.spatial.prefix.tree.{SpatialPrefixTree, SpatialPrefixTreeFactory}
 import org.zouzias.spark.lucenerdd.config.ShapeLuceneRDDConfigurable
-import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.spatial.commons.context.ContextLoader
 
 import scala.collection.JavaConverters._
 

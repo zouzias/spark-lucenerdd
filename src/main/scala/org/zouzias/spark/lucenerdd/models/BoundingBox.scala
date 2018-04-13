@@ -14,18 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.response
+package org.zouzias.spark.lucenerdd.models
 
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 
-
-case class LuceneRDDResponsePartition(results: Iterator[SparkScoreDoc])
-  extends Iterable[SparkScoreDoc] {
-  override def iterator(): Iterator[SparkScoreDoc] = results
-}
-
-object LuceneRDDResponsePartition {
-  def empty(): LuceneRDDResponsePartition = {
-    LuceneRDDResponsePartition(Iterator.empty)
-  }
-}
+/**
+  * Bounding box described as lower-left and upper right point
+  *
+  * @param lowerLeft The lowest-left point, i.e., (min_X, min_Y)
+  * @param upperRight The upper-right point, i.e., (max_X, max_Y)
+  */
+case class BoundingBox(lowerLeft: PointType, upperRight: PointType)

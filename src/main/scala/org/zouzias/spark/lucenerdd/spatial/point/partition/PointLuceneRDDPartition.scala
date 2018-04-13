@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.spatial.shape.partition
+package org.zouzias.spark.lucenerdd.spatial.point.partition
 
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.{Document, StoredField}
@@ -23,42 +23,41 @@ import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
 import org.locationtech.spatial4j.distance.DistanceUtils
-import org.locationtech.spatial4j.shape.Shape
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.locationtech.spatial4j.shape.{Point, Shape}
+import org.zouzias.spark.lucenerdd.aggregate.BoundingBoxMonoid
+import org.zouzias.spark.lucenerdd.models.{BoundingBox, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
-import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.commons.strategies.SpatialStrategy
+import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD
+import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
-import scala.reflect._
+import scala.reflect.{ClassTag, classTag}
 
-private[shape] class ShapeLuceneRDDPartition[K, V]
-  (private val iter: Iterator[(K, V)],
-   private val indexAnalyzerName: String,
-   private val queryAnalyzerName: String)
-  (override implicit val kTag: ClassTag[K],
-   override implicit val vTag: ClassTag[V])
-  (implicit shapeConversion: K => Shape,
-   docConversion: V => Document)
-  extends AbstractShapeLuceneRDDPartition[K, V]
+
+private[point] class PointLuceneRDDPartition[V]
+(private val iter: Iterator[(PointType, V)],
+ private val indexAnalyzerName: String,
+ private val queryAnalyzerName: String)
+(override implicit val vTag: ClassTag[V])
+(implicit docConversion: V => Document)
+  extends AbstractPointLuceneRDDPartition[V]
     with IndexWithTaxonomyWriter
     with SpatialStrategy {
+
+  /* We index only points in [[PointLuceneRDDPartition]] */
+  strategy.setPointsOnly(true)
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
   private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 
-  private def decorateWithLocation(doc: Document, shapes: Iterable[Shape]): Document = {
+  private def decorateWithLocation(doc: Document, point: Point): Document = {
 
-    // Potentially more than one shape in this field is supported by some
-    // strategies; see the Javadoc of the SpatialStrategy impl to see.
-    shapes.foreach{ case shape =>
-      strategy.createIndexableFields(shape).foreach{ case field =>
+    strategy.createIndexableFields(point).foreach{ field =>
         doc.add(field)
-      }
-
-      doc.add(new StoredField(strategy.getFieldName, shapeToString(shape)))
+        doc.add(new StoredField(strategy.getFieldName, shapeToString(point)))
     }
 
     doc
@@ -68,16 +67,20 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   private val startTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process initiated at ${startTime}...")
-  iterIndex.foreach { case (key, value) =>
-    // (implicitly) convert type K to Shape and V to a Lucene document
+  private val boundingBox_ = iterIndex.map { case (p, value) =>
+    // (implicitly) convert type V to a Lucene document
     val doc = docConversion(value)
-    val shape = shapeConversion(key)
-    val docWithLocation = decorateWithLocation(doc, Seq(shape))
+    val docWithLocation = decorateWithLocation(doc, ctx.makePoint(p._1, p._2))
     indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
-  }
+
+    BoundingBox(p, p)
+  }.reduce(BoundingBoxMonoid.plus)
   private val endTime = new DateTime(System.currentTimeMillis())
+
   logInfo(s"Indexing process completed at ${endTime}...")
   logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
+
+  override def bounds(): BoundingBox = boundingBox_
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()
@@ -88,24 +91,25 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   override def size: Long = iterOriginal.size.toLong
 
   /**
-   * Restricts the entries to those satisfying a predicate
-   *
-   * @param pred
-   * @return
-   */
-  override def filter(pred: (K, V) => Boolean): AbstractShapeLuceneRDDPartition[K, V] = {
-    ShapeLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)),
+    * Restricts the entries to those satisfying a predicate
+    *
+    * @param pred
+    * @return
+    */
+  override def filter(pred: (PointType, V) => Boolean):
+  AbstractPointLuceneRDDPartition[V] = {
+    PointLuceneRDDPartition(iterOriginal.filter(x => pred(x._1, x._2)),
       indexAnalyzerName, queryAnalyzerName)
   }
 
-  override def isDefined(key: K): Boolean = iterOriginal.exists(_._1 == key)
+  override def isDefined(key: PointType): Boolean = iterOriginal.exists(_._1 == key)
 
-  override def iterator: Iterator[(K, V)] = iterOriginal
+  override def iterator: Iterator[(PointType, V)] = iterOriginal
 
   private def docLocation(scoreDoc: ScoreDoc): Option[Shape] = {
     val shapeString = indexReader.document(scoreDoc.doc)
-                  .getField(strategy.getFieldName)
-                  .stringValue()
+      .getField(strategy.getFieldName)
+      .stringValue()
 
     stringToShape(shapeString)
   }
@@ -114,7 +118,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   : LuceneRDDResponsePartition = {
     logInfo(s"circleSearch [center:${center}, operation:${operationName}]")
     val args = new SpatialArgs(SpatialOperation.get(operationName),
-        ctx.makeCircle(center._1, center._2,
+      ctx.makeCircle(center._1, center._2,
         DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)))
 
     val query = strategy.makeQuery(args)
@@ -144,15 +148,15 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     // the ValueSource with CachingDoubleValueSource then retrieve the value
     // from the ValueSource now. See LUCENE-4541 for an example.
     val result = docs.scoreDocs.map { scoreDoc => {
-        val location = docLocation(scoreDoc)
-        location match {
-          case Some(shape) =>
+      val location = docLocation(scoreDoc)
+      location match {
+        case Some(shape) =>
           SparkScoreDoc(indexSearcher, scoreDoc,
             ctx.calcDistance(pt, shape.getCenter).toFloat)
-          case None =>
-            SparkScoreDoc(indexSearcher, scoreDoc, -1F)
-        }
+        case None =>
+          SparkScoreDoc(indexSearcher, scoreDoc, -1F)
       }
+    }
     }
 
     LuceneRDDResponsePartition(result.toIterator)
@@ -160,28 +164,21 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
     val shapeOpt = stringToShape(shapeAsString)
     shapeOpt match {
       case Some(shape) => spatialSearch(shape, k, operationName)
-      case None =>
+      case _ =>
         log.error("Input shape does not have a valid format. Returning empty results")
         LuceneRDDResponsePartition.empty()
     }
   }
 
   private def spatialSearch(shape: Shape, k: Int, operationName: String)
-    : LuceneRDDResponsePartition = {
+  : LuceneRDDResponsePartition = {
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
     LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
-  }
-
-  override def spatialSearch(point: PointType, k: Int, operationName: String)
-  : LuceneRDDResponsePartition = {
-    val shape = ctx.makePoint(point._1, point._2)
-    spatialSearch(shape, k, operationName)
   }
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
@@ -203,26 +200,24 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   }
 }
 
-object ShapeLuceneRDDPartition {
+object PointLuceneRDDPartition {
 
   /**
-    * Constructor for [[ShapeLuceneRDDPartition]]
+    * Constructor for [[PointLuceneRDDPartition]]
     *
     * @param iter Iterator over data
     * @param indexAnalyzer Index analyzer
     * @param queryAnalyzer Query analyzer
-    * @param shapeConv Implicit conversion to Shape
     * @param docConv Implicit convertion to Lucene document
-    * @tparam K
     * @tparam V
     * @return
     */
-  def apply[K: ClassTag, V: ClassTag](iter: Iterator[(K, V)],
+  def apply[V: ClassTag](iter: Iterator[(PointType, V)],
                                       indexAnalyzer: String,
                                       queryAnalyzer: String)
-  (implicit shapeConv: K => Shape, docConv: V => Document)
-  : ShapeLuceneRDDPartition[K, V] = {
-    new ShapeLuceneRDDPartition[K, V](iter,
-      indexAnalyzer, queryAnalyzer)(classTag[K], classTag[V]) (shapeConv, docConv)
+                                     (implicit docConv: V => Document)
+  : PointLuceneRDDPartition[V] = {
+    new PointLuceneRDDPartition[V](iter,
+      indexAnalyzer, queryAnalyzer)(classTag[V]) (docConv)
   }
 }

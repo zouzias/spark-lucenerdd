@@ -14,18 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zouzias.spark.lucenerdd.response
+package org.zouzias.spark.lucenerdd.aggregate
 
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import com.twitter.algebird.Monoid
+import org.zouzias.spark.lucenerdd.spatial.point.PointLuceneRDD.PointType
 
+/**
+  * Minimum point Monoid used for spatial linkage
+  *
+  * Keeps the minimum value per coordinate
+  */
+object MinPointMonoid extends Monoid[PointType] {
 
-case class LuceneRDDResponsePartition(results: Iterator[SparkScoreDoc])
-  extends Iterable[SparkScoreDoc] {
-  override def iterator(): Iterator[SparkScoreDoc] = results
-}
+  override def zero: PointType = (Double.MaxValue, Double.MaxValue)
 
-object LuceneRDDResponsePartition {
-  def empty(): LuceneRDDResponsePartition = {
-    LuceneRDDResponsePartition(Iterator.empty)
+  override def plus(x: PointType, y: PointType): PointType = {
+    (Math.min(x._1, y._1), Math.min(x._2, y._2))
   }
 }

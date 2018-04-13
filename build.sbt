@@ -79,7 +79,7 @@ pomExtra := (
   </developers>
 )
 
-val luceneV = "7.2.1"
+val luceneV = "7.3.0"
 
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "2.2.1"
@@ -102,7 +102,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.4"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.9.2"
-val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.6"
+val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"
 
@@ -113,7 +113,7 @@ val lucene_expressions        = "org.apache.lucene"              % "lucene-expre
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "com.vividsolutions"             % "jts"                       % "1.13"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.15.0"
 // scalastyle:on
 
 

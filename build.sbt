@@ -100,11 +100,11 @@ val scalactic                 = "org.scalactic"                  %% "scalactic" 
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.5" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.3"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.4"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.9.2"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.6"
 
-val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.2"
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
@@ -137,7 +137,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.0_0.8.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.1_0.9.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

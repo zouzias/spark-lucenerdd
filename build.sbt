@@ -65,8 +65,7 @@ publishArtifact in Test := false
 
 pomIncludeRepository := { _ => false }
 
-pomExtra := (
-  <scm>
+pomExtra := <scm>
     <url>git@github.com:zouzias/spark-lucenerdd.git</url>
     <connection>scm:git:git@github.com:zouzias/spark-lucenerdd.git</connection>
   </scm>
@@ -77,7 +76,6 @@ pomExtra := (
       <url>https://github.com/zouzias</url>
     </developer>
   </developers>
-)
 
 val luceneV = "7.3.0"
 
@@ -154,9 +152,8 @@ lazy val root = (project in file(".")).
 )
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
-compileScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value
-(compile in Compile) <<= (compile in Compile) dependsOn compileScalastyle
-
+compileScalastyle := scalastyle.in(Compile).toTask("").value
+(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
 parallelExecution in Test := false
 

@@ -15,17 +15,17 @@ before_cache:
 matrix:
   include:
     - jdk: oraclejdk8
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="en" LINKER_METHOD="cartesian"
+      scala: 2.11.12
+      env: TEST_SPARK_VERSION="2.2.1" LUCENE_ANALYZER="en" LINKER_METHOD="cartesian"
     - jdk: openjdk8
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="en" LINKER_METHOD="collectbroadcast"
+      scala: 2.11.12
+      env: TEST_SPARK_VERSION="2.2.1" LUCENE_ANALYZER="en" LINKER_METHOD="collectbroadcast"
     - jdk: openjdk8
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="whitespace" LINKER_METHOD="cartesian"
+      scala: 2.11.12
+      env: TEST_SPARK_VERSION="2.2.1" LUCENE_ANALYZER="whitespace" LINKER_METHOD="cartesian"
     - jdk: oraclejdk8
-      scala: 2.11.11
-      env: TEST_SPARK_VERSION="2.2.0" LUCENE_ANALYZER="whitespace" LINKER_METHOD="collectbroadcast"
+      scala: 2.11.12
+      env: TEST_SPARK_VERSION="2.2.1" LUCENE_ANALYZER="whitespace" LINKER_METHOD="collectbroadcast"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update
       -Dlucenerdd.linker.method=${LINKER_METHOD}

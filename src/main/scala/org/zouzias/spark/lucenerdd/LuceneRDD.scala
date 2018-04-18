@@ -25,6 +25,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.lucene.search.Query
 import org.apache.spark._
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.functions._
 import org.apache.spark.storage.StorageLevel
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
@@ -461,5 +462,61 @@ object LuceneRDD extends Versionable
       getOrElseEn(IndexAnalyzerConfigName),
       getOrElseEn(QueryAnalyzerConfigName),
       getOrElseClassic())
+  }
+
+  /**
+    * Entity linkage between two [[DataFrame]] by blocking / filtering
+    * on one or more columns.
+    *
+    * @param queries Queries / entities to be linked with @corpus
+    * @param entities DataFrame of entities to be linked with queries parameter
+    * @param rowToQueryString Converts each [[Row]] to a 'Lucene Query Syntax'
+    * @param queryPartColumns List of query columns for [[HashPartitioner]]
+    * @param entityPartColumns List of entity columns for [[HashPartitioner]]
+    * @param topK Number of linked results
+    * @param indexAnalyzer Lucene analyzer at index time
+    * @param queryAnalyzer Lucene analyzer at query time
+    * @param similarity Lucene Similarity metric (BM25, Tf/idf)
+    * @return Returns top-k linked results as RDD of [[Tuple2]] where _1 is query and
+    *         _2 is top-k linked results as [[SparkScoreDoc]].
+    */
+  def blockEntityLinkage(queries: DataFrame,
+                         entities: DataFrame,
+                         rowToQueryString: Row => String,
+                         queryPartColumns: Array[String],
+                         entityPartColumns: Array[String],
+                         topK : Int = 3,
+                         indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
+                         queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
+                         similarity: String = getOrElseClassic())
+  : RDD[(Row, Array[SparkScoreDoc])] = {
+
+    val partColumn = "__PARTITION_COLUMN__"
+
+    // Prepare input DataFrames for cogroup operation.
+    // Keyed them on queryPartColumns and entityPartColumns
+    // I.e., Query/Entity DataFrame are now of type (String, Row)
+    val blocked = entities.withColumn(partColumn,
+      concat(entityPartColumns.map(entities.col): _*))
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
+    val blockedQueries = queries.withColumn(partColumn,
+      concat(entityPartColumns.map(entities.col): _*))
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
+
+    // Cogroup queries and entities. Map over each
+    // CoGrouped partition and instantiate Lucene index on partitioned
+    // entities. Query lucene index for all partitioned queries
+    blockedQueries.cogroup(blocked)
+      .mapPartitionsWithIndex{ case (idx, iterKeyedByHash) =>
+        iterKeyedByHash.flatMap { case (_, (qs, ents)) =>
+
+          // Instantiate a lucene index on partitioned entities
+          val lucenePart = LuceneRDDPartition(ents.toIterator, idx, indexAnalyzer,
+            queryAnalyzer, similarity)
+
+          // Multi-query lucene index
+          qs.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
+        }
+    }
   }
 }

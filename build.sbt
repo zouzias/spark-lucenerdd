@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.11.11"
-crossScalaVersions := Seq("2.11.11")
+scalaVersion := "2.11.12"
+crossScalaVersions := Seq("2.11.12")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -65,8 +65,7 @@ publishArtifact in Test := false
 
 pomIncludeRepository := { _ => false }
 
-pomExtra := (
-  <scm>
+pomExtra := <scm>
     <url>git@github.com:zouzias/spark-lucenerdd.git</url>
     <connection>scm:git:git@github.com:zouzias/spark-lucenerdd.git</connection>
   </scm>
@@ -77,12 +76,11 @@ pomExtra := (
       <url>https://github.com/zouzias</url>
     </developer>
   </developers>
-)
 
-val luceneV = "7.1.0"
+val luceneV = "7.3.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.2.0"
+sparkVersion := "2.2.1"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -96,15 +94,15 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic" % "3.0.4"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.4" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.5"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.5" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.3"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.4"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "1.9.2"
-val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.6"
+val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
-val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.1"
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
@@ -113,7 +111,7 @@ val lucene_expressions        = "org.apache.lucene"              % "lucene-expre
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "com.vividsolutions"             % "jts"                       % "1.13"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.15.0"
 // scalastyle:on
 
 
@@ -137,7 +135,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"${sparkVersion.value}_0.7.4" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.1_0.9.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 
@@ -154,9 +152,8 @@ lazy val root = (project in file(".")).
 )
 
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
-compileScalastyle := org.scalastyle.sbt.ScalastylePlugin.scalastyle.in(Compile).toTask("").value
-(compile in Compile) <<= (compile in Compile) dependsOn compileScalastyle
-
+compileScalastyle := scalastyle.in(Compile).toTask("").value
+(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
 parallelExecution in Test := false
 

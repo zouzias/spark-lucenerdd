@@ -80,7 +80,7 @@ pomExtra := <scm>
 val luceneV = "7.3.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.2.1"
+sparkVersion := "2.3.0"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -135,7 +135,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.1_0.9.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.3.0_0.9.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

@@ -525,7 +525,7 @@ object LuceneRDD extends Versionable
     *
     * @param entities Entities [[DataFrame]] to deduplicate
     * @param rowToQueryString Function that maps [[Row]] to Lucene Query String
-    * @param blockingColumns Column on which exact match is required
+    * @param blockingColumns Columns on which exact match is required
     * @param topK Number of top-K query results
     * @param indexAnalyzer Lucene analyzer at index time
     * @param queryAnalyzer Lucene analyzer at query time

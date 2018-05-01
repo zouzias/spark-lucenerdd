@@ -519,4 +519,31 @@ object LuceneRDD extends Versionable
         }
     }
   }
+
+  /**
+    * Deduplication via blocking
+    *
+    * @param entities Entities [[DataFrame]] to deduplicate
+    * @param rowToQueryString Function that maps [[Row]] to Lucene Query String
+    * @param blockingColumns Column on which exact match is required
+    * @param topK Number of top-K query results
+    * @param indexAnalyzer Lucene analyzer at index time
+    * @param queryAnalyzer Lucene analyzer at query time
+    * @param similarity Lucene Similarity metric (BM25, Tf/idf)
+    * @return Returns top-k deduplicated results as [[RDD]] of [[Tuple2]] where _1 is query and
+    *         _2 is top-k linked results as [[SparkScoreDoc]].
+    * @return
+    */
+  def blockDedup(entities: DataFrame,
+                 rowToQueryString: Row => String,
+                 blockingColumns: Array[String],
+                 topK : Int = 3,
+                 indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
+                 queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
+                 similarity: String = getOrElseClassic())
+  : RDD[(Row, Array[SparkScoreDoc])] = {
+    blockEntityLinkage(entities, entities, rowToQueryString,
+      blockingColumns, blockingColumns, topK, indexAnalyzer,
+      queryAnalyzer, similarity)
+  }
 }

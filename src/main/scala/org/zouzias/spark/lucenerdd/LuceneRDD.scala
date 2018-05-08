@@ -542,8 +542,31 @@ object LuceneRDD extends Versionable
                  queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
                  similarity: String = getOrElseClassic())
   : RDD[(Row, Array[SparkScoreDoc])] = {
-    blockEntityLinkage(entities, entities, rowToQueryString,
-      blockingColumns, blockingColumns, topK, indexAnalyzer,
-      queryAnalyzer, similarity)
+
+    val partColumn = "__PARTITION_COLUMN__"
+    val blocked = entities.withColumn(partColumn,
+      concat(blockingColumns.map(entities.col): _*))
+
+    val distinctPartitions = blocked.select(partColumn).distinct().count()
+    val hashPart = new HashPartitioner(distinctPartitions.toInt)
+
+    val blockedRDD = blocked.rdd
+      .keyBy(x => x.getString(x.fieldIndex(partColumn)))
+      .partitionBy(hashPart)
+
+    blockedRDD.mapPartitionsWithIndex{ case (idx, iterKeyedByHash) =>
+
+      // Duplicate iterator since it is required to be iterated twice.
+      val (iterQueries, iterLucene) = iterKeyedByHash.map(_._2).duplicate
+
+      // Instantiate a lucene index on partitioned entities
+      val lucenePart = LuceneRDDPartition(iterLucene,
+        idx,
+        indexAnalyzer,
+        queryAnalyzer, similarity)
+
+      // Multi-query lucene index
+      iterQueries.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
+    }
   }
 }

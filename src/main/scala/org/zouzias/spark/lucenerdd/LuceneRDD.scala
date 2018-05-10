@@ -491,6 +491,12 @@ object LuceneRDD extends Versionable
                          similarity: String = getOrElseClassic())
   : RDD[(Row, Array[SparkScoreDoc])] = {
 
+    assert(entityPartColumns.nonEmpty,
+      "Entity Partition columns must be non-empty for block linkage")
+    assert(queryPartColumns.nonEmpty,
+      "Query Partition columns must be non-empty for block linkage")
+
+
     val partColumn = "__PARTITION_COLUMN__"
 
     // Prepare input DataFrames for cogroup operation.
@@ -542,6 +548,9 @@ object LuceneRDD extends Versionable
                  queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
                  similarity: String = getOrElseClassic())
   : RDD[(Row, Array[SparkScoreDoc])] = {
+
+    // Check that there is at least one partition column
+    assert(blockingColumns.nonEmpty, "Partition columns must be non-empty for block deduplication")
 
     val partColumn = "__PARTITION_COLUMN__"
     val blocked = entities.withColumn(partColumn,

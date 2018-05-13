@@ -20,6 +20,7 @@ import org.apache.lucene.search.Query
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.api.java.function.{Function => JFunction}
 import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
@@ -71,12 +72,13 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     *
     * @return
     */
-  def dedup[T1: ClassTag](searchQueryGen: T1 => String,
+  def dedup[T1: ClassTag](searchQueryGen: JFunction[T1, String],
                           topK: Int,
                           linkerMethod: String )
   : JavaRDD[(T1, Array[SparkScoreDoc])] = {
+    def fn: T1 => String = (x: T1) => searchQueryGen.call(x)
     // FIXME: is this asInstanceOf necessary?
-    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK, linkerMethod)
+    link[T1](this.asInstanceOf[RDD[T1]], fn, topK, linkerMethod)
   }
 
   /**
@@ -89,11 +91,12 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
     */
   def linkDataFrame(other: DataFrame,
-                    searchQueryGen: Row => String,
+                    searchQueryGen: JFunction[Row, String],
                     topK: Int,
                     linkerMethod: String)
   : JavaRDD[(Row, Array[SparkScoreDoc])] = {
-    link[Row](other.rdd, searchQueryGen, topK, linkerMethod)
+    def fn: Row => String = (x: Row) => searchQueryGen.call(x)
+    link[Row](other.rdd, fn, topK, linkerMethod)
   }
 
   /**
@@ -107,12 +110,12 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     *         in the second position
     */
   def linkByQuery[T1: ClassTag](other: RDD[T1],
-                                searchQueryGen: T1 => Query,
+                                searchQueryGen: JFunction[T1, Query],
                                 topK: Int,
                                 linkerMethod: String)
   : JavaRDD[(T1, Array[SparkScoreDoc])] = {
     def typeToQueryString = (input: T1) => {
-      searchQueryGen(input).toString
+      searchQueryGen.call(input).toString
     }
 
     link[T1](other, typeToQueryString, topK, linkerMethod)
@@ -130,7 +133,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     * Note: Currently the query strings of the other RDD are collected to the driver and
     * broadcast to the workers.
     */
-  def link[T1: ClassTag](other: RDD[T1],
+  private def link[T1: ClassTag](other: RDD[T1],
                          searchQueryGen: T1 => String,
                          topK: Int,
                          linkerMethod: String)

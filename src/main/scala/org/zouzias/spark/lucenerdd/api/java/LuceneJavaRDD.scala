@@ -16,7 +16,9 @@
  */
 package org.zouzias.spark.lucenerdd.api.java
 
+import org.apache.lucene.document.Document
 import org.apache.lucene.search.Query
+import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row}
@@ -25,12 +27,21 @@ import org.zouzias.spark.lucenerdd.LuceneRDD
 import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponse
+import org.zouzias.spark.lucenerdd._
 
 import scala.reflect.ClassTag
 
-class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
-                      (implicit override val classTag: ClassTag[T])
+class LuceneJavaRDD[T](override val rdd: RDD[T])
+                      (implicit override val classTag: ClassTag[T], conv: T => Document)
+
   extends JavaRDD(rdd) {
+
+  private val luceneRDD = LuceneRDD(rdd)
+
+  override def cache(): JavaRDD[T] = {
+    luceneRDD.cache()
+    super.cache()
+  }
 
   /**
     * Return all document fields
@@ -38,7 +49,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     * @return
     */
   def fields(): Set[String] = {
-    rdd.fields()
+    luceneRDD.fields()
   }
 
   /**
@@ -48,7 +59,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     * @return
     */
   def exists(doc: Map[String, String]): Boolean = {
-    rdd.exists(doc)
+    luceneRDD.exists(doc)
   }
 
   /**
@@ -59,7 +70,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     * @return
     */
   def query(searchString: String, topK: Int): LuceneRDDResponse = {
-    rdd.query(searchString, topK)
+    luceneRDD.query(searchString, topK)
   }
 
 
@@ -138,7 +149,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
                          topK: Int,
                          linkerMethod: String)
   : JavaRDD[(T1, Array[SparkScoreDoc])] = {
-    JavaRDD.fromRDD(rdd.link(other, searchQueryGen, topK, linkerMethod))
+    JavaRDD.fromRDD(luceneRDD.link(other, searchQueryGen, topK, linkerMethod))
   }
 
   /**
@@ -151,7 +162,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     */
   def termQuery(fieldName: String, query: String,
                 topK: Int): LuceneRDDResponse = {
-    rdd.termQuery(fieldName, query, topK)
+    luceneRDD.termQuery(fieldName, query, topK)
   }
 
   /**
@@ -164,7 +175,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     */
   def prefixQuery(fieldName: String, query: String,
                   topK: Int): LuceneRDDResponse = {
-    rdd.prefixQuery(fieldName, query, topK)
+    luceneRDD.prefixQuery(fieldName, query, topK)
   }
 
   /**
@@ -178,7 +189,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int): LuceneRDDResponse = {
-    rdd.fuzzyQuery(fieldName, query, maxEdits, topK)
+    luceneRDD.fuzzyQuery(fieldName, query, maxEdits, topK)
   }
 
   /**
@@ -191,11 +202,11 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     */
   def phraseQuery(fieldName: String, query: String,
                   topK: Int): LuceneRDDResponse = {
-    rdd.phraseQuery(fieldName, query, topK)
+    luceneRDD.phraseQuery(fieldName, query, topK)
   }
 
   override def count(): Long = {
-    rdd.count()
+    luceneRDD.count()
   }
 
   /**
@@ -211,7 +222,7 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
   def moreLikeThis(fieldName: String, query: String,
                    minTermFreq: Int, minDocFreq: Int, topK: Int)
   : LuceneRDDResponse = {
-    rdd.moreLikeThis(fieldName, query, minTermFreq, minDocFreq, topK)
+    luceneRDD.moreLikeThis(fieldName, query, minTermFreq, minDocFreq, topK)
   }
 
   /**
@@ -225,24 +236,24 @@ class LuceneJavaRDD[T](override val rdd: LuceneRDD[T])
     */
   def termVectors(fieldName: String, idFieldName: Option[String] = None)
   : JavaRDD[TermVectorEntry] = {
-    JavaRDD.fromRDD(rdd.termVectors(fieldName, idFieldName))
+    JavaRDD.fromRDD(luceneRDD.termVectors(fieldName, idFieldName))
   }
 
   def indexStats(): JavaRDD[IndexStatistics] = {
-    JavaRDD.fromRDD(rdd.indexStats())
+    JavaRDD.fromRDD(luceneRDD.indexStats())
   }
 
 
   def filter(pred: T => Boolean): LuceneJavaRDD[T] = {
-    val filteredRDD = rdd.filter(pred)
+    val filteredRDD = luceneRDD.filter(pred)
     new LuceneJavaRDD(filteredRDD)
   }
 
   def exists(elem: T): Boolean = {
-    rdd.exists(elem)
+    luceneRDD.exists(elem)
   }
 
   def close(): Unit = {
-    rdd.close()
+    luceneRDD.close()
   }
 }

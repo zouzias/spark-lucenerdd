@@ -77,10 +77,10 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.3.1"
+val luceneV = "7.4.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.3.0"
+sparkVersion := "2.3.1"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -99,7 +99,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.4"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "2.0.1"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "2.0.2"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"

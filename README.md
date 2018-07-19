@@ -27,7 +27,7 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc and any combination of those. 
 For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). 
 
-### Examples
+### [Examples](https://github.com/zouzias/spark-lucenerdd-examples)
 
 Here are a few examples using `LuceneRDD` for full text search, spatial search and record linkage. All examples exploit Lucene's flexible query language. For spatial search, `lucene-spatial` and `jts` are required.
 

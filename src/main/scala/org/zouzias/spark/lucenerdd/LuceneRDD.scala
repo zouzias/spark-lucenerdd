@@ -491,6 +491,12 @@ object LuceneRDD extends Versionable
                          similarity: String = getOrElseClassic())
   : RDD[(Row, Array[SparkScoreDoc])] = {
 
+    assert(entityPartColumns.nonEmpty,
+      "Entity Partition columns must be non-empty for block linkage")
+    assert(queryPartColumns.nonEmpty,
+      "Query Partition columns must be non-empty for block linkage")
+
+
     val partColumn = "__PARTITION_COLUMN__"
 
     // Prepare input DataFrames for cogroup operation.
@@ -517,6 +523,59 @@ object LuceneRDD extends Versionable
           // Multi-query lucene index
           qs.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
         }
+    }
+  }
+
+  /**
+    * Deduplication via blocking
+    *
+    * @param entities Entities [[DataFrame]] to deduplicate
+    * @param rowToQueryString Function that maps [[Row]] to Lucene Query String
+    * @param blockingColumns Columns on which exact match is required
+    * @param topK Number of top-K query results
+    * @param indexAnalyzer Lucene analyzer at index time
+    * @param queryAnalyzer Lucene analyzer at query time
+    * @param similarity Lucene Similarity metric (BM25, Tf/idf)
+    * @return Returns top-k deduplicated results as [[RDD]] of [[Tuple2]] where _1 is query and
+    *         _2 is top-k linked results as [[SparkScoreDoc]].
+    * @return
+    */
+  def blockDedup(entities: DataFrame,
+                 rowToQueryString: Row => String,
+                 blockingColumns: Array[String],
+                 topK : Int = 3,
+                 indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
+                 queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
+                 similarity: String = getOrElseClassic())
+  : RDD[(Row, Array[SparkScoreDoc])] = {
+
+    // Check that there is at least one partition column
+    assert(blockingColumns.nonEmpty, "Partition columns must be non-empty for block deduplication")
+
+    val partColumn = "__PARTITION_COLUMN__"
+    val blocked = entities.withColumn(partColumn,
+      concat(blockingColumns.map(entities.col): _*))
+
+    val distinctPartitions = blocked.select(partColumn).distinct().count()
+    val hashPart = new HashPartitioner(distinctPartitions.toInt)
+
+    val blockedRDD = blocked.rdd
+      .keyBy(x => x.getString(x.fieldIndex(partColumn)))
+      .partitionBy(hashPart)
+
+    blockedRDD.mapPartitionsWithIndex{ case (idx, iterKeyedByHash) =>
+
+      // Duplicate iterator since it is required to be iterated twice.
+      val (iterQueries, iterLucene) = iterKeyedByHash.map(_._2).duplicate
+
+      // Instantiate a lucene index on partitioned entities
+      val lucenePart = LuceneRDDPartition(iterLucene,
+        idx,
+        indexAnalyzer,
+        queryAnalyzer, similarity)
+
+      // Multi-query lucene index
+      iterQueries.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
     }
   }
 }

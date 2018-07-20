@@ -77,10 +77,10 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.3.0"
+val luceneV = "7.4.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.2.1"
+sparkVersion := "2.3.1"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -97,9 +97,9 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.5"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.5" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.9.9"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.4"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "1.9.2"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "2.1.1"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"
@@ -111,7 +111,7 @@ val lucene_expressions        = "org.apache.lucene"              % "lucene-expre
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.15.0"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.15.1"
 // scalastyle:on
 
 
@@ -135,7 +135,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.2.1_0.9.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.3.1_0.10.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

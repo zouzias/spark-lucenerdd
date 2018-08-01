@@ -17,15 +17,17 @@
 
 resolvers += "bintray-spark-packages" at "https://dl.bintray.com/spark-packages/maven/"
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.0")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.8")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.7")
 
-addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.9.0")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.9")
 
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
+addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
-addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.2.4")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
+
+addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.2.6")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
 

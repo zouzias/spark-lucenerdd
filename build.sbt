@@ -77,10 +77,10 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.4.0"
+val luceneV = "7.5.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.3.1"
+sparkVersion := "2.3.2"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -111,7 +111,7 @@ val lucene_expressions        = "org.apache.lucene"              % "lucene-expre
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.15.1"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.16.0"
 // scalastyle:on
 
 

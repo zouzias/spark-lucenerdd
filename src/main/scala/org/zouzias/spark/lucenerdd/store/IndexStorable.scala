@@ -77,13 +77,28 @@ trait IndexStorable extends Configurable
         case ow =>
           logInfo(s"Config parameter ${IndexStoreKey} is set to ${ow}")
           logInfo("Lucene index will be storage in memory (default)")
+          logInfo(
+            """
+              Quoting from http://lucene.apache.org/core/7_5_0/core/org/apache/lucene/store/RAMDirectory.html
+
+              A memory-resident Directory implementation. Locking implementation is by default the
+              SingleInstanceLockFactory. Warning: This class is not intended to work with huge indexes.
+              Everything beyond several hundred megabytes will waste resources (GC cycles), because it
+              uses an internal buffer size of 1024 bytes, producing millions of byte[1024] arrays.
+              This class is optimized for small memory-resident indexes. It also has bad concurrency
+              on multithreaded environments.
+
+              It is recommended to materialize large indexes on disk and use MMapDirectory, which is
+              a high-performance directory implementation working directly on the file system cache of
+              the operating system, so copying data to Java heap space is not useful.
+            """.stripMargin)
           new RAMDirectory()
       }
     }
     else {
       logInfo(s"Config parameter ${IndexStoreKey} is not set")
-      logInfo("Lucene index will be storage in memory")
-      new RAMDirectory()
+      logInfo("Lucene index will be storage in disk")
+      new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
     }
   }
 

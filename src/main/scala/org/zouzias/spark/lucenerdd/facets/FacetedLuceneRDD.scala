@@ -85,7 +85,7 @@ class FacetedLuceneRDD[T: ClassTag]
                  topK: Int = DefaultTopK,
                  facetNum: Int = DefaultFacetNum
                 ): (LuceneRDDResponse, SparkFacetResult) = {
-    val aggrTopDocs = partitionMapper(_.query(searchString, topK), topK)
+    val aggrTopDocs = partitionMapper(_.query(searchString, topK))
     val aggrFacets = facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum))
     (aggrTopDocs, aggrFacets)
   }
@@ -105,7 +105,7 @@ class FacetedLuceneRDD[T: ClassTag]
                    facetNum: Int = DefaultFacetNum)
   : (LuceneRDDResponse, Map[String, SparkFacetResult]) = {
     logInfo(s"Faceted query on facet fields ${facetFields.mkString(",")}...")
-    val aggrTopDocs = partitionMapper(_.query(searchString, topK), topK)
+    val aggrTopDocs = partitionMapper(_.query(searchString, topK))
     val aggrFacets = facetFields.map { case facetField =>
       (facetField, facetResultsAggregator(_.facetQuery(searchString, facetField, facetNum)))
     }.toMap[String, SparkFacetResult]

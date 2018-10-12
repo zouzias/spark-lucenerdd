@@ -24,8 +24,8 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 |Bbox Search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |
 |Spatial Linkage| `ShapeLuceneRDD.linkByRadius(RDD[T], linkage: T => (x,y), radius, topK)` | Spatial radius linkage|
 
-Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc and any combination of those. 
-For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html). 
+Using the query parser, you can perform prefix queries, fuzzy queries, prefix queries, etc and any combination of those.
+For more information on using Lucene's query parser, see [Query Parser](https://lucene.apache.org/core/5_5_0/queryparser/org/apache/lucene/queryparser/classic/QueryParser.html).
 
 ### [Examples](https://github.com/zouzias/spark-lucenerdd-examples)
 
@@ -78,7 +78,7 @@ Artifact                  | Release Date    | Spark compatibility | Notes | Stat
 ------------------------- | --------------- | -------------------------- | ----- | ----
 0.3.5-SNAPSHOT            |                 | >= 2.3.1, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
 0.3.4                     |  2018-11-27     | >= 2.4.0, JVM 8  | [tag v0.3.4](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.4) | Released
-0.2.8                     | 2017-05-30      |  2.1.x, JVM 7      | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released 
+0.2.8                     | 2017-05-30      |  2.1.x, JVM 7      | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released
 0.1.0                     | 2016-09-26      | 1.4.x, 1.5.x, 1.6.x| [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 
 ### Project Status and Limitations
@@ -101,7 +101,7 @@ A docker compose script is setup with some preliminary notebook in Zeppelin, run
 docker-compose up
 ```
 
-For more LuceneRDD examples on Zeppelin, check these [examples](https://github.com/zouzias/spark-lucenerdd-examples) 
+For more LuceneRDD examples on Zeppelin, check these [examples](https://github.com/zouzias/spark-lucenerdd-examples)
 ### Build from Source
 
 Install Java, [SBT](http://www.scala-sbt.org) and clone the project

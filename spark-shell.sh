@@ -6,7 +6,7 @@ CURRENT_DIR=`pwd`
 SPARK_LUCENERDD_VERSION=`cat version.sbt | awk '{print $5}' | xargs`
 
 # You should have downloaded this spark version under your ${HOME}
-SPARK_VERSION="2.3.0"
+SPARK_VERSION="2.3.1"
 
 echo "==============================================="
 echo "Loading LuceneRDD with version ${SPARK_LUCENERDD_VERSION}"

@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.11.12"
-crossScalaVersions := Seq("2.11.12")
+scalaVersion := "2.12.7"
+crossScalaVersions := Seq("2.11.12", "2.12.7")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -80,7 +80,7 @@ pomExtra := <scm>
 val luceneV = "7.5.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.3.2"
+sparkVersion := "2.4.0"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -97,9 +97,9 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.5"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.5" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.4"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "2.1.1"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "2.1.2"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"

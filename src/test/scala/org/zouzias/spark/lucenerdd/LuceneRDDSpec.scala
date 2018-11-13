@@ -28,7 +28,7 @@ class LuceneRDDSpec extends FlatSpec
   var luceneRDD: LuceneRDD[_] = _
 
 
-  override val conf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+  override val conf: SparkConf = LuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
     setMaster("local[*]").
     setAppName("test").
     set("spark.ui.enabled", "false").

@@ -111,4 +111,19 @@ trait LuceneRDDConfigurable extends Configurable {
     }
     else "collectbroadcast"  // collectbroadcast by default
   }
+
+  /**
+    *
+    * @param fieldName Name of field
+    * @return Returns true, if field must be analyzed
+    */
+  protected def isAnalyzedField(fieldName: String): Boolean = {
+    if (StringFieldsListToBeNotAnalyzed.contains(fieldName)) {
+      false
+    }
+    else {
+      // Return the default string field analysis option
+      StringFieldsDefaultAnalyzed
+    }
+  }
 }

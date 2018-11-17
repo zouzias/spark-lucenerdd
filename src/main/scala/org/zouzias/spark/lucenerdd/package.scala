@@ -24,8 +24,28 @@ import scala.reflect.ClassTag
 
 package object lucenerdd extends LuceneRDDConfigurable {
 
-  private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
+  private val DefaultNotAnalyzedFieldSuffix = "_notanalyzed"
+
+  /**
+    * Returns true, if a field should be analyzed
+    *
+    * Note: All fields that end with [[DefaultNotAnalyzedFieldSuffix]]
+    * are not analyzed
+    *
+    * @param fieldName Name of field
+    * @return Returns true, if field must be analyzed
+    */
+  private def isAnalyzedField(fieldName: String): Boolean = {
+    if (StringFieldsListToBeNotAnalyzed.contains(fieldName) ||
+      fieldName.toLowerCase.endsWith(DefaultNotAnalyzedFieldSuffix)) {
+      false
+    }
+    else {
+      // Return the default string field analysis option
+      StringFieldsDefaultAnalyzed
+    }
+  }
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document

@@ -24,8 +24,28 @@ import scala.reflect.ClassTag
 
 package object lucenerdd extends LuceneRDDConfigurable {
 
-  private val Stored = Field.Store.YES
   private val DefaultFieldName = "_1"
+  private val DefaultNotAnalyzedFieldSuffix = "_notanalyzed"
+
+  /**
+    * Returns true, if a field should be analyzed
+    *
+    * Note: All fields that end with [[DefaultNotAnalyzedFieldSuffix]]
+    * are not analyzed
+    *
+    * @param fieldName Name of field
+    * @return Returns true, if field must be analyzed
+    */
+  private def isAnalyzedField(fieldName: String): Boolean = {
+    if (StringFieldsListToBeNotAnalyzed.contains(fieldName) ||
+      fieldName.toLowerCase.endsWith(DefaultNotAnalyzedFieldSuffix)) {
+      false
+    }
+    else {
+      // Return the default string field analysis option
+      StringFieldsDefaultAnalyzed
+    }
+  }
 
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
@@ -66,7 +86,9 @@ package object lucenerdd extends LuceneRDDConfigurable {
   implicit def stringToDocument(s: String): Document = {
     val doc = new Document
 
-    if (s != null) doc.add(new Field(DefaultFieldName, s, CustomStringFieldType))
+    if (s != null) {
+      doc.add(new Field(DefaultFieldName, s, analyzedField(StringFieldsDefaultAnalyzed)))
+    }
     doc
   }
 
@@ -75,14 +97,18 @@ package object lucenerdd extends LuceneRDDConfigurable {
   }
 
   /**
-    * Custom text field type, reads configuration and returns Lucene field type
+    *
+    * Decide to analyze a field based on its name
+    *
+    * @param tobeAnalyzed If true, analyze the field
+    * @return A Lucene [[FieldType]]
     */
-  private lazy val CustomStringFieldType: FieldType = {
+  private def analyzedField(tobeAnalyzed: Boolean): FieldType = {
     val fieldType = new FieldType()
     fieldType.setStoreTermVectors(StringFieldsStoreTermVector)
     fieldType.setStoreTermVectorPositions(StringFieldsStoreTermPositions)
     fieldType.setOmitNorms(StringFieldsOmitNorms)
-    fieldType.setTokenized(StringFieldsAnalyzed)
+    fieldType.setTokenized(tobeAnalyzed)
     fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
     fieldType.setIndexOptions(StringFieldsIndexOptions)
     fieldType.freeze()
@@ -93,7 +119,9 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
     s match {
       case x: String if x != null =>
-        doc.add(new Field(fieldName, x, CustomStringFieldType))
+        doc.add(new Field(fieldName, x,
+          analyzedField(isAnalyzedField(fieldName)))
+        )
         doc.add(new StoredField(fieldName, x))
       case x: Long if x != null =>
         doc.add(new LongPoint(fieldName, x))

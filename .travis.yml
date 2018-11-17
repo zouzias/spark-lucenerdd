@@ -16,16 +16,16 @@ matrix:
   include:
     - jdk: oraclejdk8
       scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.3.2" LUCENE_ANALYZER="en" LINKER_METHOD="cartesian"
+      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="en" LINKER_METHOD="cartesian"
     - jdk: openjdk8
       scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.3.2" LUCENE_ANALYZER="en" LINKER_METHOD="collectbroadcast"
+      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="en" LINKER_METHOD="collectbroadcast"
     - jdk: openjdk8
       scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.3.2" LUCENE_ANALYZER="whitespace" LINKER_METHOD="cartesian"
+      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="whitespace" LINKER_METHOD="cartesian"
     - jdk: oraclejdk8
       scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.3.2" LUCENE_ANALYZER="whitespace" LINKER_METHOD="collectbroadcast"
+      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="whitespace" LINKER_METHOD="collectbroadcast"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update
       -Dlucenerdd.linker.method=${LINKER_METHOD}

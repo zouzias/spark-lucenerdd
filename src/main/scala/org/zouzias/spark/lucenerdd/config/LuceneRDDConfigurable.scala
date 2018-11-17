@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.config
 
 import org.apache.lucene.index.IndexOptions
+import scala.collection.JavaConverters._
 
 /**
  * Configuration for [[org.zouzias.spark.lucenerdd.LuceneRDD]]
@@ -45,11 +46,26 @@ trait LuceneRDDConfigurable extends Configurable {
     else 10
   }
 
-  protected val StringFieldsAnalyzed: Boolean = {
+  protected val StringFieldsDefaultAnalyzed: Boolean = {
     if (Config.hasPath("lucenerdd.index.stringfields.analyzed")) {
       Config.getBoolean("lucenerdd.index.stringfields.analyzed")
     }
-    else true
+    else {
+      true
+    }
+  }
+
+  /**
+    * List of string fields *not* to be analyzed
+    */
+  protected val StringFieldsListToBeNotAnalyzed: List[String] = {
+    if (Config.hasPath("lucenerdd.index.stringfields.not_analyzed_list")) {
+      Config.getStringList("lucenerdd.index.stringfields.not_analyzed_list")
+        .asScala.toList
+    }
+    else {
+      List.empty[String]
+    }
   }
 
   protected val StringFieldsStoreTermVector: Boolean = {
@@ -83,7 +99,7 @@ trait LuceneRDDConfigurable extends Configurable {
         case "docs_and_freqs_and_positions" => IndexOptions.DOCS_AND_FREQS_AND_POSITIONS
         case "docs_and_freqs_and_positions_and_offsets" =>
           IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS
-        case "none" => IndexOptions.NONE
+        case _ => IndexOptions.NONE
       }
     }
     else IndexOptions.DOCS_AND_FREQS_AND_POSITIONS  // Default

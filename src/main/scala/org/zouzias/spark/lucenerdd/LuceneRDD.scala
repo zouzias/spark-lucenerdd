@@ -69,7 +69,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
 
   override def persist(newLevel: StorageLevel): this.type = {
     partitionsRDD.persist(newLevel)
-    super.persist(newLevel)
+    super.persist(StorageLevel.DISK_ONLY)
     this
   }
 

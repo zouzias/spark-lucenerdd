@@ -77,7 +77,7 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.5.0"
+val luceneV = "7.6.0"
 
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "2.4.0"
@@ -99,7 +99,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.5"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "2.1.2"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.0"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"
@@ -135,7 +135,7 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
   "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.3.1_0.10.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.4.0_0.11.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

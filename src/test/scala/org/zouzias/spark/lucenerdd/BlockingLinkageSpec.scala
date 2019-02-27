@@ -43,7 +43,7 @@ class BlockingLinkageSpec extends FlatSpec
       Person(str, index, email)
     }
 
-    val peopleRight: Array[Person] = Array("fear", "death, "water", "fire"", "house")
+    val peopleRight: Array[Person] = Array("fear", "death", "water", "fire", "house")
       .zipWithIndex.map { case (str, index) =>
       val email = if (index % 2 == 0) "yes@gmail.com" else "no@gmail.com"
       Person(str, index, email)

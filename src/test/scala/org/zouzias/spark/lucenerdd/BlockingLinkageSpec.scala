@@ -37,12 +37,21 @@ class BlockingLinkageSpec extends FlatSpec
     val spark = SparkSession.builder().getOrCreate()
     import spark.implicits._
 
-    val people: Array[Person] = Array("fear", "death", "water", "fire", "house")
+    val peopleLeft: Array[Person] = Array("fear", "death", "water", "fire", "house")
       .zipWithIndex.map { case (str, index) =>
       val email = if (index % 2 == 0) "yes@gmail.com" else "no@gmail.com"
       Person(str, index, email)
     }
-    val df = sc.parallelize(people).repartition(2).toDF()
+
+    val peopleRight: Array[Person] = Array("fear", "death", "water", "fire", "house")
+      .zipWithIndex.map { case (str, index) =>
+      val email = if (index % 2 == 0) "yes@gmail.com" else "no@gmail.com"
+      Person(str, index, email)
+    }
+
+    val leftDF = sc.parallelize(peopleLeft).repartition(2).toDF()
+    val rightDF = sc.parallelize(peopleRight).repartition(3).toDF()
+
 
     val linker: Row => String = { row =>
       val name = row.getString(row.fieldIndex("name"))
@@ -51,10 +60,10 @@ class BlockingLinkageSpec extends FlatSpec
     }
 
 
-    val linked = LuceneRDD.blockEntityLinkage(df, df, linker,
+    val linked = LuceneRDD.blockEntityLinkage(leftDF, rightDF, linker,
       Array("email"), Array("email"))
 
-    val linkedCount, dfCount = (linked.count, df.count())
+    val linkedCount, dfCount = (linked.count, leftDF.count())
 
     linkedCount should equal(dfCount)
 

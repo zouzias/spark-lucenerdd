@@ -496,17 +496,18 @@ object LuceneRDD extends Versionable
       "Query Partition columns must be non-empty for block linkage")
 
 
-    val partColumn = "__PARTITION_COLUMN__"
+    val partColumnLeft = "__PARTITION_COLUMN_LEFT__"
+    val partColumnRight = "__PARTITION_COLUMN_RIGHT__"
 
     // Prepare input DataFrames for cogroup operation.
     // Keyed them on queryPartColumns and entityPartColumns
     // I.e., Query/Entity DataFrame are now of type (String, Row)
-    val blocked = entities.withColumn(partColumn,
+    val blocked = entities.withColumn(partColumnLeft,
       concat(entityPartColumns.map(entities.col): _*))
-      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
-    val blockedQueries = queries.withColumn(partColumn,
-      concat(entityPartColumns.map(entities.col): _*))
-      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumnLeft)))
+    val blockedQueries = queries.withColumn(partColumnRight,
+      concat(queryPartColumns.map(queries.col): _*)).drop(queryPartColumns: _*)
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumnRight)))
 
     // Cogroup queries and entities. Map over each
     // CoGrouped partition and instantiate Lucene index on partitioned

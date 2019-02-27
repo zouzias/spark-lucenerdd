@@ -506,7 +506,7 @@ object LuceneRDD extends Versionable
       concat(entityPartColumns.map(entities.col): _*))
       .rdd.keyBy(x => x.getString(x.fieldIndex(partColumnLeft)))
     val blockedQueries = queries.withColumn(partColumnRight,
-      concat(entityPartColumns.map(entities.col): _*))
+      concat(queryPartColumns.map(queries.col): _*)).drop(queryPartColumns: _*)
       .rdd.keyBy(x => x.getString(x.fieldIndex(partColumnRight)))
 
     // Cogroup queries and entities. Map over each

@@ -54,52 +54,7 @@ class BlockingLinkageSpec extends FlatSpec
     val leftDF = sc.parallelize(peopleLeft).repartition(2).toDF()
     val rightDF = sc.parallelize(peopleRight).repartition(3).toDF()
 
-
-    val linker: Row => String = { row =>
-      val name = row.getString(row.fieldIndex("name"))
-
-      s"name:$name"
-    }
-
-
-    val linked = LuceneRDD.blockEntityLinkage(leftDF, rightDF, linker,
-      Array("email"), Array("email"))
-
-    val linkedCount, dfCount = (linked.count, leftDF.count())
-
-    linkedCount should equal(dfCount)
-
-    // Check for correctness
-    // Age is a unique index
-    linked.collect().foreach { case (row, results) =>
-      val leftAge, rightAge = (row.getInt(row.fieldIndex("age")),
-        results.headOption.map(_.doc.numericField("age")))
-
-      leftAge should equal(rightAge)
-
-    }
-  }
-
-  "LuceneRDD.blockEntityLinkageQuery" should "deduplicate elements on unique elements" in {
-    val spark = SparkSession.builder().getOrCreate()
-    import spark.implicits._
-
-    val peopleLeft: Array[Person] = Array("fear", "death", "water", "fire", "house")
-      .zipWithIndex.map { case (str, index) =>
-      val email = if (index % 2 == 0) "yes@gmail.com" else "no@gmail.com"
-      Person(str, index, email)
-    }
-
-    val peopleRight: Array[Person] = Array("fear", "death", "water", "fire", "house")
-      .zipWithIndex.map { case (str, index) =>
-      val email = if (index % 2 == 0) "yes@gmail.com" else "no@gmail.com"
-      Person(str, index, email)
-    }
-
-    val leftDF = sc.parallelize(peopleLeft).repartition(2).toDF()
-    val rightDF = sc.parallelize(peopleRight).repartition(3).toDF()
-
-
+    // Define a Lucene Term linker
     val linker: Row => Query = { row =>
       val name = row.getString(row.fieldIndex("name"))
       val term = new Term("name", name)
@@ -108,7 +63,7 @@ class BlockingLinkageSpec extends FlatSpec
     }
 
 
-    val linked = LuceneRDD.blockEntityLinkageQuery(leftDF, rightDF, linker,
+    val linked = LuceneRDD.blockEntityLinkage(leftDF, rightDF, linker,
       Array("email"), Array("email"))
 
     val linkedCount, dfCount = (linked.count, leftDF.count())

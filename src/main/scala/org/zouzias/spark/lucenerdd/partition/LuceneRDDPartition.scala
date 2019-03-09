@@ -137,6 +137,13 @@ private[lucenerdd] class LuceneRDDPartition[T]
     LuceneRDDResponsePartition(results.toIterator)
   }
 
+  override def query(query: Query,
+                     topK: Int): LuceneRDDResponsePartition = {
+    val results = LuceneQueryHelpers.searchParser(indexSearcher, query, topK, QueryAnalyzer)
+
+    LuceneRDDResponsePartition(results.toIterator)
+  }
+
   override def queries(searchStrings: Iterable[String],
                      topK: Int): Iterable[(String, LuceneRDDResponsePartition)] = {
     searchStrings.map( searchString =>

@@ -107,6 +107,13 @@ object LuceneQueryHelpers extends Serializable {
     indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
+  def searchParser(indexSearcher: IndexSearcher,
+                   query: Query,
+                   topK: Int, analyzer: Analyzer)
+  : Seq[SparkScoreDoc] = {
+    indexSearcher.search(query, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  }
+
   /**
    * Faceted search using [[SortedSetDocValuesFacetCounts]]
    *

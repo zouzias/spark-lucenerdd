@@ -139,7 +139,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def query(query: Query,
                      topK: Int): LuceneRDDResponsePartition = {
-    val results = LuceneQueryHelpers.searchParser(indexSearcher, query, topK, QueryAnalyzer)
+    val results = LuceneQueryHelpers.searchQuery(indexSearcher, query, topK)
 
     LuceneRDDResponsePartition(results.toIterator)
   }

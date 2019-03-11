@@ -64,8 +64,9 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
 
   /**
-    * Generic Lucene Query using Lucene [[Query]]
-    * @param query Lucene query
+    * Lucene search using Lucene [[Query]]
+    * @param query Lucene query, i.e., [[org.apache.lucene.search.BooleanQuery]] or
+    *              [[org.apache.lucene.search.PhraseQuery]]
     * @param topK Number of documents to return
     * @return
     */

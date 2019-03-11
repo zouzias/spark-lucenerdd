@@ -469,7 +469,7 @@ object LuceneRDD extends Versionable
     *
     * @param queries Queries / entities to be linked with @corpus
     * @param entities DataFrame of entities to be linked with queries parameter
-    * @param rowToQueryString Converts each [[Row]] to a 'Lucene Query Syntax'
+    * @param rowToQuery Function[Row, Query] that converts [[Row]] to a Lucene [[Query]]
     * @param queryPartColumns List of query columns for [[HashPartitioner]]
     * @param entityPartColumns List of entity columns for [[HashPartitioner]]
     * @param topK Number of linked results
@@ -481,7 +481,7 @@ object LuceneRDD extends Versionable
     */
   def blockEntityLinkage(queries: DataFrame,
                          entities: DataFrame,
-                         rowToQueryString: Row => String,
+                         rowToQuery: Row => Query,
                          queryPartColumns: Array[String],
                          entityPartColumns: Array[String],
                          topK : Int = 3,
@@ -496,17 +496,18 @@ object LuceneRDD extends Versionable
       "Query Partition columns must be non-empty for block linkage")
 
 
-    val partColumn = "__PARTITION_COLUMN__"
+    val partColumnLeft = "__PARTITION_COLUMN_LEFT__"
+    val partColumnRight = "__PARTITION_COLUMN_RIGHT__"
 
     // Prepare input DataFrames for cogroup operation.
     // Keyed them on queryPartColumns and entityPartColumns
     // I.e., Query/Entity DataFrame are now of type (String, Row)
-    val blocked = entities.withColumn(partColumn,
+    val blocked = entities.withColumn(partColumnLeft,
       concat(entityPartColumns.map(entities.col): _*))
-      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
-    val blockedQueries = queries.withColumn(partColumn,
-      concat(entityPartColumns.map(entities.col): _*))
-      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumn)))
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumnLeft)))
+    val blockedQueries = queries.withColumn(partColumnRight,
+      concat(queryPartColumns.map(queries.col): _*)).drop(queryPartColumns: _*)
+      .rdd.keyBy(x => x.getString(x.fieldIndex(partColumnRight)))
 
     // Cogroup queries and entities. Map over each
     // CoGrouped partition and instantiate Lucene index on partitioned
@@ -520,7 +521,7 @@ object LuceneRDD extends Versionable
             queryAnalyzer, similarity)
 
           // Multi-query lucene index
-          qs.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
+          qs.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))
         }
     }
   }
@@ -529,7 +530,7 @@ object LuceneRDD extends Versionable
     * Deduplication via blocking
     *
     * @param entities Entities [[DataFrame]] to deduplicate
-    * @param rowToQueryString Function that maps [[Row]] to Lucene Query String
+    * @param rowToQuery Function that maps [[Row]] to Lucene [[Query]]
     * @param blockingColumns Columns on which exact match is required
     * @param topK Number of top-K query results
     * @param indexAnalyzer Lucene analyzer at index time
@@ -540,7 +541,7 @@ object LuceneRDD extends Versionable
     * @return
     */
   def blockDedup(entities: DataFrame,
-                 rowToQueryString: Row => String,
+                 rowToQuery: Row => Query,
                  blockingColumns: Array[String],
                  topK : Int = 3,
                  indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
@@ -574,7 +575,7 @@ object LuceneRDD extends Versionable
         queryAnalyzer, similarity)
 
       // Multi-query lucene index
-      iterQueries.map(q => (q, lucenePart.query(rowToQueryString(q), topK).results.toArray))
+      iterQueries.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))
     }
   }
 }

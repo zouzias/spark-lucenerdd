@@ -17,6 +17,8 @@
 package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.lucene.index.Term
+import org.apache.lucene.search.{Query, TermQuery}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
@@ -44,10 +46,11 @@ class BlockingDedupSpec extends FlatSpec
     }
     val df = sc.parallelize(people).repartition(2).toDF()
 
-    val linker: Row => String = { row =>
+    val linker: Row => Query = { row =>
       val name = row.getString(row.fieldIndex("name"))
+      val term = new Term("name", name)
 
-      s"name:$name"
+      new TermQuery(term)
     }
 
 

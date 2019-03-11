@@ -77,7 +77,7 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.6.0"
+val luceneV = "7.7.1"
 
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "2.4.0"
@@ -94,8 +94,8 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.5"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.5" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.6"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.6" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.5"
@@ -111,7 +111,7 @@ val lucene_expressions        = "org.apache.lucene"              % "lucene-expre
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.16.0"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.16.1"
 // scalastyle:on
 
 

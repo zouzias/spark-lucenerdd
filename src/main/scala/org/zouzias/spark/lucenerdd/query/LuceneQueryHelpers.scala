@@ -95,16 +95,33 @@ object LuceneQueryHelpers extends Serializable {
    *
    * @param indexSearcher Index searcher
    * @param searchString Lucene search query string
-   * @param topK Number of returned documents
+   * @param topK Number of documents to return
    * @param analyzer Lucene Analyzer
    * @return
    */
   def searchParser(indexSearcher: IndexSearcher,
                    searchString: String,
-                   topK: Int, analyzer: Analyzer)
+                   topK: Int,
+                   analyzer: Analyzer)
   : Seq[SparkScoreDoc] = {
     val q = parseQueryString(searchString, analyzer)
     indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+  }
+
+  /**
+    * Lucene search using a Lucene [[Query]]
+    *
+    * Important: Query analysis is done during the definition of query
+    * @param indexSearcher Lucene index searcher
+    * @param query Lucene query
+    * @param topK Number of documents to return
+    * @return
+    */
+  def searchQuery(indexSearcher: IndexSearcher,
+                  query: Query,
+                  topK: Int)
+  : Seq[SparkScoreDoc] = {
+    indexSearcher.search(query, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   /**

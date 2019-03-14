@@ -41,7 +41,7 @@ trait IndexStorable extends Configurable
 
   private val tmpJavaDir = System.getProperty("java.io.tmpdir")
 
-  private val indexDirName =
+  protected val indexDirName =
     s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
 
   private val indexDir = Files.createTempDirectory(indexDirName)

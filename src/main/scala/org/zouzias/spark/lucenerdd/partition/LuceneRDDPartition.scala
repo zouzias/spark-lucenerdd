@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.partition
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
@@ -233,6 +235,14 @@ private[lucenerdd] class LuceneRDDPartition[T]
     val fieldsStats = fields.map(FieldStatistics(indexReader, _)).toArray
 
     IndexStatistics(partitionId, numDocs, maxDocId, numDelDocs, fields.size, fieldsStats)
+  }
+
+  def saveToHDFS(destPath: String, hadoopConfig: Configuration): Unit = {
+    val hdfs = FileSystem.get(hadoopConfig)
+    val srcPath = new Path(indexDirName)
+    val destPathDir = new Path(destPath + "/" + partitionId)
+
+    hdfs.copyFromLocalFile(srcPath, destPathDir)
   }
 }
 

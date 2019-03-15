@@ -39,7 +39,7 @@ trait IndexStorable extends Configurable
 
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
-  private val tmpJavaDir = System.getProperty("java.io.tmpdir")
+  protected val tmpJavaDir = System.getProperty("java.io.tmpdir")
 
   protected val indexDirName =
     s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"

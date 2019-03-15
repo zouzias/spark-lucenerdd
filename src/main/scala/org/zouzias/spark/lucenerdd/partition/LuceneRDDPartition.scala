@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.partition
 
+import java.nio.file.Paths
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.lucene.analysis.Analyzer
@@ -239,7 +241,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   def saveToHDFS(destPath: String, hadoopConfig: Configuration): Unit = {
     val hdfs = FileSystem.get(hadoopConfig)
-    val srcPath = new Path(indexDirName)
+    val srcPath = new Path(tmpJavaDir + "/" +  indexDirName)
     val destPathDir = new Path(destPath + "/" + partitionId)
 
     hdfs.copyFromLocalFile(srcPath, destPathDir)

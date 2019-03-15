@@ -122,6 +122,7 @@ class LuceneRDDSpec extends FlatSpec
     val maps = List(Map( "a" -> "hello"), Map("b" -> "world"), Map("c" -> "how are you"))
     val rdd = sc.parallelize(maps)
     luceneRDD = LuceneRDD(rdd)
+    luceneRDD.cache()
     luceneRDD.saveToHDFS("/test_location")
     true shouldBe true
   }

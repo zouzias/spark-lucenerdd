@@ -77,7 +77,7 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.7.1"
+val luceneV = "8.0.0"
 
 spName := "zouzias/spark-lucenerdd"
 sparkVersion := "2.4.0"

@@ -18,8 +18,6 @@
 package org.zouzias.spark.lucenerdd
 
 import com.twitter.algebird.{TopK, TopKMonoid}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
 import org.apache.lucene.document.Document
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}

@@ -16,8 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd.partition
 
-import java.nio.file.Paths
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.lucene.analysis.Analyzer
@@ -63,6 +61,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
   logInfo(s"[partId=${partitionId}] Partition is created...")
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
+
+  override def partId(): Int = partitionId
 
   private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 

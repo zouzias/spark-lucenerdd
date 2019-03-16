@@ -123,6 +123,7 @@ class LuceneRDDSpec extends FlatSpec
     val rdd = sc.parallelize(maps)
     luceneRDD = LuceneRDD(rdd)
     luceneRDD.cache()
+    luceneRDD.count()
     luceneRDD.saveToHDFS("/test_location")
     true shouldBe true
   }

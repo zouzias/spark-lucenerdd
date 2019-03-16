@@ -49,11 +49,13 @@ import org.apache.lucene.analysis.ru.RussianAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tr.TurkishAnalyzer
 import org.zouzias.spark.lucenerdd.config.Configurable
+import org.zouzias.spark.lucenerdd.logging.Logging
 
 /**
  * Lucene Analyzer loader via configuration
  */
-trait AnalyzerConfigurable extends Configurable {
+trait AnalyzerConfigurable extends Configurable
+  with Logging {
 
   private val IndexAnalyzerConfigKey = "lucenerdd.index.analyzer.name"
   private val QueryAnalyzerConfigKey = "lucenerdd.query.analyzer.name"
@@ -114,10 +116,29 @@ trait AnalyzerConfigurable extends Configurable {
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
         case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram) // Example of custom analyzer
-        case _ => new StandardAnalyzer()
+        case othewise =>
+          try {
+            val clazz = getClass.getClassLoader.loadClass(othewise).asInstanceOf[Analyzer]
+            clazz
+          }
+          catch {
+            case e: ClassNotFoundException =>
+              logError(s"Class ${othewise} was not found in classpath. Does the class exist?", e)
+              System.exit(-1)
+              null
+            case e: ClassCastException =>
+              logError(s"Class ${othewise} could not be " +
+                s"cast to superclass org.apache.lucene.analysis.Analyzer.", e)
+              System.exit(-1)
+              null
+            case _: Throwable =>
+              System.exit(-1)
+              null
+          }
       }
     }
     else {
+      logInfo("Analyzer name is not defined. Default analyzer is StandardAnalyzer().")
       new StandardAnalyzer()
     }
   }

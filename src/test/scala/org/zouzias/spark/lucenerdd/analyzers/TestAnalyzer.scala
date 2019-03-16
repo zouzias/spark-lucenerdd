@@ -16,21 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.analyzers
 
-import org.apache.lucene.analysis.en.EnglishAnalyzer
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.apache.lucene.analysis.Analyzer
 
-class AnalyzersConfigurableSpec extends FlatSpec with Matchers
-  with BeforeAndAfterEach
-  with AnalyzerConfigurable {
-
-  "AnalyzersConfigurable.getAnalyzer" should "return english analyzer with 'en' input" in {
-    val englishAnalyzer = getAnalyzer(Some("en"))
-    englishAnalyzer.isInstanceOf[EnglishAnalyzer] should equal(true)
-  }
-
-  "AnalyzersConfigurable.getAnalyzer" should
-    "return custom test analyzer with 'org.zouzias.spark.lucenerdd.analyzers.TestAnalyzer'" in {
-    val englishAnalyzer = getAnalyzer(Some("org.zouzias.spark.lucenerdd.analyzers.TestAnalyzer"))
-    englishAnalyzer.isInstanceOf[TestAnalyzer] should equal(true)
-  }
+class TestAnalyzer extends Analyzer {
+  override def createComponents(fieldName: String): Analyzer.TokenStreamComponents = ???
 }

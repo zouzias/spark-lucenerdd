@@ -17,6 +17,8 @@
 package org.zouzias.spark.lucenerdd.analyzers
 
 import org.apache.lucene.analysis.en.EnglishAnalyzer
+import org.apache.lucene.analysis.el.GreekAnalyzer
+import org.apache.lucene.analysis.de.GermanAnalyzer
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 class AnalyzersConfigurableSpec extends FlatSpec with Matchers
@@ -29,8 +31,14 @@ class AnalyzersConfigurableSpec extends FlatSpec with Matchers
   }
 
   "AnalyzersConfigurable.getAnalyzer" should
-    "return custom test analyzer with 'org.zouzias.spark.lucenerdd.analyzers.TestAnalyzer'" in {
-    val englishAnalyzer = getAnalyzer(Some("org.zouzias.spark.lucenerdd.analyzers.TestAnalyzer"))
-    englishAnalyzer.isInstanceOf[TestAnalyzer] should equal(true)
+    "return custom test analyzer with 'org.apache.lucene.analysis.el.GreekAnalyzer'" in {
+    val greekAnalyzer = getAnalyzer(Some("org.apache.lucene.analysis.el.GreekAnalyzer"))
+    greekAnalyzer.isInstanceOf[GreekAnalyzer] should equal(true)
+  }
+
+  "AnalyzersConfigurable.getAnalyzer" should
+    "return custom test analyzer with 'org.apache.lucene.analysis.de.GermanAnalyzer'" in {
+    val deutschAnalyzer = getAnalyzer(Some("org.apache.lucene.analysis.de.GermanAnalyzer"))
+    deutschAnalyzer.isInstanceOf[GermanAnalyzer] should equal(true)
   }
 }

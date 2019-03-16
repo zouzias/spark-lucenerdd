@@ -19,5 +19,5 @@ package org.zouzias.spark.lucenerdd.analyzers
 import org.apache.lucene.analysis.Analyzer
 
 class TestAnalyzer extends Analyzer {
-  override def createComponents(fieldName: String): Analyzer.TokenStreamComponents = ???
+  override def createComponents(fieldName: String): Analyzer.TokenStreamComponents = null
 }

@@ -116,23 +116,21 @@ trait AnalyzerConfigurable extends Configurable
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
         case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram) // Example of custom analyzer
-        case othewise =>
+        case otherwise: String =>
           try {
-            val clazz = getClass.getClassLoader.loadClass(othewise).asInstanceOf[Analyzer]
+            val clazz = getClass.getClassLoader.loadClass(otherwise).asInstanceOf[Analyzer]
             clazz
           }
           catch {
             case e: ClassNotFoundException =>
-              logError(s"Class ${othewise} was not found in classpath. Does the class exist?", e)
-              System.exit(-1)
+              logError(s"Class ${otherwise} was not found in classpath. Does the class exist?", e)
               null
             case e: ClassCastException =>
-              logError(s"Class ${othewise} could not be " +
+              logError(s"Class ${otherwise} could not be " +
                 s"cast to superclass org.apache.lucene.analysis.Analyzer.", e)
-              System.exit(-1)
               null
-            case _: Throwable =>
-              System.exit(-1)
+            case e: Throwable =>
+              logError(s"Class ${otherwise} could not be used as Analyzer.", e)
               null
           }
       }

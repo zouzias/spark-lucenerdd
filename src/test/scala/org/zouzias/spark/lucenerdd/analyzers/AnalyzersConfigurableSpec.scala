@@ -33,12 +33,14 @@ class AnalyzersConfigurableSpec extends FlatSpec with Matchers
   "AnalyzersConfigurable.getAnalyzer" should
     "return custom test analyzer with 'org.apache.lucene.analysis.el.GreekAnalyzer'" in {
     val greekAnalyzer = getAnalyzer(Some("org.apache.lucene.analysis.el.GreekAnalyzer"))
+    greekAnalyzer shouldNot equal(null)
     greekAnalyzer.isInstanceOf[GreekAnalyzer] should equal(true)
   }
 
   "AnalyzersConfigurable.getAnalyzer" should
     "return custom test analyzer with 'org.apache.lucene.analysis.de.GermanAnalyzer'" in {
     val deutschAnalyzer = getAnalyzer(Some("org.apache.lucene.analysis.de.GermanAnalyzer"))
+    deutschAnalyzer shouldNot equal(null)
     deutschAnalyzer.isInstanceOf[GermanAnalyzer] should equal(true)
   }
 }

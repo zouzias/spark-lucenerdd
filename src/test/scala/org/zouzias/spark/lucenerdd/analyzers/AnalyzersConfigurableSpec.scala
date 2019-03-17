@@ -27,6 +27,7 @@ class AnalyzersConfigurableSpec extends FlatSpec with Matchers
 
   "AnalyzersConfigurable.getAnalyzer" should "return english analyzer with 'en' input" in {
     val englishAnalyzer = getAnalyzer(Some("en"))
+    englishAnalyzer shouldNot equal(null)
     englishAnalyzer.isInstanceOf[EnglishAnalyzer] should equal(true)
   }
 

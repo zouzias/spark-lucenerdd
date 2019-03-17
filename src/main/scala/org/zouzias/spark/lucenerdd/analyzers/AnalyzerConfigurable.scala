@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd.analyzers
 
+import java.lang.reflect.Constructor
+
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.ar.ArabicAnalyzer
 import org.apache.lucene.analysis.bg.BulgarianAnalyzer
@@ -118,7 +120,7 @@ trait AnalyzerConfigurable extends Configurable
         case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram) // Example of custom analyzer
         case otherwise: String =>
           try {
-            val clazz = getClass.getClassLoader.loadClass(otherwise).asInstanceOf[Analyzer]
+            val clazz = loadConstructor[Analyzer](otherwise)
             clazz
           }
           catch {
@@ -140,4 +142,13 @@ trait AnalyzerConfigurable extends Configurable
       new StandardAnalyzer()
     }
   }
+
+  private def loadConstructor[T <: Analyzer](className: String): T = {
+    val loader = getClass.getClassLoader
+    logInfo(s"Loading class ${className} using loader ${loader}")
+    val loadedClass: Class[T] = loader.loadClass(className).asInstanceOf[Class[T]]
+    val constructor = loadedClass.getConstructor()
+    constructor.newInstance()
+  }
+
 }

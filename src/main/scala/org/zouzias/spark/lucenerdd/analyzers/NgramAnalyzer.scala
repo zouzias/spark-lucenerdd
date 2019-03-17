@@ -33,7 +33,7 @@ class NgramAnalyzer(minGram: Int, maxGram: Int) extends Analyzer {
   override def createComponents(fieldName: String): TokenStreamComponents = {
     val source: Tokenizer = new WhitespaceTokenizer()
     val lowerCase = new LowerCaseFilter(source)
-    val ngramSource = new NGramTokenFilter(lowerCase, minGram, maxGram)
+    val ngramSource = new NGramTokenFilter(lowerCase, minGram, maxGram, preserveOrigina=true)
     new TokenStreamComponents(source, ngramSource)
   }
 }

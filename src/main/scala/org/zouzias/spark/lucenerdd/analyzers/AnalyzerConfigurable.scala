@@ -16,8 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd.analyzers
 
-import java.lang.reflect.Constructor
-
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.ar.ArabicAnalyzer
 import org.apache.lucene.analysis.bg.BulgarianAnalyzer
@@ -54,7 +52,13 @@ import org.zouzias.spark.lucenerdd.config.Configurable
 import org.zouzias.spark.lucenerdd.logging.Logging
 
 /**
- * Lucene Analyzer loader via configuration
+ * Lucene Analyzer loader via configuration or via class name
+  *
+  * An analyzer can be loaded by using all the short country codes, i.e.,
+  * en,el,de, etc or using a class name present in the classpath, i.e.,
+  * 'org.apache.lucene.analysis.el.GreekAnalyzer'
+  *
+  * Custom Analyzers can be loaded provided that are present during runtime.
  */
 trait AnalyzerConfigurable extends Configurable
   with Logging {

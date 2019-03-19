@@ -135,6 +135,13 @@ trait AnalyzerConfigurable extends Configurable
     }
   }
 
+  /**
+    * Load a Lucene [[Analyzer]] using class name
+    *
+    * @param className The class name of the analyzer to load
+    * @tparam T
+    * @return Returns a Lucene Analyzer
+    */
   private def loadConstructor[T <: Analyzer](className: String): T = {
     val loader = getClass.getClassLoader
     logInfo(s"Loading class ${className} using loader ${loader}")

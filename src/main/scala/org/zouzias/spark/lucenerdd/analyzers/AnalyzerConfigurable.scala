@@ -110,7 +110,6 @@ trait AnalyzerConfigurable extends Configurable
         case "pt" => new PortugueseAnalyzer()
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
-        case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram) // Example of custom analyzer
         case otherwise: String =>
           try {
             val clazz = loadConstructor[Analyzer](otherwise)

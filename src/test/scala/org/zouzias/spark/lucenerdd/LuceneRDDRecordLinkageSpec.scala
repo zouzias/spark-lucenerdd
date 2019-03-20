@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
-import org.apache.lucene.search.{FuzzyQuery, PrefixQuery}
+import org.apache.lucene.search._
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
@@ -123,8 +123,8 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
     luceneRDD = LuceneRDD(countries)
 
-    def linker(country: String): String = {
-      s"_1:${country}*"
+    def linker(country: String): Query = {
+      new PrefixQuery(new Term("_1", country))
     }
 
     val linked = luceneRDD.link(leftCountriesRDD, linker, 10)
@@ -142,8 +142,8 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
     luceneRDD = LuceneRDD(countries)
 
-    def linker(country: String): String = {
-      s"_1:${country}*"
+    def linker(country: String): Query = {
+      new TermQuery(new Term("_1", country))
     }
 
     val linked = luceneRDD.dedup(linker, 5)
@@ -165,11 +165,12 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
     luceneRDD = LuceneRDD(countries)
 
-    def linker(row: Row): String = {
+
+    def linker(row: Row): Query = {
       val country = Option(row.get("name"))
       country match {
-        case Some(c) => s"_1:${c}*"
-        case None => s"_1:*"
+        case Some(c) => new PrefixQuery(new Term("_1", c))
+        case None => new BooleanQuery.Builder().build()
       }
     }
 
@@ -183,26 +184,26 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
       && link._2.length == 1) should equal(true)
   }
 
-  "LuceneRDD.link" should "correctly link with query parser (fuzzy)" in {
-    val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
-    val leftCountriesRDD = sc.parallelize(leftCountries)
+    "LuceneRDD.link" should "correctly link with query parser (fuzzy)" in {
+      val leftCountries = Array("gree", "germa", "spa", "ita")
+      implicit val mySC = sc
+      val leftCountriesRDD = sc.parallelize(leftCountries)
 
-    val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
-      .map(_.toLowerCase()).toSeq)
+      val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
+        .map(_.toLowerCase()).toSeq)
 
-    luceneRDD = LuceneRDD(countries)
+      luceneRDD = LuceneRDD(countries)
 
-    def fuzzyLinker(country: String): String = {
-      val Fuzziness = 2
-      s"_1:${country}~${Fuzziness}"
+      def fuzzyLinker(country: String): Query = {
+        val fuzziness = 2
+        new FuzzyQuery(new Term("_1", country), fuzziness)
+      }
+
+      val linked = luceneRDD.link(leftCountriesRDD, fuzzyLinker, 10)
+      linked.count() should equal(leftCountries.length)
+      // Greece should appear only
+      linked.collect.exists(link => link._1 == "gree" && link._2.length == 1)  should equal(true)
+      // At least Italy, Iraq and Iran should appear
+      linked.collect.exists(link => link._1 == "ita" && link._2.length >= 3) should equal(true)
     }
-
-    val linked = luceneRDD.link(leftCountriesRDD, fuzzyLinker, 10)
-    linked.count() should equal(leftCountries.length)
-    // Greece should appear only
-    linked.collect.exists(link => link._1 == "gree" && link._2.length == 1)  should equal(true)
-    // At least Italy, Iraq and Iran should appear
-    linked.collect.exists(link => link._1 == "ita" && link._2.length >= 3) should equal(true)
-  }
 }

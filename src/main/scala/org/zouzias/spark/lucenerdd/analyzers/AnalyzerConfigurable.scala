@@ -65,20 +65,9 @@ trait AnalyzerConfigurable extends Configurable
 
   private val IndexAnalyzerConfigKey = "lucenerdd.index.analyzer.name"
   private val QueryAnalyzerConfigKey = "lucenerdd.query.analyzer.name"
-  private val NgramMinGramConfigKey = "lucenerdd.index.analyzer.ngram.mingram"
-  private val NgramMaxGramConfigKey = "lucenerdd.index.analyzer.ngram.maxgram"
-
 
   /** Get the configured analyzers or fallback to English */
   protected def getOrElseEn(analyzerName: Option[String]): String = analyzerName.getOrElse("en")
-
-  private val NgramMinGram = if (Config.hasPath(NgramMinGramConfigKey)) {
-    Config.getInt(NgramMinGramConfigKey)
-  } else 2
-
-  private val NgramMaxGram = if (Config.hasPath(NgramMaxGramConfigKey)) {
-    Config.getInt(NgramMaxGramConfigKey)
-  } else NgramMinGram + 2 // Default is + 2
 
   protected val IndexAnalyzerConfigName: Option[String] =
     if (Config.hasPath(IndexAnalyzerConfigKey)) {
@@ -121,7 +110,6 @@ trait AnalyzerConfigurable extends Configurable
         case "pt" => new PortugueseAnalyzer()
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
-        case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram) // Example of custom analyzer
         case otherwise: String =>
           try {
             val clazz = loadConstructor[Analyzer](otherwise)
@@ -147,6 +135,13 @@ trait AnalyzerConfigurable extends Configurable
     }
   }
 
+  /**
+    * Load a Lucene [[Analyzer]] using class name
+    *
+    * @param className The class name of the analyzer to load
+    * @tparam T
+    * @return Returns a Lucene Analyzer
+    */
   private def loadConstructor[T <: Analyzer](className: String): T = {
     val loader = getClass.getClassLoader
     logInfo(s"Loading class ${className} using loader ${loader}")

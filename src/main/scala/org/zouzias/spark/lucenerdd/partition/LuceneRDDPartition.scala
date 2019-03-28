@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.{DirectoryReader, IndexReader}
@@ -29,6 +30,7 @@ import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigur
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import org.zouzias.spark.lucenerdd.LuceneRDD
+import scala.collection.JavaConverters._
 
 import scala.reflect.{ClassTag, _}
 import scala.collection.mutable.ArrayBuffer
@@ -49,7 +51,9 @@ private[lucenerdd] class LuceneRDDPartition[T]
  private val partitionId: Int,
  private val indexAnalyzerName: String,
  private val queryAnalyzerName: String,
- private val similarityName: String)
+ private val similarityName: String,
+ private val indexAnalyzerPerField: Map[String, String] = Map.empty,
+ private val queryAnalyzerPerField: Map[String, String] = Map.empty)
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
@@ -60,7 +64,19 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
+  override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
+    val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField.mapValues(x =>
+      getAnalyzer(Some(x)))
+    new PerFieldAnalyzerWrapper(indexAnalyzer(), analyzerPerField.asJava)
+  }
+
   private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
+
+  private def PerFieldQueryAnalyzer(): PerFieldAnalyzerWrapper = {
+    val analyzerPerField: Map[String, Analyzer] = queryAnalyzerPerField.mapValues(x =>
+      getAnalyzer(Some(x)))
+    new PerFieldAnalyzerWrapper(QueryAnalyzer, analyzerPerField.asJava)
+  }
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
@@ -132,7 +148,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def query(searchString: String,
                      topK: Int): LuceneRDDResponsePartition = {
-    val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK, QueryAnalyzer)
+    val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK,
+      PerFieldQueryAnalyzer)
 
     LuceneRDDResponsePartition(results.toIterator)
   }

@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.query
 import java.io.StringReader
 
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
 import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
@@ -82,11 +83,12 @@ object LuceneQueryHelpers extends Serializable {
    * Parse a Query string
    *
    * @param searchString
-   * @param analyzer
+   * @param queryAnalyzerPerField Lucene query Analyzers per field
    * @return
    */
-  def parseQueryString(searchString: String, analyzer: Analyzer): Query = {
-    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
+  def parseQueryString(searchString: String, queryAnalyzerPerField: PerFieldAnalyzerWrapper)
+  : Query = {
+    val queryParser = new QueryParser(QueryParserDefaultField, queryAnalyzerPerField)
     queryParser.parse(searchString)
   }
 
@@ -96,15 +98,15 @@ object LuceneQueryHelpers extends Serializable {
    * @param indexSearcher Index searcher
    * @param searchString Lucene search query string
    * @param topK Number of documents to return
-   * @param analyzer Lucene Analyzer
+   * @param queryAnalyzerPerField Lucene Analyzer per field
    * @return
    */
   def searchParser(indexSearcher: IndexSearcher,
                    searchString: String,
                    topK: Int,
-                   analyzer: Analyzer)
+                   queryAnalyzerPerField: PerFieldAnalyzerWrapper)
   : Seq[SparkScoreDoc] = {
-    val q = parseQueryString(searchString, analyzer)
+    val q = parseQueryString(searchString, queryAnalyzerPerField)
     indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 

@@ -569,10 +569,7 @@ object LuceneRDD extends Versionable
       val (iterQueries, iterLucene) = iterKeyedByHash.map(_._2).duplicate
 
       // Instantiate a lucene index on partitioned entities
-      val lucenePart = LuceneRDDPartition(iterLucene,
-        idx,
-        indexAnalyzer,
-        queryAnalyzer, similarity)
+      val lucenePart = LuceneRDDPartition(iterLucene, idx, indexAnalyzer, queryAnalyzer, similarity)
 
       // Multi-query lucene index
       iterQueries.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))

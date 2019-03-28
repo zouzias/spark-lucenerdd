@@ -38,12 +38,18 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * A partition of [[LuceneRDD]]
   *
-  * @param iter
-  * @param partitionId
-  * @param indexAnalyzerName
-  * @param queryAnalyzerName
-  * @param docConversion
-  * @param kTag
+  * Each LuceneRDD partition constructs a Lucene index by using [[Analyzer]]
+  * during indexing time and allowing to specify Lucene [[Analyzer]] during query
+  * time.
+  *
+  * @param iter Iterator of elements to be Lucene indexed
+  * @param partitionId Identifier of the RDD partition
+  * @param indexAnalyzerName Lucene Analyzer applied during index time
+  * @param queryAnalyzerName Lucene Analyzer applied during query time
+  * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time)
+  * @param queryAnalyzerPerField Lucene Analyzer per field (query time)
+  * @param docConversion Convertion from T to a Lucene document
+  * @param kTag Class tag of type T
   * @tparam T the type associated with each entry in the set.
   */
 private[lucenerdd] class LuceneRDDPartition[T]
@@ -52,8 +58,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
  private val indexAnalyzerName: String,
  private val queryAnalyzerName: String,
  private val similarityName: String,
- private val indexAnalyzerPerField: Map[String, String] = Map.empty,
- private val queryAnalyzerPerField: Map[String, String] = Map.empty)
+ private val indexAnalyzerPerField: Map[String, String],
+ private val queryAnalyzerPerField: Map[String, String])
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
@@ -137,7 +143,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
     new LuceneRDDPartition(iterOriginal.filter(pred),
-      partitionId, indexAnalyzerName, queryAnalyzerName, similarityName)(docConversion, kTag)
+      partitionId, indexAnalyzerName, queryAnalyzerName, similarityName,
+      indexAnalyzerPerField, queryAnalyzerPerField)(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): LuceneRDDResponsePartition = {
@@ -258,23 +265,28 @@ object LuceneRDDPartition {
   /**
     * Constructor for [[LuceneRDDPartition]]
     *
-    * @param iter
-    * @param partitionId
-    * @param indexAnalyzer
-    * @param queryAnalyzer
-    * @param similarityName
-    * @param docConversion
-    * @tparam T
-    * @return
+    * @param iter Iterator of elements to be Lucene indexed
+    * @param partitionId Identifier of the RDD partition
+    * @param indexAnalyzerName Lucene Analyzer applied during index time
+    * @param queryAnalyzerName Lucene Analyzer applied during query time
+    * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time)
+    * @param queryAnalyzerPerField Lucene Analyzer per field (query time)
+    * @param docConversion Convertion from T to a Lucene document
+    * @param kTag Class tag of type T
+    * @tparam T the type associated with each entry in the set.
+    * @return A partition of [[LuceneRDD]], type [[LuceneRDDPartition]]
     */
   def apply[T: ClassTag](iter: Iterator[T],
                          partitionId: Int,
                          indexAnalyzer: String,
                          queryAnalyzer: String,
-                         similarityName: String)
+                         similarityName: String,
+                         indexAnalyzerPerField: Map[String, String] = Map.empty,
+                         queryAnalyzerPerField: Map[String, String] = Map.empty)
                         (implicit docConversion: T => Document)
   : LuceneRDDPartition[T] = {
     new LuceneRDDPartition[T](iter, partitionId,
-      indexAnalyzer, queryAnalyzer, similarityName)(docConversion, classTag[T])
+      indexAnalyzer, queryAnalyzer, similarityName, indexAnalyzerPerField,
+      queryAnalyzerPerField)(docConversion, classTag[T])
   }
 }

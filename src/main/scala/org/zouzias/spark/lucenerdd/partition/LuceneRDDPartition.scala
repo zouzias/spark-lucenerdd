@@ -278,15 +278,15 @@ object LuceneRDDPartition {
     */
   def apply[T: ClassTag](iter: Iterator[T],
                          partitionId: Int,
-                         indexAnalyzer: String,
-                         queryAnalyzer: String,
+                         indexAnalyzerName: String,
+                         queryAnalyzerName: String,
                          similarityName: String,
                          indexAnalyzerPerField: Map[String, String] = Map.empty,
                          queryAnalyzerPerField: Map[String, String] = Map.empty)
                         (implicit docConversion: T => Document)
   : LuceneRDDPartition[T] = {
     new LuceneRDDPartition[T](iter, partitionId,
-      indexAnalyzer, queryAnalyzer, similarityName, indexAnalyzerPerField,
+      indexAnalyzerName, queryAnalyzerName, similarityName, indexAnalyzerPerField,
       queryAnalyzerPerField)(docConversion, classTag[T])
   }
 }

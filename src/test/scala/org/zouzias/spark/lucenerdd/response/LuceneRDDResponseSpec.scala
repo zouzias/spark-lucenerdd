@@ -90,4 +90,13 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
       equal(org.apache.spark.sql.types.FloatType)
     schema.fields(schema.fieldIndex("email")).dataType should equal(StringType)
   }
+
+
+  "LuceneRDDResponseSpec.collect()" should "work when no results are found" in {
+    val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
+    val rdd = sc.parallelize(array)
+    luceneRDD = LuceneRDD(rdd)
+    val result = luceneRDD.query("fff", 10)
+    result.collect().length should be (0)
+  }
 }

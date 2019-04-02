@@ -94,8 +94,8 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.6"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.6" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.7"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.7" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.5"

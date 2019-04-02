@@ -27,6 +27,7 @@ import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
+import scala.collection.JavaConverters._
 
 import scala.io.Source
 
@@ -39,15 +40,16 @@ class LuceneQueryHelpersSpec extends FlatSpec
   val countries = Source.fromFile("src/test/resources/countries.txt").getLines()
     .map(_.toLowerCase()).toSeq
 
-  val indexAnalyzerPerField = Map("")
+  val indexAnalyzerPerField: Map[String, String] = Map("name"
+    -> "org.apache.lucene.en.EnglishAnalyzer")
 
   private val MaxFacetValue: Int = 10
 
   override def indexAnalyzer: Analyzer = getAnalyzer(Some("en"))
 
   override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
-    val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField.mapValues(x =>
-      getAnalyzer(Some(x)))
+    val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField
+      .mapValues(x => getAnalyzer(Some(x)))
     new PerFieldAnalyzerWrapper(indexAnalyzer(), analyzerPerField.asJava)
   }
 

@@ -77,6 +77,8 @@ pomExtra := <scm>
     </developer>
   </developers>
 
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+
 val luceneV = "8.0.0"
 
 spName := "zouzias/spark-lucenerdd"

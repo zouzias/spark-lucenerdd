@@ -38,16 +38,12 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
   override def afterEach() {
     luceneRDD.close()
   }
-
-  /**
-   * Do not work with facets (multi-valued issue)
-
   "LuceneRDD" should "work with RDD[List[String]]" in {
     val array = Array(List("aaa", "aaa2"), List("bbb", "bbb2"),
       List("ccc", "ccc2"), List("ddd"), List("eee"))
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should be (array.size)
+    luceneRDD.count should be (array.length)
   }
 
   "LuceneRDD" should "work with RDD[Set[String]]" in {
@@ -55,16 +51,14 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
       Set("ccc", "ccc2"), Set("ddd"), Set("eee"))
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should be (array.size)
+    luceneRDD.count should be (array.length)
   }
-
-   */
 
   "LuceneRDD" should "work with RDD[String]" in {
     val array = Array("aaa", "bbb", "ccc", "ddd", "eee")
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should be (array.size)
+    luceneRDD.count should be (array.length)
   }
 
   "LuceneRDD" should "work with RDD[Int]" in {
@@ -109,7 +103,7 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
     val array = Array("aaa", null, "ccc", null, "eee")
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
-    luceneRDD.count should be (array.size)
+    luceneRDD.count should be (array.length)
   }
 
 }

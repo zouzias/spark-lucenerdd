@@ -115,7 +115,6 @@ package object lucenerdd extends LuceneRDDConfigurable {
   }
 
   def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
-
     s match {
       case x: String if x != null =>
         doc.add(new Field(fieldName, x,
@@ -134,6 +133,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case x: Double if x != null =>
         doc.add(new DoublePoint(fieldName, x))
         doc.add(new StoredField(fieldName, x))
+      case null => Unit
       case _ =>
         throw new RuntimeException(s"Type ${s.getClass.getName} " +
           s"on field ${fieldName} is not supported")

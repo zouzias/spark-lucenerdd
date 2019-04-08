@@ -18,9 +18,10 @@ package org.zouzias.spark
 
 import org.apache.lucene.document._
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.ArrayType
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 
-import scala.collection.mutable
+import collection.JavaConverters._
 import scala.reflect.ClassTag
 
 package object lucenerdd extends LuceneRDDConfigurable {
@@ -135,8 +136,6 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case x: Double if x != null =>
         doc.add(new DoublePoint(fieldName, x))
         doc.add(new StoredField(fieldName, x))
-      case x: mutable.WrappedArray[_] if x != null =>
-        wrappedArrayPrimitiveToDocument(fieldName, x)
       case null => Unit
       case _ =>
         throw new RuntimeException(s"Type ${s.getClass.getName} " +
@@ -151,11 +150,11 @@ package object lucenerdd extends LuceneRDDConfigurable {
     doc
   }
 
-  implicit def wrappedArrayPrimitiveToDocument[T: ClassTag](fieldName: String,
-                                                            iter: mutable.WrappedArray[T])
+  implicit def listPrimitiveToDocument[T: ClassTag](fieldName: String,
+                                                            iter: java.util.List[T])
   : Document = {
     val doc = new Document
-    iter.foreach( item => typeToDocument(doc, fieldName, item))
+    iter.asScala.foreach( item => typeToDocument(doc, fieldName, item))
     doc
   }
 
@@ -193,10 +192,17 @@ package object lucenerdd extends LuceneRDDConfigurable {
   implicit def sparkRowToDocument(row: Row): Document = {
     val doc = new Document
 
-    val fieldNames = row.schema.fieldNames
-    fieldNames.foreach{ case fieldName =>
+    row.schema.map(field => (field.name, field.dataType))
+      .foreach{ case (fieldName, dataType) =>
       val index = row.fieldIndex(fieldName)
-      typeToDocument(doc, fieldName, row.get(index))
+
+      // TODO: Handle org.apache.spark.sql.types.MapType and more
+      if (dataType.isInstanceOf[ArrayType]) {
+       listPrimitiveToDocument(fieldName, row.getList(index))
+      }
+      else {
+        typeToDocument(doc, fieldName, row.get(index))
+      }
     }
 
     doc

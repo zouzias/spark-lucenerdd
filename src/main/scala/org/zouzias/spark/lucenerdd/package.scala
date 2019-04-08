@@ -19,7 +19,6 @@ package org.zouzias.spark
 import org.apache.lucene.document._
 import org.apache.spark.sql.Row
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
-
 import scala.reflect.ClassTag
 
 package object lucenerdd extends LuceneRDDConfigurable {
@@ -135,12 +134,14 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case x: Double if x != null =>
         doc.add(new DoublePoint(fieldName, x))
         doc.add(new StoredField(fieldName, x))
-      case _ => Unit
+      case _ =>
+        throw new RuntimeException(s"Type ${s.getClass.getName} " +
+          s"on field ${fieldName} is not supported")
     }
     doc
   }
 
-  implicit def iterablePrimitiveToDocument[T: ClassTag](iter: Iterable[T]): Document = {
+  implicit def traversablePrimitiveToDocument[T: ClassTag](iter: Traversable[T]): Document = {
     val doc = new Document
     iter.foreach( item => tupleTypeToDocument(doc, 1, item))
     doc

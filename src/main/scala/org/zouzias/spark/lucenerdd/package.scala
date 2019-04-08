@@ -19,6 +19,8 @@ package org.zouzias.spark
 import org.apache.lucene.document._
 import org.apache.spark.sql.Row
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
+
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 package object lucenerdd extends LuceneRDDConfigurable {
@@ -133,6 +135,8 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case x: Double if x != null =>
         doc.add(new DoublePoint(fieldName, x))
         doc.add(new StoredField(fieldName, x))
+      case x: mutable.WrappedArray[_] if x != null =>
+        wrappedArrayPrimitiveToDocument(fieldName, x)
       case null => Unit
       case _ =>
         throw new RuntimeException(s"Type ${s.getClass.getName} " +
@@ -144,6 +148,14 @@ package object lucenerdd extends LuceneRDDConfigurable {
   implicit def traversablePrimitiveToDocument[T: ClassTag](iter: Traversable[T]): Document = {
     val doc = new Document
     iter.foreach( item => tupleTypeToDocument(doc, 1, item))
+    doc
+  }
+
+  implicit def wrappedArrayPrimitiveToDocument[T: ClassTag](fieldName: String,
+                                                            iter: mutable.WrappedArray[T])
+  : Document = {
+    val doc = new Document
+    iter.foreach( item => typeToDocument(doc, fieldName, item))
     doc
   }
 

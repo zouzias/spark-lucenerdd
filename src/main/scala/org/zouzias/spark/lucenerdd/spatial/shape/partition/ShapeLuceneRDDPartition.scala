@@ -30,8 +30,7 @@ import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
-import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
-import scala.collection.JavaConverters._
+import org.zouzias.spark.lucenerdd.store.IndexWritable
 
 import scala.reflect._
 
@@ -46,7 +45,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   (implicit shapeConversion: K => Shape,
    docConversion: V => Document)
   extends AbstractShapeLuceneRDDPartition[K, V]
-    with IndexWithTaxonomyWriter
+    with IndexWritable
     with SpatialStrategy {
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
@@ -83,7 +82,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val doc = docConversion(value)
     val shape = shapeConversion(key)
     val docWithLocation = decorateWithLocation(doc, Seq(shape))
-    indexWriter.addDocument(FacetsConfig.build(taxoWriter, docWithLocation))
+    indexWriter.addDocument(docWithLocation)
   }
   private val endTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process completed at ${endTime}...")

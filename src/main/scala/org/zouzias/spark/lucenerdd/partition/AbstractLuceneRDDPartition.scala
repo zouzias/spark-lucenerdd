@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.search.{BooleanClause, Query}
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
+import org.zouzias.spark.lucenerdd.models.TermVectorEntry
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 
 import scala.reflect.ClassTag
@@ -80,15 +80,6 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
    */
   def queries(searchString: Iterable[String], topK: Int)
   : Iterable[(String, LuceneRDDResponsePartition)]
-
-  /**
-   * Generic Lucene faceted Query using QueryParser
-   * @param searchString Lucene query string, i.e., textField:hello*
-   * @param topK Number of facets to return
-   * @return
-   */
-  def facetQuery(searchString: String, facetField: String, topK: Int)
-  : SparkFacetResult
 
   /**
    * Term Query

@@ -22,15 +22,11 @@ import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
-import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
-import org.apache.lucene.facet.taxonomy.{FastTaxonomyFacetCounts, TaxonomyReader}
 import org.apache.lucene.index.Term
 import org.apache.lucene.queries.mlt.MoreLikeThis
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
-import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -124,38 +120,6 @@ object LuceneQueryHelpers extends Serializable {
                   topK: Int)
   : Seq[SparkScoreDoc] = {
     indexSearcher.search(query, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
-  }
-
-  /**
-   * Faceted search using [[SortedSetDocValuesFacetCounts]]
-   *
-   * @param indexSearcher Index searcher
-   * @param taxoReader taxonomy reader used for faceted search
-   * @param searchString Lucene search query string
-   * @param facetField Facet field name
-   * @param topK Number of returned documents
-   * @return
-   */
-  def facetedTextSearch(indexSearcher: IndexSearcher,
-                        taxoReader: TaxonomyReader,
-                        facetsConfig: FacetsConfig,
-                        searchString: String,
-                        facetField: String,
-                        topK: Int, analyzer: Analyzer): SparkFacetResult = {
-    // Prepare the query
-    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
-    val q: Query = queryParser.parse(searchString)
-
-    // Collect the facets
-    val fc = new FacetsCollector()
-    FacetsCollector.search(indexSearcher, q, topK, fc)
-    val facets = Option(new FastTaxonomyFacetCounts(taxoReader, facetsConfig, fc))
-
-    // Present the facets
-    facets match {
-      case Some(fcts) => SparkFacetResult(facetField, fcts.getTopChildren(topK, facetField))
-      case None => SparkFacetResultMonoid.zero(facetField)
-    }
   }
 
   /**

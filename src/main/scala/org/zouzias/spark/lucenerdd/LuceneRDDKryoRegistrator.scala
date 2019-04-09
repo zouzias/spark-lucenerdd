@@ -20,8 +20,7 @@ import com.twitter.algebird.TopK
 import com.twitter.chill.Kryo
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
-import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
-import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.partition.LuceneRDDPartition
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 import org.zouzias.spark.lucenerdd.testing.{FavoriteCaseClass, Person}
@@ -30,7 +29,6 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
   def registerClasses(kryo: Kryo): Unit = {
     kryo.register(classOf[LuceneRDD[_]])
     kryo.register(classOf[LuceneRDDPartition[_]])
-    kryo.register(classOf[FacetedLuceneRDD[_]])
     kryo.register(classOf[SparkDoc])
     kryo.register(classOf[Number])
     kryo.register(classOf[java.lang.Double])
@@ -57,7 +55,6 @@ class LuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.collection.immutable.Set$EmptySet$])
     kryo.register(classOf[scala.collection.immutable.Map[_, _]])
     kryo.register(classOf[Array[scala.collection.immutable.Map[_, _]]])
-    kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])
     kryo.register(classOf[LuceneRDDResponse])
     kryo.register(classOf[LuceneRDDResponsePartition])

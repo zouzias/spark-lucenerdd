@@ -18,7 +18,6 @@ package org.zouzias.spark.lucenerdd.store
 
 import java.nio.file.{Files, Path}
 
-import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store._
 import org.zouzias.spark.lucenerdd.config.Configurable
 import org.zouzias.spark.lucenerdd.logging.Logging
@@ -35,8 +34,6 @@ trait IndexStorable extends Configurable
   with AutoCloseable
   with Logging {
 
-  protected lazy val FacetsConfig = new FacetsConfig()
-
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
   private val tmpJavaDir = System.getProperty("java.io.tmpdir")
@@ -46,14 +43,7 @@ trait IndexStorable extends Configurable
 
   private val indexDir = Files.createTempDirectory(indexDirName)
 
-  private val taxonomyDirName =
-    s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
-
-  private val taxonomyDir = Files.createTempDirectory(taxonomyDirName)
-
-  protected val IndexDir = storageMode(indexDir)
-
-  protected val TaxonomyDir = storageMode(taxonomyDir)
+  protected val IndexDir: Directory = storageMode(indexDir)
 
   /**
    * Select Lucene index storage implementation based on config
@@ -110,6 +100,5 @@ trait IndexStorable extends Configurable
 
   override def close(): Unit = {
     IndexDir.close()
-    TaxonomyDir.close()
   }
 }

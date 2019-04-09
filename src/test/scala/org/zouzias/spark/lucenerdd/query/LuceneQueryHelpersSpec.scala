@@ -20,24 +20,20 @@ import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.document.Field.Store
 import org.apache.lucene.document._
-import org.apache.lucene.facet.FacetField
-import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
-import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
-import scala.collection.JavaConverters._
+import org.zouzias.spark.lucenerdd.store.IndexWritable
 
 import scala.io.Source
 
 class LuceneQueryHelpersSpec extends FlatSpec
-  with IndexWithTaxonomyWriter
+  with IndexWritable
   with Matchers
   with BeforeAndAfterEach {
 
   // Load cities
-  val countries = Source.fromFile("src/test/resources/countries.txt").getLines()
+  val countries: Seq[String] = Source.fromFile("src/test/resources/countries.txt").getLines()
     .map(_.toLowerCase()).toSeq
 
   val indexAnalyzerPerField: Map[String, String] = Map("name"
@@ -45,7 +41,7 @@ class LuceneQueryHelpersSpec extends FlatSpec
 
   private val MaxFacetValue: Int = 10
 
-  override def indexAnalyzer: Analyzer = getAnalyzer(Some("en"))
+  override def indexAnalyzer(): Analyzer = getAnalyzer(Some("en"))
 
   override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
     val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField
@@ -55,27 +51,22 @@ class LuceneQueryHelpersSpec extends FlatSpec
 
   countries.zipWithIndex.foreach { case (elem, index) =>
     val doc = convertToDoc(index % MaxFacetValue, elem)
-    indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
+    indexWriter.addDocument(doc)
   }
 
   indexWriter.commit()
-  taxoWriter.close()
   indexWriter.close()
 
   private val indexReader = DirectoryReader.open(IndexDir)
   private val indexSearcher = new IndexSearcher(indexReader)
-  private lazy val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
 
 
-  private lazy val TestFacetName = s"_2${FacetedLuceneRDD.FacetTextFieldSuffix}"
 
   def convertToDoc(pos: Int, text: String): Document = {
     val doc = new Document()
     doc.add(new StringField("_1", text, Store.YES))
-    doc.add(new FacetField(s"_1${FacetedLuceneRDD.FacetTextFieldSuffix}", text))
     doc.add(new IntPoint("_2", pos))
     doc.add(new StoredField("_2", pos))
-    doc.add(new FacetField(TestFacetName, pos.toString))
     doc
   }
 
@@ -85,14 +76,6 @@ class LuceneQueryHelpersSpec extends FlatSpec
 
   "LuceneQueryHelpers.totalDocs" should "return correct total document counts" in {
     LuceneQueryHelpers.totalDocs(indexSearcher) should equal (countries.size)
-  }
-
-  "LuceneQueryHelpers.facetedTextSearch" should "return correct facet counts" in {
-    val facets = LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader,
-      FacetsConfig, "*:*", TestFacetName, 100, indexAnalyzer)
-
-    facets.facetName should equal(TestFacetName)
-    facets.facets.size should equal(MaxFacetValue)
   }
 
   "LuceneQueryHelpers.termQuery" should "return correct documents" in {

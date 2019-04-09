@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.partition
 
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.document._
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.{DirectoryReader, IndexReader}
@@ -29,6 +30,7 @@ import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigur
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import org.zouzias.spark.lucenerdd.LuceneRDD
+import scala.collection.JavaConverters._
 
 import scala.reflect.{ClassTag, _}
 import scala.collection.mutable.ArrayBuffer
@@ -36,12 +38,19 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * A partition of [[LuceneRDD]]
   *
-  * @param iter
-  * @param partitionId
-  * @param indexAnalyzerName
-  * @param queryAnalyzerName
-  * @param docConversion
-  * @param kTag
+  * Each LuceneRDD partition constructs a Lucene index by using [[Analyzer]]
+  * during indexing time and allowing to specify Lucene [[Analyzer]] during query
+  * time.
+  *
+  * @param iter Iterator of elements to be Lucene indexed
+  * @param partitionId Identifier of the RDD partition
+  * @param indexAnalyzerName Lucene Analyzer applied during index time
+  * @param queryAnalyzerName Lucene Analyzer applied during query time
+  * @param similarityName Lucene Similarity metric (BM25, Tf/idf)
+  * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time)
+  * @param queryAnalyzerPerField Lucene Analyzer per field (query time)
+  * @param docConversion Conversion from T to a Lucene document
+  * @param kTag Class tag of type T
   * @tparam T the type associated with each entry in the set.
   */
 private[lucenerdd] class LuceneRDDPartition[T]
@@ -49,7 +58,9 @@ private[lucenerdd] class LuceneRDDPartition[T]
  private val partitionId: Int,
  private val indexAnalyzerName: String,
  private val queryAnalyzerName: String,
- private val similarityName: String)
+ private val similarityName: String,
+ private val indexAnalyzerPerField: Map[String, String],
+ private val queryAnalyzerPerField: Map[String, String])
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
@@ -60,7 +71,19 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
+  override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
+    val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField.mapValues(x =>
+      getAnalyzer(Some(x)))
+    new PerFieldAnalyzerWrapper(indexAnalyzer(), analyzerPerField.asJava)
+  }
+
   private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
+
+  private def PerFieldQueryAnalyzer(): PerFieldAnalyzerWrapper = {
+    val analyzerPerField: Map[String, Analyzer] = queryAnalyzerPerField.mapValues(x =>
+      getAnalyzer(Some(x)))
+    new PerFieldAnalyzerWrapper(QueryAnalyzer, analyzerPerField.asJava)
+  }
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
@@ -121,7 +144,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T] =
     new LuceneRDDPartition(iterOriginal.filter(pred),
-      partitionId, indexAnalyzerName, queryAnalyzerName, similarityName)(docConversion, kTag)
+      partitionId, indexAnalyzerName, queryAnalyzerName, similarityName,
+      indexAnalyzerPerField, queryAnalyzerPerField)(docConversion, kTag)
 
   override def termQuery(fieldName: String, fieldText: String,
                          topK: Int = 1): LuceneRDDResponsePartition = {
@@ -132,7 +156,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def query(searchString: String,
                      topK: Int): LuceneRDDResponsePartition = {
-    val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK, QueryAnalyzer)
+    val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK,
+      PerFieldQueryAnalyzer)
 
     LuceneRDDResponsePartition(results.toIterator)
   }
@@ -241,23 +266,29 @@ object LuceneRDDPartition {
   /**
     * Constructor for [[LuceneRDDPartition]]
     *
-    * @param iter
-    * @param partitionId
-    * @param indexAnalyzer
-    * @param queryAnalyzer
-    * @param similarityName
-    * @param docConversion
-    * @tparam T
-    * @return
+    * @param iter Iterator of elements to be Lucene indexed
+    * @param partitionId Identifier of the RDD partition
+    * @param indexAnalyzerName Lucene Analyzer applied during index time
+    * @param queryAnalyzerName Lucene Analyzer applied during query time
+    * @param similarityName Lucene Similarity metric (BM25, Tf/idf)
+    * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time), default empty
+    * @param queryAnalyzerPerField Lucene Analyzer per field (query time), default empty
+    * @param docConversion Convertion from T to a Lucene document
+    * @param kTag Class tag of type T
+    * @tparam T the type associated with each entry in the set.
+    * @return A partition of [[LuceneRDD]], type [[LuceneRDDPartition]]
     */
   def apply[T: ClassTag](iter: Iterator[T],
                          partitionId: Int,
-                         indexAnalyzer: String,
-                         queryAnalyzer: String,
-                         similarityName: String)
+                         indexAnalyzerName: String,
+                         queryAnalyzerName: String,
+                         similarityName: String,
+                         indexAnalyzerPerField: Map[String, String] = Map.empty,
+                         queryAnalyzerPerField: Map[String, String] = Map.empty)
                         (implicit docConversion: T => Document)
   : LuceneRDDPartition[T] = {
     new LuceneRDDPartition[T](iter, partitionId,
-      indexAnalyzer, queryAnalyzer, similarityName)(docConversion, classTag[T])
+      indexAnalyzerName, queryAnalyzerName, similarityName, indexAnalyzerPerField,
+      queryAnalyzerPerField)(docConversion, classTag[T])
   }
 }

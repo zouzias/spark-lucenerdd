@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.document.Field.Store
 import org.apache.lucene.document._
 import org.apache.lucene.facet.FacetField
@@ -26,6 +27,7 @@ import org.apache.lucene.search.IndexSearcher
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
+import scala.collection.JavaConverters._
 
 import scala.io.Source
 
@@ -38,9 +40,18 @@ class LuceneQueryHelpersSpec extends FlatSpec
   val countries = Source.fromFile("src/test/resources/countries.txt").getLines()
     .map(_.toLowerCase()).toSeq
 
+  val indexAnalyzerPerField: Map[String, String] = Map("name"
+    -> "org.apache.lucene.en.EnglishAnalyzer")
+
   private val MaxFacetValue: Int = 10
 
   override def indexAnalyzer: Analyzer = getAnalyzer(Some("en"))
+
+  override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
+    val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField
+      .mapValues(x => getAnalyzer(Some(x)))
+    new PerFieldAnalyzerWrapper(indexAnalyzer(), analyzerPerField.asJava)
+  }
 
   countries.zipWithIndex.foreach { case (elem, index) =>
     val doc = convertToDoc(index % MaxFacetValue, elem)
@@ -101,4 +112,5 @@ class LuceneQueryHelpersSpec extends FlatSpec
     topDocs.forall(doc => doc.doc.textField("_1").exists(x =>
       x.toString().toLowerCase().contains(prefix))) should equal(true)
   }
+
 }

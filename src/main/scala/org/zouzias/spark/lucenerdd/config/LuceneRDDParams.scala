@@ -36,17 +36,6 @@ case class LuceneRDDParams(indexAnalyzer: String,
 
 
 object LuceneRDDParams extends AnalyzerConfigurable with SimilarityConfigurable {
-
-  def apply(indexAnalyzer: String,
-            queryAnalyzer: String,
-            similarity: String,
-            indexAnalyzerPerField: Map[String, String],
-            queryAnalyzerPerField: Map[String, String])
-  : LuceneRDDParams = {
-    new LuceneRDDParams(indexAnalyzer, queryAnalyzer, similarity,
-      indexAnalyzerPerField, queryAnalyzerPerField)
-  }
-
   def apply(): LuceneRDDParams = {
     new LuceneRDDParams(getOrElseEn(IndexAnalyzerConfigName),
       getOrElseEn(QueryAnalyzerConfigName),

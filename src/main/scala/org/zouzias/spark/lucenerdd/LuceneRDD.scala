@@ -392,8 +392,8 @@ object LuceneRDD extends Versionable
                           indexAnalyzer: String,
                           queryAnalyzer: String,
                           similarity: String,
-                          indexAnalyzerPerField: Map[String, String] = Map.empty[String, String],
-                          queryAnalyzerPerField: Map[String, String] = Map.empty[String, String])
+                          indexAnalyzerPerField: Map[String, String],
+                          queryAnalyzerPerField: Map[String, String])
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
       (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer,
@@ -421,8 +421,8 @@ object LuceneRDD extends Versionable
    indexAnalyzer: String,
    queryAnalyzer: String,
    similarity: String,
-   indexAnalyzerPerField: Map[String, String] = Map.empty[String, String],
-   queryAnalyzerPerField: Map[String, String] = Map.empty[String, String])
+   indexAnalyzerPerField: Map[String, String],
+   queryAnalyzerPerField: Map[String, String])
   (implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {
     apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity,
@@ -436,7 +436,9 @@ object LuceneRDD extends Versionable
     apply[T](elems,
       getOrElseEn(IndexAnalyzerConfigName),
       getOrElseEn(QueryAnalyzerConfigName),
-      getOrElseClassic())
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
   }
 
   /**
@@ -449,10 +451,20 @@ object LuceneRDD extends Versionable
             indexAnalyzer: String,
             queryAnalyzer: String,
             similarity: String,
-            indexAnalyzerPerField: Map[String, String] = Map.empty[String, String],
-            queryAnalyzerPerField: Map[String, String] = Map.empty[String, String])
+            indexAnalyzerPerField: Map[String, String],
+            queryAnalyzerPerField: Map[String, String])
   : LuceneRDD[Row] = {
-    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity)
+    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity,
+      indexAnalyzerPerField, queryAnalyzerPerField)
+  }
+
+  def apply(dataFrame: DataFrame,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String)
+  : LuceneRDD[Row] = {
+    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity,
+      Map.empty[String, String], Map.empty[String, String])
   }
 
   /**
@@ -466,7 +478,9 @@ object LuceneRDD extends Versionable
     apply[Row](dataFrame.rdd,
       getOrElseEn(IndexAnalyzerConfigName),
       getOrElseEn(QueryAnalyzerConfigName),
-      getOrElseClassic())
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
   }
 
   /**

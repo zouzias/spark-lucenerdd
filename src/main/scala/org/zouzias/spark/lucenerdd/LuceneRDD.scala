@@ -430,6 +430,19 @@ object LuceneRDD extends Versionable
   }
 
   def apply[T : ClassTag]
+  (elems: RDD[T])
+  (implicit conv: T => Document)
+  : LuceneRDD[T] = {
+    apply[T](elems,
+      getOrElseEn(IndexAnalyzerConfigName),
+      getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
+  }
+
+
+  def apply[T : ClassTag]
   (elems: Iterable[T])
   (implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {

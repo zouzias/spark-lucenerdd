@@ -46,9 +46,10 @@ import scala.collection.mutable.ArrayBuffer
   * @param partitionId Identifier of the RDD partition
   * @param indexAnalyzerName Lucene Analyzer applied during index time
   * @param queryAnalyzerName Lucene Analyzer applied during query time
+  * @param similarityName Lucene Similarity metric (BM25, Tf/idf)
   * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time)
   * @param queryAnalyzerPerField Lucene Analyzer per field (query time)
-  * @param docConversion Convertion from T to a Lucene document
+  * @param docConversion Conversion from T to a Lucene document
   * @param kTag Class tag of type T
   * @tparam T the type associated with each entry in the set.
   */
@@ -269,8 +270,9 @@ object LuceneRDDPartition {
     * @param partitionId Identifier of the RDD partition
     * @param indexAnalyzerName Lucene Analyzer applied during index time
     * @param queryAnalyzerName Lucene Analyzer applied during query time
-    * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time)
-    * @param queryAnalyzerPerField Lucene Analyzer per field (query time)
+    * @param similarityName Lucene Similarity metric (BM25, Tf/idf)
+    * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time), default empty
+    * @param queryAnalyzerPerField Lucene Analyzer per field (query time), default empty
     * @param docConversion Convertion from T to a Lucene document
     * @param kTag Class tag of type T
     * @tparam T the type associated with each entry in the set.

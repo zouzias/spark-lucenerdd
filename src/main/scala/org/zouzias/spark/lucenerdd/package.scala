@@ -144,7 +144,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
     doc
   }
 
-  implicit def traversablePrimitiveToDocument[T: ClassTag](iter: Traversable[T]): Document = {
+  implicit def iterablePrimitiveToDocument[T: ClassTag](iter: Iterable[T]): Document = {
     val doc = new Document
     iter.foreach( item => tupleTypeToDocument(doc, 1, item))
     doc

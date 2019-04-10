@@ -38,9 +38,20 @@ class LucenePrimitiveTypesSpec extends FlatSpec with Matchers
   override def afterEach() {
     luceneRDD.close()
   }
+
+  /**
   "LuceneRDD" should "work with RDD[List[String]]" in {
     val array = Array(List("aaa", "aaa2"), List("bbb", "bbb2"),
       List("ccc", "ccc2"), List("ddd"), List("eee"))
+    val rdd = sc.parallelize(array)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.count should be (array.length)
+  }
+  */
+
+  "LuceneRDD" should "work with RDD[Array[String]]" in {
+    val array = Array(Array("aaa", "aaa2"), Array("bbb", "bbb2"),
+      Array("ccc", "ccc2"), Array("ddd"), Array("eee"))
     val rdd = sc.parallelize(array)
     luceneRDD = LuceneRDD(rdd)
     luceneRDD.count should be (array.length)

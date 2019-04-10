@@ -49,6 +49,13 @@ package object lucenerdd extends LuceneRDDConfigurable {
     }
   }
 
+  private def listPrimitiveToDocument[T: ClassTag](fieldName: String, iter: java.util.List[T])
+  : Document = {
+    val doc = new Document
+    iter.asScala.foreach( item => typeToDocument(doc, fieldName, item))
+    doc
+  }
+
   implicit def intToDocument(v: Int): Document = {
     val doc = new Document
     if (v != null) {
@@ -150,11 +157,9 @@ package object lucenerdd extends LuceneRDDConfigurable {
     doc
   }
 
-  implicit def listPrimitiveToDocument[T: ClassTag](fieldName: String,
-                                                            iter: java.util.List[T])
-  : Document = {
+  implicit def arrayPrimitiveToDocument[T: ClassTag](iter: Array[T]): Document = {
     val doc = new Document
-    iter.asScala.foreach( item => typeToDocument(doc, fieldName, item))
+    iter.foreach( item => tupleTypeToDocument(doc, 1, item))
     doc
   }
 

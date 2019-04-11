@@ -20,7 +20,7 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.testing.FavoriteCaseClass
+import org.zouzias.spark.lucenerdd.testing.{FavoriteCaseClass, MultivalueFavoriteCaseClass}
 
 class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
   with Matchers
@@ -45,6 +45,18 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     .zipWithIndex.map{ case (str, index) =>
     FavoriteCaseClass(str, index, 10L, 12.3F, s"${str}@gmail.com")}
 
+  val multiValuesElems = Array("fear", "death", "water", "fire", "house")
+    .zipWithIndex.map{ case (str, index) =>
+    MultivalueFavoriteCaseClass(Array(str, str.reverse), index, 10L, 12.3F, s"${str}@gmail.com")}
+
+  "LuceneRDD(MultivalueFavoriteCaseClass).count" should "return correct number of elements" in {
+    val rdd = sc.parallelize(multiValuesElems)
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
+    luceneRDD.count should equal (elem.length)
+  }
 
   "LuceneRDD(case class).count" should "return correct number of elements" in {
     val rdd = sc.parallelize(elem)
@@ -52,7 +64,7 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     import spark.implicits._
     val df = rdd.toDF()
     luceneRDD = LuceneRDD(df)
-    luceneRDD.count should equal (elem.size)
+    luceneRDD.count should equal (elem.length)
   }
 
   "LuceneRDD(case class).fields" should "return all fields" in {
@@ -70,6 +82,21 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     luceneRDD.fields().contains("email") should equal(true)
   }
 
+  "LuceneRDD(MultivalueFavoriteCaseClass).fields" should "return all fields" in {
+    val rdd = sc.parallelize(multiValuesElems)
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
+
+    luceneRDD.fields().size should equal(5)
+    luceneRDD.fields().contains("names") should equal(true)
+    luceneRDD.fields().contains("age") should equal(true)
+    luceneRDD.fields().contains("myLong") should equal(true)
+    luceneRDD.fields().contains("myFloat") should equal(true)
+    luceneRDD.fields().contains("email") should equal(true)
+  }
+
   "LuceneRDD(case class).termQuery" should "correctly search with TermQueries" in {
     val rdd = sc.parallelize(elem)
     val spark = SparkSession.builder().getOrCreate()
@@ -78,6 +105,17 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     luceneRDD = LuceneRDD(df)
 
     val results = luceneRDD.termQuery("name", "water")
+    results.count should equal(1)
+  }
+
+  "LuceneRDD(MultivalueFavoriteCaseClass).termQuery" should "correctly search with TermQueries" in {
+    val rdd = sc.parallelize(multiValuesElems)
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
+
+    val results = luceneRDD.termQuery("names", "retaw")
     results.count should equal(1)
   }
 }

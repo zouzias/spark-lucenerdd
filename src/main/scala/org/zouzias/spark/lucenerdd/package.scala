@@ -49,9 +49,10 @@ package object lucenerdd extends LuceneRDDConfigurable {
     }
   }
 
-  private def listPrimitiveToDocument[T: ClassTag](fieldName: String, iter: java.util.List[T])
+  private def listPrimitiveToDocument[T: ClassTag](doc: Document,
+                                                   fieldName: String,
+                                                   iter: java.util.List[T])
   : Document = {
-    val doc = new Document
     iter.asScala.foreach( item => typeToDocument(doc, fieldName, item))
     doc
   }
@@ -203,7 +204,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
       // TODO: Handle org.apache.spark.sql.types.MapType and more
       if (dataType.isInstanceOf[ArrayType]) {
-       listPrimitiveToDocument(fieldName, row.getList(index))
+       listPrimitiveToDocument(doc, fieldName, row.getList(index))
       }
       else {
         typeToDocument(doc, fieldName, row.get(index))

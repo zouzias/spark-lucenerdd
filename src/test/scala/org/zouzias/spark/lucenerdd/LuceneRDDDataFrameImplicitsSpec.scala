@@ -90,7 +90,7 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     luceneRDD = LuceneRDD(df)
 
     luceneRDD.fields().size should equal(5)
-    luceneRDD.fields().contains("name") should equal(true)
+    luceneRDD.fields().contains("names") should equal(true)
     luceneRDD.fields().contains("age") should equal(true)
     luceneRDD.fields().contains("myLong") should equal(true)
     luceneRDD.fields().contains("myFloat") should equal(true)
@@ -115,7 +115,7 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     val df = rdd.toDF()
     luceneRDD = LuceneRDD(df)
 
-    val results = luceneRDD.termQuery("name", "retaw")
+    val results = luceneRDD.termQuery("names", "retaw")
     results.count should equal(1)
   }
 }

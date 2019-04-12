@@ -25,14 +25,14 @@ import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.locationtech.spatial4j.shape.Shape
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
+import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.reflect._
 
 private[shape] class ShapeLuceneRDDPartition[K, V]
@@ -134,7 +134,11 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs
+      .map(SparkScoreDoc(indexSearcher, _))
+      .toIterator
+      .map(SparkDoc.toRow(_))
+    )
   }
 
   override def knnSearch(point: PointType, k: Int, searchString: String)
@@ -170,7 +174,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    LuceneRDDResponsePartition(result.toIterator)
+    LuceneRDDResponsePartition(result.toIterator.map(SparkDoc.toRow(_)))
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
@@ -185,7 +189,11 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs
+      .map(SparkScoreDoc(indexSearcher, _))
+      .toIterator
+      .map(SparkDoc.toRow(_))
+    )
   }
 
   override def spatialSearch(point: PointType, k: Int, operationName: String)

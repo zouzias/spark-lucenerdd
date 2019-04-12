@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.models
 
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
+import org.apache.spark.sql.Row
 
 /**
  * A scored [[SparkDoc]]
@@ -52,18 +53,25 @@ object SparkScoreDoc extends Serializable {
   /**
    * Ordering by score (descending)
    */
-  def descending: Ordering[SparkScoreDoc] = new Ordering[SparkScoreDoc]{
-    override def compare(x: SparkScoreDoc, y: SparkScoreDoc): Int = {
-      if ( x.score > y.score) -1 else if (x.score == y.score) 0 else 1
+  def descending: Ordering[Row] = new Ordering[Row]{
+    override def compare(x: Row, y: Row): Int = {
+      val xScore = x.getDouble(x.fieldIndex("score"))
+      val yScore = y.getDouble(y.fieldIndex("score"))
+      if ( xScore > yScore) {
+        -1
+      } else if (xScore == yScore) 0 else 1
     }
   }
 
   /**
    * Ordering by score (ascending)
    */
-  def ascending: Ordering[SparkScoreDoc] = new Ordering[SparkScoreDoc]{
-    override def compare(x: SparkScoreDoc, y: SparkScoreDoc): Int = {
-      if ( x.score < y.score) -1 else if (x.score == y.score) 0 else 1
+  def ascending: Ordering[Row] = new Ordering[Row]{
+    override def compare(x: Row, y: Row): Int = {
+      val xScore = x.getDouble(x.fieldIndex("score"))
+      val yScore = y.getDouble(y.fieldIndex("score"))
+
+      if ( xScore < yScore) -1 else if (xScore == yScore) 0 else 1
     }
   }
 }

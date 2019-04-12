@@ -29,8 +29,9 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.queries.mlt.MoreLikeThis
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
+import org.apache.spark.sql.Row
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -105,9 +106,10 @@ object LuceneQueryHelpers extends Serializable {
                    searchString: String,
                    topK: Int,
                    queryAnalyzerPerField: PerFieldAnalyzerWrapper)
-  : Seq[SparkScoreDoc] = {
+  : Seq[Row] = {
     val q = parseQueryString(searchString, queryAnalyzerPerField)
-    indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+    val docs = indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+    docs.map(SparkDoc.toRow(_))
   }
 
   /**

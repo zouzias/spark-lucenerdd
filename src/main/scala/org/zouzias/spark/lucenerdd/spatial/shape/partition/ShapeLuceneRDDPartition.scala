@@ -23,6 +23,7 @@ import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
 import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
+import scala.collection.JavaConverters._
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.locationtech.spatial4j.shape.Shape
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc

@@ -85,53 +85,6 @@ private[lucenerdd] class LuceneRDDResponse
     }
   }
 
-  /**
-    * Infer the types of each field of a [[SparkScoreDoc]]
-    *
-    * @param d
-    * @return
-    */
-  private def inferTypes(d: SparkScoreDoc): Iterable[(String, FieldType)] = {
-    val textFieldTypes = d.doc.getTextFields.map(x => x -> TextType)
-    val numFieldTypes = d.doc.getNumericFields
-      .map(fieldName => fieldName -> inferNumericType(d.doc.numericField(fieldName)))
-
-    textFieldTypes ++ numFieldTypes
-  }
-
-  /**
-    * Infers types of scored documents, i.e., [[SparkScoreDoc]]
-    *
-    * @param docs RDD of [[SparkScoreDoc]]
-    * @return Map of field name to its inferred type
-    */
-  def inferTypes(docs: RDD[SparkScoreDoc]): Map[String, FieldType] = {
-    val types = docs
-      .flatMap(inferTypes).map(x => x -> 1L)
-      .reduceByKey(_ + _)
-      .map{ case (key, value) => (key._1, (value, key._2))}
-
-    val mostFreqTypes = types.reduceByKey((x, y) => if (x._1 >= y._1) x else y)
-    mostFreqTypes.map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
-  }
-
-  /**
-    * Checks the subclass of [[Number]]
-    * @param num
-    * @return
-    */
-  private def inferNumericType(num: Option[Number]): FieldType = {
-    num match {
-      case None => TextType
-      case Some(n) =>
-        if (n.isInstanceOf[Integer]) { IntType }
-        else if (n.isInstanceOf[Long]) { LongType }
-        else if (n.isInstanceOf[Double]) { DoubleType }
-        else if (n.isInstanceOf[Float]) { FloatType }
-        else { TextType }
-    }
-  }
-
   def toDF(): DataFrame = {
     this.toDF()
   }

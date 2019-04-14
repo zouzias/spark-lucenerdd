@@ -25,7 +25,7 @@ import org.apache.lucene.spatial.query.{SpatialArgs, SpatialOperation}
 import org.joda.time.DateTime
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.locationtech.spatial4j.shape.Shape
-import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.query.LuceneQueryHelpers
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
@@ -135,9 +135,8 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
     LuceneRDDResponsePartition(docs.scoreDocs
-      .map(SparkScoreDoc(indexSearcher, _))
+      .map(x => SparkScoreDoc(indexSearcher, x).toRow())
       .toIterator
-      .map(SparkDoc.toRow(_))
     )
   }
 
@@ -174,7 +173,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    LuceneRDDResponsePartition(result.toIterator.map(SparkDoc.toRow(_)))
+    LuceneRDDResponsePartition(result.toIterator.map(_.toRow()))
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
@@ -190,9 +189,8 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
     LuceneRDDResponsePartition(docs.scoreDocs
-      .map(SparkScoreDoc(indexSearcher, _))
+      .map(SparkScoreDoc(indexSearcher, _).toRow())
       .toIterator
-      .map(SparkDoc.toRow(_))
     )
   }
 

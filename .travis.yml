@@ -1,4 +1,6 @@
 language: scala
+scala:
+  - 2.11.12
 sudo: false
 dist: trusty
 cache:
@@ -15,22 +17,16 @@ before_cache:
 matrix:
   include:
     - jdk: oraclejdk8
-      scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="en" LINKER_METHOD="cartesian"
+      env: TEST_SPARK_VERSION="2.4.1" LUCENERDD_ANALYZER_NAME="en" LUCENERDD_LINKER_METHOD="cartesian"
     - jdk: openjdk8
-      scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="en" LINKER_METHOD="collectbroadcast"
+      env: TEST_SPARK_VERSION="2.4.1" LUCENERDD_ANALYZER_NAME="en" LUCENERDD_LINKER_METHOD="collectbroadcast"
     - jdk: openjdk8
-      scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="whitespace" LINKER_METHOD="cartesian"
+      env: TEST_SPARK_VERSION="2.4.1" LUCENERDD_ANALYZER_NAME="whitespace" LUCENERDD_LINKER_METHOD="cartesian"
     - jdk: oraclejdk8
-      scala: 2.11.12
-      env: TEST_SPARK_VERSION="2.4.0" LUCENE_ANALYZER="whitespace" LINKER_METHOD="collectbroadcast"
+      env: TEST_SPARK_VERSION="2.4.1" LUCENERDD_ANALYZER_NAME="whitespace" LUCENERDD_LINKER_METHOD="collectbroadcast"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update
-      -Dlucenerdd.linker.method=${LINKER_METHOD}
-      -Dlucenerdd.spatial.linker.method=${LINKER_METHOD}
-      -Dlucenerdd.analyzer.name=${LUCENE_ANALYZER} -test
+      -Dlucenerdd.spatial.linker.method=${LUCENE_SPATIAL_LINKER_METHOD} -test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION assembly
   - travis_wait 30 sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport

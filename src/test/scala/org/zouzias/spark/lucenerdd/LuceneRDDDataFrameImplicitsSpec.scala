@@ -41,11 +41,12 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
   }
 
 
-  val elem = Array("fear", "death", "water", "fire", "house")
+  val elem: Array[FavoriteCaseClass] = Array("fear", "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) =>
     FavoriteCaseClass(str, index, 10L, 12.3F, s"${str}@gmail.com")}
 
-  val multiValuesElems = Array("fear", "death", "water", "fire", "house")
+  val multiValuesElems: Array[MultivalueFavoriteCaseClass] = Array("fear",
+    "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) =>
     MultivalueFavoriteCaseClass(Array(str, str.reverse), index, 10L, 12.3F, s"${str}@gmail.com")}
 

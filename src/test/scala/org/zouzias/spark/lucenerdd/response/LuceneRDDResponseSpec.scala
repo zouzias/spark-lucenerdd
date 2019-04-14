@@ -66,8 +66,8 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
       FavoriteCaseClass(str, index, 10L, 10e-6F, s"${str}@gmail.com")}
     val rdd = sc.parallelize(elem)
     luceneRDD = LuceneRDD(rdd)
-    val result = luceneRDD.query("*:*", 10).toDF(1.0)(sqlContext)
-    val schema = result.schema
+    val response = luceneRDD.query("*:*", 10).toDF()
+    val schema = response.schema
 
     schema.nonEmpty should equal(true)
     schema.fieldNames.contains("name") should equal(true)

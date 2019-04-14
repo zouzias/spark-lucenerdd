@@ -18,6 +18,7 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
+import scala.collection.JavaConverters._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
 import scala.io.Source
@@ -41,17 +42,22 @@ class LuceneRDDMoreLikeThisSpec extends FlatSpec
   }
 
   "LuceneRDD.moreLikeThis" should "return relevant documents" in {
-    val words = Source.fromFile("src/test/resources/alice.txt").getLines().map(_.toLowerCase).toSeq
+    val words: Seq[String] = Source.fromFile("src/test/resources/alice.txt")
+      .getLines().map(_.toLowerCase).toSeq
     val rdd = sc.parallelize(words)
     luceneRDD = LuceneRDD(rdd)
     val results = luceneRDD.moreLikeThis("_1", "alice adventures wonderland", 1, 1).collect()
 
     results.length > 0 should equal(true)
-    results.head.doc.textField("_1").exists(x => x.contains("alice")
+    val firstDoc = results.head
+    firstDoc.getList[String](firstDoc.fieldIndex("_1")).asScala
+        .exists(x => x.contains("alice")
     && x.contains("wonderland")
     && x.contains("adventures")) should equal(true)
 
-    results.last.doc.textField("_1").exists(x => x.contains("alice")
+    val lastDoc = results.head
+    lastDoc.getList[String](lastDoc.fieldIndex("_1")).asScala
+    .exists(x => x.contains("alice")
       && !x.contains("wonderland")
       && !x.contains("adventures")) should equal(true)
 

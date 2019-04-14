@@ -64,15 +64,15 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.spatialSearch(circleWKT, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Laussanne._2)) should equal(true)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Toronto._2)) should equal(false)
   }
 
   "ShapeLuceneRDD.bboxSearch(lowerLeft, upperRight)" should "return correct results" in {
@@ -87,34 +87,34 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     val results = pointLuceneRDD.bboxSearch((x - width, y - width), (x + width, y + width), k, "Intersects")
       .collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Laussanne._2)) should equal(true)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Toronto._2)) should equal(false)
   }
 
   "ShapeLuceneRDD.spatialSearch((Double, Double))" should "return a single point intersection" in {
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val point = ctx.makePoint(Bern._1._1, Bern._1._2)
-    val results = pointLuceneRDD.spatialSearch( (Bern._1._1, Bern._1._2), k, "Intersects")
+    val point = (Bern._1._1, Bern._1._2)
+    val results = pointLuceneRDD.spatialSearch(point, k, "Intersects")
       .collect()
 
-    results.size should equal(1)
+    results.length should equal(1)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Zurich._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Laussanne._2)) should equal(false)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Toronto._2)) should equal(false)
   }
 
 
@@ -135,15 +135,15 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.spatialSearch(rectangleWKT, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Laussanne._2)) should equal(true)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Toronto._2)) should equal(false)
   }
 
   "ShapeLuceneRDD.spatialSearch(Polygon)" should "return correct results" in {
@@ -163,14 +163,14 @@ class ShapeLuceneRDDSpatialSearchSpec extends FlatSpec
     // Bern, Laussanne and Zurich is within 300km
     val results = pointLuceneRDD.spatialSearch(polygonAsString, k).collect()
 
-    results.size should equal(3)
+    results.length should equal(3)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Bern._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Zurich._2)) should equal(true)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Laussanne._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Bern._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Zurich._2)) should equal(true)
+    results.exists(x => docTextFieldEq(x, "_1", Laussanne._2)) should equal(true)
 
-    results.exists(x => docTextFieldEq(x.doc, "_1", Milan._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Athens._2)) should equal(false)
-    results.exists(x => docTextFieldEq(x.doc, "_1", Toronto._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Milan._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Athens._2)) should equal(false)
+    results.exists(x => docTextFieldEq(x, "_1", Toronto._2)) should equal(false)
   }
 }

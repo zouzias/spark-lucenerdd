@@ -131,4 +131,8 @@ private[lucenerdd] class LuceneRDDResponse
         else { TextType }
     }
   }
+
+  def toDF(): DataFrame = {
+    this.toDF()
+  }
 }

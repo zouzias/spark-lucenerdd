@@ -133,7 +133,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
     val linkage = pointLuceneRDD.linkDataFrameByKnn(citiesDF, linker, k)
 
-    linkage.count() should equal(cities.size)
+    linkage.count() should equal(cities.length)
 
     linkage.collect().foreach { case (city, knnResults) =>
 

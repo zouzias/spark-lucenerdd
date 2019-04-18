@@ -18,10 +18,12 @@ package org.zouzias.spark.lucenerdd.models
 
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.inferNumericType
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{ShardField, DocIdField, ScoreField}
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{DocIdField, ScoreField, ShardField}
+
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -78,7 +80,9 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
       (StructField(ScoreField, org.apache.spark.sql.types.DoubleType), this.score),
       (StructField(ShardField, IntegerType), this.shardIndex))
 
-    Row.fromSeq(typeWithValue ++ extraSchemaWithValue)
+    val allTogether = typeWithValue ++ extraSchemaWithValue
+
+    new GenericRowWithSchema(allTogether.map(_._2).toArray, StructType(allTogether.map(_._1)))
   }
 
   override def toString: String = {
@@ -110,8 +114,8 @@ object SparkScoreDoc extends Serializable {
    */
   def descending: Ordering[Row] = new Ordering[Row]{
     override def compare(x: Row, y: Row): Int = {
-      val xScore = x.getDouble(x.fieldIndex("score"))
-      val yScore = y.getDouble(y.fieldIndex("score"))
+      val xScore = x.getDouble(x.fieldIndex(ScoreField))
+      val yScore = y.getDouble(y.fieldIndex(ScoreField))
       if ( xScore > yScore) {
         -1
       } else if (xScore == yScore) 0 else 1
@@ -123,8 +127,8 @@ object SparkScoreDoc extends Serializable {
    */
   def ascending: Ordering[Row] = new Ordering[Row]{
     override def compare(x: Row, y: Row): Int = {
-      val xScore = x.getDouble(x.fieldIndex("score"))
-      val yScore = y.getDouble(y.fieldIndex("score"))
+      val xScore = x.getDouble(x.fieldIndex(ScoreField))
+      val yScore = y.getDouble(y.fieldIndex(ScoreField))
 
       if ( xScore < yScore) -1 else if (xScore == yScore) 0 else 1
     }

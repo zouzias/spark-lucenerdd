@@ -73,7 +73,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       knnResults.length should be <= k
 
       // Distances must be sorted
-      val revertedDists = knnResults.map(x => x.getFloat(x.fieldIndex("score"))).reverse
+      val revertedDists = knnResults.map(x => x.getDouble(x.fieldIndex("score"))).reverse
       sortedDesc(revertedDists) should equal(true)
     }
   }
@@ -145,7 +145,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       knnResults.length should be <= k
 
       // Distances must be sorted
-      val revertedDists = knnResults.map(x => x.getFloat(x.fieldIndex("score"))).reverse
+      val revertedDists = knnResults.map(x => x.getDouble(x.fieldIndex("score"))).reverse
       sortedDesc(revertedDists) should equal(true)
     }
 

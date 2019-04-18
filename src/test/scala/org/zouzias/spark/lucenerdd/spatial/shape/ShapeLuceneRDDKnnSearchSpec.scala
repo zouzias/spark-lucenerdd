@@ -62,7 +62,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.last, "_1", Toronto._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getFloat(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -80,7 +80,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getFloat(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -98,7 +98,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getFloat(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -116,7 +116,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getFloat(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 }

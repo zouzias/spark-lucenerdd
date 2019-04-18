@@ -65,7 +65,7 @@ trait LuceneRDDTestUtils {
   }
 
   // Check if sequence is sorted in descending order
-  protected def sortedDesc(seq : Seq[Float]) : Boolean = {
+  protected def sortedDesc(seq : Seq[Double]) : Boolean = {
     if (seq.isEmpty) true else seq.zip(seq.tail).forall(x => x._1 >= x._2)
   }
 

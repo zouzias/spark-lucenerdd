@@ -50,16 +50,19 @@ class LuceneRDDMoreLikeThisSpec extends FlatSpec
 
     results.length > 0 should equal(true)
     val firstDoc = results.head
-    firstDoc.getList[String](firstDoc.fieldIndex("_1")).asScala
-        .exists(x => x.contains("alice")
-    && x.contains("wonderland")
-    && x.contains("adventures")) should equal(true)
+    val x = firstDoc.getString(firstDoc.fieldIndex("_1"))
+
+    x.contains("alice") ||
+      x.contains("wonderland") ||
+      x.contains("adventures") should equal(true)
 
     val lastDoc = results.head
-    lastDoc.getList[String](lastDoc.fieldIndex("_1")).asScala
-    .exists(x => x.contains("alice")
-      && !x.contains("wonderland")
-      && !x.contains("adventures")) should equal(true)
+    val y = lastDoc.getString(lastDoc.fieldIndex("_1"))
+
+
+      y.contains("alice") &&
+        !y.contains("wonderland") &&
+        !y.contains("adventures") should equal(true)
 
   }
 }

@@ -23,6 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.ScoreField
 
 class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
   with Matchers
@@ -62,7 +63,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.last, "_1", Toronto._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -80,7 +81,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -98,7 +99,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -116,7 +117,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
     docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(x => x.getDouble(x.fieldIndex("score"))).reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 }

@@ -114,8 +114,8 @@ object SparkScoreDoc extends Serializable {
    */
   def descending: Ordering[Row] = new Ordering[Row]{
     override def compare(x: Row, y: Row): Int = {
-      val xScore = x.getDouble(x.fieldIndex(ScoreField))
-      val yScore = y.getDouble(y.fieldIndex(ScoreField))
+      val xScore = x.getFloat(x.fieldIndex(ScoreField))
+      val yScore = y.getFloat(y.fieldIndex(ScoreField))
       if ( xScore > yScore) {
         -1
       } else if (xScore == yScore) 0 else 1
@@ -127,8 +127,8 @@ object SparkScoreDoc extends Serializable {
    */
   def ascending: Ordering[Row] = new Ordering[Row]{
     override def compare(x: Row, y: Row): Int = {
-      val xScore = x.getDouble(x.fieldIndex(ScoreField))
-      val yScore = y.getDouble(y.fieldIndex(ScoreField))
+      val xScore = x.getFloat(x.fieldIndex(ScoreField))
+      val yScore = y.getFloat(y.fieldIndex(ScoreField))
 
       if ( xScore < yScore) -1 else if (xScore == yScore) 0 else 1
     }

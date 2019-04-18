@@ -21,7 +21,7 @@ import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField}
 import org.apache.spark.sql.Row
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.inferNumericType
-
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{ShardField, DocIdField, ScoreField}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -74,9 +74,9 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
     }
 
     // Additional fields of [[SparkScoreDoc]] with known types
-    val extraSchemaWithValue = Seq((StructField("__docid__", IntegerType), this.docId),
-      (StructField("__score__", org.apache.spark.sql.types.DoubleType), this.score),
-      (StructField("__shardIndex__", IntegerType), this.shardIndex))
+    val extraSchemaWithValue = Seq((StructField(DocIdField, IntegerType), this.docId),
+      (StructField(ScoreField, org.apache.spark.sql.types.DoubleType), this.score),
+      (StructField(ShardField, IntegerType), this.shardIndex))
 
     Row.fromSeq(typeWithValue ++ extraSchemaWithValue)
   }
@@ -91,6 +91,10 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
 }
 
 object SparkScoreDoc extends Serializable {
+
+  val DocIdField = "__docid__"
+  val ScoreField = "__score__"
+  val ShardField = "__shardIndex__"
 
   def apply(indexSearcher: IndexSearcher, scoreDoc: ScoreDoc): SparkScoreDoc = {
     SparkScoreDoc(scoreDoc.score, scoreDoc.doc, scoreDoc.shardIndex,

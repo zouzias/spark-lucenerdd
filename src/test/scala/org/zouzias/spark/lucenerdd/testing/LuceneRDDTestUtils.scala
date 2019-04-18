@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.testing
 
 import org.apache.spark.sql.Row
 import scala.collection.JavaConverters._
-import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 trait LuceneRDDTestUtils {
 

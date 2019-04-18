@@ -66,13 +66,14 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     linkage.collect().foreach{ case (city, knnResults) =>
 
       // top result should be linked with its query result
-      city._2 should equal(knnResults.head.doc.textField("_1").head)
+      val doc = knnResults.head
+      city._2 should equal(doc.getString(doc.fieldIndex("_1")))
 
       // Must return only at most k results
       knnResults.length should be <= k
 
       // Distances must be sorted
-      val revertedDists = knnResults.map(_.score).reverse
+      val revertedDists = knnResults.map(x => x.getFloat(x.fieldIndex("score"))).reverse
       sortedDesc(revertedDists) should equal(true)
     }
   }
@@ -144,7 +145,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       knnResults.length should be <= k
 
       // Distances must be sorted
-      val revertedDists = knnResults.map(_.score).reverse
+      val revertedDists = knnResults.map(x => x.getFloat(x.fieldIndex("score"))).reverse
       sortedDesc(revertedDists) should equal(true)
     }
 

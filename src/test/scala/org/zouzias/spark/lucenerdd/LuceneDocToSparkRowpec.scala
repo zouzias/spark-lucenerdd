@@ -34,14 +34,14 @@ class LuceneDocToSparkRowpec extends FlatSpec
     doc.add(new LongPoint("longField", 10))
     doc.add(new StoredField("longField", 10))
 
-    doc.add(new FloatPoint("floatField", 10.1f))
-    doc.add(new StoredField("floatField", 10.1f))
+    doc.add(new FloatPoint("floatField", 20.1f))
+    doc.add(new StoredField("floatField", 20.1f))
 
     doc.add(new IntPoint("intField", 9))
     doc.add(new StoredField("intField", 9))
 
-    doc.add(new DoublePoint("doubleField", 10.0D))
-    doc.add(new StoredField("doubleField", 10.0D))
+    doc.add(new DoublePoint("doubleField", 10.11D))
+    doc.add(new StoredField("doubleField", 10.11D))
 
     doc
   }
@@ -68,6 +68,16 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
   "SparkScoreDoc.toRow" should "return correct number of fields" in {
     val row = sparkScoreDoc.toRow()
-    row.getFields() should equal(7)
+    row.getFields().size() should equal(7)
+  }
+
+  "SparkScoreDoc.toRow" should "set correctly DoublePoint" in {
+    val row = sparkScoreDoc.toRow()
+    row.getDouble(row.fieldIndex("doubleField")) should equal(10.11D)
+  }
+
+  "SparkScoreDoc.toRow" should "set correctly FloatPoint" in {
+    val row = sparkScoreDoc.toRow()
+    row.getDouble(row.fieldIndex("doubleField")) should equal(20.1D)
   }
 }

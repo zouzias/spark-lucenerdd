@@ -39,13 +39,6 @@ trait LuceneRDDConfigurable extends Configurable {
     else 10
   }
 
-  protected val DefaultFacetNum: Int = {
-    if (Config.hasPath("lucenerdd.query.facet.topk.default")) {
-      Config.getInt("lucenerdd.query.facet.topk.default")
-    }
-    else 10
-  }
-
   protected val StringFieldsDefaultAnalyzed: Boolean = {
     if (Config.hasPath("lucenerdd.index.stringfields.analyzed")) {
       Config.getBoolean("lucenerdd.index.stringfields.analyzed")

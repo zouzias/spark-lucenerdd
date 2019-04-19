@@ -40,8 +40,6 @@ class LuceneQueryHelpersSpec extends FlatSpec
   val indexAnalyzerPerField: Map[String, String] = Map("name"
     -> "org.apache.lucene.en.EnglishAnalyzer")
 
-  private val MaxFacetValue: Int = 10
-
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some("en"))
 
   override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
@@ -51,7 +49,7 @@ class LuceneQueryHelpersSpec extends FlatSpec
   }
 
   countries.zipWithIndex.foreach { case (elem, index) =>
-    val doc = convertToDoc(index % MaxFacetValue, elem)
+    val doc = convertToDoc(index, elem)
     indexWriter.addDocument(doc)
   }
 

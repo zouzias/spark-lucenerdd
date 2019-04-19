@@ -19,18 +19,16 @@ package org.zouzias.spark.lucenerdd.partition
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.document._
-import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.{DirectoryReader, IndexReader}
 import org.apache.lucene.search._
 import org.joda.time.DateTime
-import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
+import scala.collection.JavaConverters._
 import org.zouzias.spark.lucenerdd.models.indexstats.{FieldStatistics, IndexStatistics}
-import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
+import org.zouzias.spark.lucenerdd.models.TermVectorEntry
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
-import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import org.zouzias.spark.lucenerdd.LuceneRDD
-import scala.collection.JavaConverters._
+import org.zouzias.spark.lucenerdd.store.IndexWritable
 
 import scala.reflect.{ClassTag, _}
 import scala.collection.mutable.ArrayBuffer
@@ -64,10 +62,10 @@ private[lucenerdd] class LuceneRDDPartition[T]
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
-  with IndexWithTaxonomyWriter
+  with IndexWritable
   with SimilarityConfigurable {
 
-  logInfo(s"[partId=${partitionId}] Partition is created...")
+  logInfo(s"[partId=$partitionId] Partition is created...")
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
@@ -88,27 +86,26 @@ private[lucenerdd] class LuceneRDDPartition[T]
   private val (iterOriginal, iterIndex) = iter.duplicate
 
   private val startTime = new DateTime(System.currentTimeMillis())
-  logInfo(s"[partId=${partitionId}]Indexing process initiated at ${startTime}...")
+  logInfo(s"[partId=$partitionId]Indexing process initiated at $startTime...")
   iterIndex.foreach { case elem =>
     // (implicitly) convert type T to Lucene document
     val doc = docConversion(elem)
-    indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
+    indexWriter.addDocument(doc)
   }
   private val endTime = new DateTime(System.currentTimeMillis())
-  logInfo(s"[partId=${partitionId}]Indexing process completed at ${endTime}...")
-  logInfo(s"[partId=${partitionId}]Indexing process took ${(endTime.getMillis
+  logInfo(s"[partId=$partitionId]Indexing process completed at $endTime...")
+  logInfo(s"[partId=$partitionId]Indexing process took ${(endTime.getMillis
     - startTime.getMillis) / 1000} seconds...")
 
-  // Close the indexWriter and taxonomyWriter (for faceted search)
+  // Close the indexWriter
   closeAllWriters()
-  logDebug(s"[partId=${partitionId}]Closing index writers...")
+  logDebug(s"[partId=$partitionId]Closing index writers...")
 
-  logDebug(s"[partId=${partitionId}]Instantiating index/facet readers")
+  logDebug(s"[partId=$partitionId]Instantiating index readers")
   private val indexReader = DirectoryReader.open(IndexDir)
   private lazy val indexSearcher = initializeIndexSearcher(indexReader)
-  private val taxoReader = new DirectoryTaxonomyReader(TaxonomyDir)
-  logDebug(s"[partId=${partitionId}]Index readers instantiated successfully")
-  logInfo(s"[partId=${partitionId}]Indexed ${size} documents")
+  logDebug(s"[partId=$partitionId]Index readers instantiated successfully")
+  logInfo(s"[partId=$partitionId]Indexed $size documents")
 
   override def fields(): Set[String] = {
     LuceneQueryHelpers.fields(indexSearcher)
@@ -157,7 +154,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
   override def query(searchString: String,
                      topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK,
-      PerFieldQueryAnalyzer)
+      PerFieldQueryAnalyzer())
 
     LuceneRDDResponsePartition(results.toIterator)
   }
@@ -199,15 +196,6 @@ private[lucenerdd] class LuceneRDDPartition[T]
     LuceneRDDResponsePartition(results.toIterator)
   }
 
-  override def facetQuery(searchString: String,
-                          facetField: String,
-                          topK: Int): SparkFacetResult = {
-    LuceneQueryHelpers.facetedTextSearch(indexSearcher, taxoReader, FacetsConfig,
-      searchString,
-      facetField + FacetedLuceneRDD.FacetTextFieldSuffix,
-      topK, QueryAnalyzer)
-  }
-
   override def moreLikeThis(fieldName: String, query: String,
                             minTermFreq: Int, minDocFreq: Int, topK: Int)
   : LuceneRDDResponsePartition = {
@@ -234,7 +222,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
           case None => (docId.toString, partitionId)
         }
 
-        termsOpt.foreach { case terms =>
+        termsOpt.foreach { terms =>
 
           // Iterate over terms of each document
           val termsIter = terms.iterator()
@@ -274,7 +262,6 @@ object LuceneRDDPartition {
     * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time), default empty
     * @param queryAnalyzerPerField Lucene Analyzer per field (query time), default empty
     * @param docConversion Convertion from T to a Lucene document
-    * @param kTag Class tag of type T
     * @tparam T the type associated with each entry in the set.
     * @return A partition of [[LuceneRDD]], type [[LuceneRDDPartition]]
     */

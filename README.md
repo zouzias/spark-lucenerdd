@@ -9,7 +9,7 @@
 
 [Spark](http://spark.apache.org) RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
-The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuceneRDD` and `ShapeLuceneRDD`, which instantiate a Lucene index on each Spark executor. These `RDD`s distribute search queries and aggregate search results between the Spark driver and its executors. Currently, the following queries are supported:
+The main abstractions are special types of `RDD` called `LuceneRDD` and `ShapeLuceneRDD`, which instantiate a Lucene index on each Spark executor. These `RDD`s distribute search queries and aggregate search results between the Spark driver and its executors. Currently, the following queries are supported:
 
 |Operation| Syntax| Description |
 |-------|---------------------|----------|
@@ -18,7 +18,6 @@ The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuc
 |Phrase Query | `LuceneRDD.phraseQuery(field, query, topK)` | Phrase search |
 |Prefix Query | `LuceneRDD.prefixSearch(field, prefix, topK)` | Prefix search |
 |Query Parser | `LuceneRDD.query(queryString, topK)` | Query parser search|
-|Faceted Search| `FacetedLuceneRDD.facetQuery(queryString, field, topK)` | Faceted Search |
 |[Record Linkage](https://github.com/zouzias/spark-lucenerdd/wiki/Record-Linkage)| `LuceneRDD.link(otherEntity: RDD[T], linkageFct: T => searchQuery, topK)`| Record linkage via Lucene queries|
 |Circle Search| `ShapeLuceneRDD.circleSearch((x,y), radius, topK)` | Search within radius |
 |Bbox Search| `ShapeLuceneRDD.bboxSearch(lowerLeft, upperLeft, topK)` | Bounding box |

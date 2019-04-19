@@ -22,7 +22,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.serializer.{KryoRegistrator, KryoSerializer}
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.types._
-import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkFacetResult, SparkScoreDoc}
+import org.zouzias.spark.lucenerdd.models.{SparkDoc, SparkScoreDoc}
 import org.zouzias.spark.lucenerdd.spatial.shape.partition.ShapeLuceneRDDPartition
 
 
@@ -73,7 +73,6 @@ class ShapeLuceneRDDKryoRegistrator extends KryoRegistrator {
     kryo.register(classOf[scala.collection.immutable.Set$EmptySet$])
     kryo.register(classOf[scala.collection.immutable.Map[_, _]])
     kryo.register(classOf[Array[scala.collection.immutable.Map[_, _]]])
-    kryo.register(classOf[SparkFacetResult])
     kryo.register(classOf[SparkScoreDoc])
     kryo.register(classOf[TopK[_]])
 

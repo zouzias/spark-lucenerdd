@@ -18,15 +18,14 @@ package org.zouzias.spark.lucenerdd.store
 
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
-import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyWriter
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 
 /**
- * Index and Taxonomy Writer used for facet queries
+ * Index writer
  */
-trait IndexWithTaxonomyWriter extends IndexStorable
+trait IndexWritable extends IndexStorable
   with AnalyzerConfigurable {
 
   protected def indexAnalyzer(): Analyzer
@@ -37,12 +36,8 @@ trait IndexWithTaxonomyWriter extends IndexStorable
     new IndexWriterConfig(indexPerFieldAnalyzer())
       .setOpenMode(OpenMode.CREATE))
 
-  protected lazy val taxoWriter = new DirectoryTaxonomyWriter(TaxonomyDir)
-
   protected def closeAllWriters(): Unit = {
     indexWriter.commit()
-    taxoWriter.commit()
-    taxoWriter.close()
     indexWriter.close()
   }
 }

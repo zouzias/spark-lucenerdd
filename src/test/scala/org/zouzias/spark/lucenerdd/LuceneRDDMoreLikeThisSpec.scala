@@ -46,17 +46,19 @@ class LuceneRDDMoreLikeThisSpec extends FlatSpec
       .getLines().map(_.toLowerCase).toSeq
     val rdd = sc.parallelize(words)
     luceneRDD = LuceneRDD(rdd)
-    val results = luceneRDD.moreLikeThis("_1", "alice adventures wonderland", 1, 1).collect()
+    val results = luceneRDD
+      .moreLikeThis("_1", "alice adventures wonderland", 1, 1)
+      .collect()
 
     results.length > 0 should equal(true)
     val firstDoc = results.head
     val x = firstDoc.getString(firstDoc.fieldIndex("_1"))
 
-    x.contains("alice") ||
-      x.contains("wonderland") ||
+    x.contains("alice") &&
+      x.contains("wonderland") &&
       x.contains("adventures") should equal(true)
 
-    val lastDoc = results.head
+    val lastDoc = results.last
     val y = lastDoc.getString(lastDoc.fieldIndex("_1"))
 
 

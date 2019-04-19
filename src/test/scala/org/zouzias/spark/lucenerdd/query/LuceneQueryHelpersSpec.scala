@@ -105,8 +105,9 @@ class LuceneQueryHelpersSpec extends FlatSpec
 
     topDocs.size should equal(1)
 
-    topDocs.exists(d => d.getString(d.fieldIndex("_1")).forall(x =>
-      x.toString.toLowerCase().contains(greece))) should equal(true)
+    topDocs.exists(d => d.getString(d.fieldIndex("_1")).
+      toLowerCase()
+      .contains(greece)) should equal(true)
   }
 
   "LuceneQueryHelpers.prefixQuery" should "return correct documents" in {
@@ -115,8 +116,9 @@ class LuceneQueryHelpersSpec extends FlatSpec
       .prefixQuery(indexSearcher, "_1", prefix, 100)
       .map(_.toRow())
 
-    topDocs.forall(d => d.getString(d.fieldIndex("_1")).exists(x =>
-      x.toString.toLowerCase().contains(prefix))) should equal(true)
+    topDocs.forall(d => d.getString(d.fieldIndex("_1"))
+      .toLowerCase()
+      .contains(prefix)) should equal(true)
   }
 
 }

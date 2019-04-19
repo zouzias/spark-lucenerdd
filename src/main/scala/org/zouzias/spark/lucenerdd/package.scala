@@ -147,7 +147,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case null => Unit
       case _ =>
         throw new RuntimeException(s"Type ${s.getClass.getName} " +
-          s"on field ${fieldName} is not supported")
+          s"on field $fieldName is not supported")
     }
     doc
   }
@@ -192,14 +192,16 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
   /**
    * Implicit conversion for Spark Row: used for DataFrame
-   * @param row
-   * @return
+   * @param row A Spark Row of a Spark DataFrame
+   * @return A Lucene Document
    */
   implicit def sparkRowToDocument(row: Row): Document = {
     val doc = new Document
 
     row.schema.map(field => (field.name, field.dataType))
       .foreach{ case (fieldName, dataType) =>
+
+        // Field index
       val index = row.fieldIndex(fieldName)
 
       // TODO: Handle org.apache.spark.sql.types.MapType and more

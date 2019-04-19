@@ -57,7 +57,7 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
       val fieldName = field.name()
 
       val tp = if (field.numericValue() != null) {
-        inferNumericType(Some(field.numericValue))
+        inferNumericType(field.numericValue)
       }
       else if (field.numericValue() == null && field.stringValue() != null) {
         TextType
@@ -136,16 +136,15 @@ object SparkScoreDoc extends Serializable {
 
   /**
     * Checks the subclass of [[Number]]
-    * @param num
+    * @param num A number of type [[Number]]
     * @return
     */
-  private def inferNumericType[T <: Number : ClassTag](num: Option[T]): FieldType = {
+  private def inferNumericType[T <: Number : ClassTag](num: T): FieldType = {
     num match {
-      case None => TextType
-      case _: Some[Integer] => IntType
-      case _: Some[Long] => LongType
-      case _: Some[Double] => LongType
-      case _: Some[Float] => LongType
+      case x if x.isInstanceOf[Integer] => IntType
+      case x if x.isInstanceOf[Long] => LongType
+      case x if x.isInstanceOf[Double] => LongType
+      case x if x.isInstanceOf[Float] => LongType
       case _ => TextType
     }
   }

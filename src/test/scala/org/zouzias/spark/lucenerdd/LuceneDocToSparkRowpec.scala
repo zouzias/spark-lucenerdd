@@ -16,19 +16,40 @@
  */
 package org.zouzias.spark.lucenerdd
 
-import org.apache.lucene.document.Document
+import org.apache.lucene.document.{Document, DoublePoint, FloatPoint, IntPoint, LongPoint, StoredField, TextField}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{ScoreField, ShardField, DocIdField}
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{DocIdField, ScoreField, ShardField}
 
 class LuceneDocToSparkRowpec extends FlatSpec
   with Matchers
   with BeforeAndAfterEach {
 
-  val doc = new Document()
   val (score: Float, docId: Int, shardIndex: Int) = (1.0f, 1, 2)
 
+  def generate_doc(): Document = {
+    val doc = new Document()
+
+    // Add long field
+    doc.add(new LongPoint("longField", 10))
+    doc.add(new StoredField("longField", 10))
+
+    doc.add(new FloatPoint("floatField", 10.1f))
+    doc.add(new StoredField("floatField", 10.1f))
+
+    doc.add(new IntPoint("intField", 9))
+    doc.add(new StoredField("intField", 9))
+
+    doc.add(new DoublePoint("doubleField", 10.0D))
+    doc.add(new StoredField("doubleField", 10.0D))
+
+    doc
+  }
+
+  val doc = generate_doc()
+
   val sparkScoreDoc = SparkScoreDoc(score, docId, shardIndex, doc)
+
 
   "SparkScoreDoc.toRow" should "return correct score" in {
     val row = sparkScoreDoc.toRow()
@@ -37,11 +58,16 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
   "SparkScoreDoc.toRow" should "return correct docId" in {
     val row = sparkScoreDoc.toRow()
-    row.getInt(row.fieldIndex(DocIdField)) should equal(score)
+    row.getInt(row.fieldIndex(DocIdField)) should equal(docId)
   }
 
   "SparkScoreDoc.toRow" should "return correct shard number" in {
     val row = sparkScoreDoc.toRow()
-    row.getInt(row.fieldIndex(ShardField)) should equal(score)
+    row.getInt(row.fieldIndex(ShardField)) should equal(shardIndex)
+  }
+
+  "SparkScoreDoc.toRow" should "return correct number of fields" in {
+    val row = sparkScoreDoc.toRow()
+    row.getFields() should equal(7)
   }
 }

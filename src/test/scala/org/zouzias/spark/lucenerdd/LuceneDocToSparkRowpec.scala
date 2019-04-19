@@ -16,10 +16,14 @@
  */
 package org.zouzias.spark.lucenerdd
 
-import org.apache.lucene.document.{Document, DoublePoint, FloatPoint, IntPoint, LongPoint, StoredField, TextField}
+import java.io.{Reader, StringReader}
+
+import org.apache.lucene.document.{Document, DoublePoint, Field, FloatPoint, IntPoint, LongPoint, StoredField, TextField}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{DocIdField, ScoreField, ShardField}
+
+import scala.collection.JavaConverters._
 
 class LuceneDocToSparkRowpec extends FlatSpec
   with Matchers
@@ -34,16 +38,14 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
     // Add long field
     doc.add(new LongPoint("longField", 10))
-    doc.add(new StoredField("longField", 10))
 
     doc.add(new FloatPoint("floatField", float))
-    doc.add(new StoredField("floatField", float))
 
     doc.add(new IntPoint("intField", 9))
-    doc.add(new StoredField("intField", 9))
 
     doc.add(new DoublePoint("doubleField", double))
-    doc.add(new StoredField("doubleField", double))
+
+    doc.add(new TextField("textField", "hello world", Field.Store.YES))
 
     doc
   }
@@ -70,7 +72,7 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
   "SparkScoreDoc.toRow" should "return correct number of fields" in {
     val row = sparkScoreDoc.toRow()
-    row.getFields().size() should equal(7)
+    row.getFields().asScala.filter(_.fieldType().stored()).length should equal(9)
   }
 
   "SparkScoreDoc.toRow" should "set correctly DoublePoint" in {

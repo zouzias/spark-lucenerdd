@@ -72,6 +72,7 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
           org.apache.spark.sql.types.DoubleType), field.numericValue().doubleValue())
         case FloatType => (StructField(fieldName,
           org.apache.spark.sql.types.FloatType), field.numericValue().floatValue())
+        case _ => (StructField(fieldName, StringType), field.stringValue())
       }
     }
 
@@ -135,16 +136,16 @@ object SparkScoreDoc extends Serializable {
   }
 
   /**
-    * Checks the subclass of [[Number]]
-    * @param num A number of type [[Number]]
-    * @return
+    * Infers the subclass of [[Number]]
+    * @param num A value of type [[Number]]
+    * @return The [[FieldType]] of the input Number value
     */
-  private def inferNumericType[T <: Number : ClassTag](num: T): FieldType = {
+  private def inferNumericType(num: Number): FieldType = {
     num match {
-      case x if x.isInstanceOf[Integer] => IntType
-      case x if x.isInstanceOf[Long] => LongType
-      case x if x.isInstanceOf[Double] => LongType
-      case x if x.isInstanceOf[Float] => LongType
+      case _: java.lang.Double => DoubleType
+      case _: java.lang.Long => LongType
+      case _: java.lang.Integer => IntType
+      case _: java.lang.Float => FloatType
       case _ => TextType
     }
   }

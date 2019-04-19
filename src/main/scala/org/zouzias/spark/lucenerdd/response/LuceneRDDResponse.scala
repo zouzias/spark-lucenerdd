@@ -84,8 +84,4 @@ private[lucenerdd] class LuceneRDDResponse
       Array.empty[Row]
     }
   }
-
-  def toDF(): DataFrame = {
-    this.toDF()
-  }
 }

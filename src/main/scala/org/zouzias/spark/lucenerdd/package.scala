@@ -134,12 +134,16 @@ package object lucenerdd extends LuceneRDDConfigurable {
         doc.add(new StoredField(fieldName, x))
       case x: Long if x != null =>
         doc.add(new LongPoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case x: Int if x != null =>
         doc.add(new IntPoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case x: Float if x != null =>
         doc.add(new FloatPoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case x: Double if x != null =>
         doc.add(new DoublePoint(fieldName, x))
+        doc.add(new StoredField(fieldName, x))
       case null => Unit
       case _ =>
         throw new RuntimeException(s"Type ${s.getClass.getName} " +

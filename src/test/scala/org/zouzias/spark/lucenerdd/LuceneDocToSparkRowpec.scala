@@ -46,7 +46,7 @@ class LuceneDocToSparkRowpec extends FlatSpec
     doc
   }
 
-  val doc = generate_doc()
+  private val doc: Document = generate_doc()
 
   val sparkScoreDoc = SparkScoreDoc(score, docId, shardIndex, doc)
 
@@ -78,6 +78,6 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
   "SparkScoreDoc.toRow" should "set correctly FloatPoint" in {
     val row = sparkScoreDoc.toRow()
-    row.getDouble(row.fieldIndex("doubleField")) should equal(20.1D)
+    row.getFloat(row.fieldIndex("floatField")) should equal(20.1D)
   }
 }

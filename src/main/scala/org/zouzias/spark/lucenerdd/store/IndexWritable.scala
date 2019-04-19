@@ -18,7 +18,6 @@ package org.zouzias.spark.lucenerdd.store
 
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
-import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyWriter
 import org.apache.lucene.index.IndexWriterConfig.OpenMode
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable

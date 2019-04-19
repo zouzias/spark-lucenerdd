@@ -89,7 +89,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   logInfo(s"Indexing process completed at ${endTime}...")
   logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
 
-  // Close the indexWriter and taxonomyWriter (for faceted search)
+  // Close the indexWriter
   closeAllWriters()
 
   private val indexReader = DirectoryReader.open(IndexDir)

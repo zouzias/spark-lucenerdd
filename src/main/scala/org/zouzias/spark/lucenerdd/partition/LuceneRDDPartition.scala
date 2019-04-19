@@ -97,11 +97,11 @@ private[lucenerdd] class LuceneRDDPartition[T]
   logInfo(s"[partId=$partitionId]Indexing process took ${(endTime.getMillis
     - startTime.getMillis) / 1000} seconds...")
 
-  // Close the indexWriter and taxonomyWriter (for faceted search)
+  // Close the indexWriter
   closeAllWriters()
   logDebug(s"[partId=$partitionId]Closing index writers...")
 
-  logDebug(s"[partId=$partitionId]Instantiating index/facet readers")
+  logDebug(s"[partId=$partitionId]Instantiating index readers")
   private val indexReader = DirectoryReader.open(IndexDir)
   private lazy val indexSearcher = initializeIndexSearcher(indexReader)
   logDebug(s"[partId=$partitionId]Index readers instantiated successfully")

@@ -9,7 +9,7 @@
 
 [Spark](http://spark.apache.org) RDD with Apache [Lucene](https://lucene.apache.org)'s query capabilities.
 
-The main abstractions are special types of `RDD` called `LuceneRDD`, `FacetedLuceneRDD` and `ShapeLuceneRDD`, which instantiate a Lucene index on each Spark executor. These `RDD`s distribute search queries and aggregate search results between the Spark driver and its executors. Currently, the following queries are supported:
+The main abstractions are special types of `RDD` called `LuceneRDD` and `ShapeLuceneRDD`, which instantiate a Lucene index on each Spark executor. These `RDD`s distribute search queries and aggregate search results between the Spark driver and its executors. Currently, the following queries are supported:
 
 |Operation| Syntax| Description |
 |-------|---------------------|----------|

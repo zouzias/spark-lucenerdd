@@ -20,10 +20,9 @@ import com.twitter.algebird.TopKMonoid
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types._
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
  * LuceneRDD response
@@ -64,12 +63,14 @@ private[lucenerdd] class LuceneRDDResponse
   }
 
   /**
-   * Use [[TopKMonoid]] to take
-   * @param num
-   * @return
+   * Return the top-k result in terms of Lucene score
+    *
+    * It uses a [[TopKMonoid]] to compute topK
+   * @param k Number of result to return
+   * @return Array of result, size k
    */
-  override def take(num: Int): Array[Row] = {
-    val monoid = new TopKMonoid[Row](num)(ordering)
+  override def take(k: Int): Array[Row] = {
+    val monoid = new TopKMonoid[Row](k)(ordering)
     partitionsRDD.map(monoid.build(_))
       .reduce(monoid.plus).items.toArray
   }
@@ -83,5 +84,15 @@ private[lucenerdd] class LuceneRDDResponse
     } else {
       Array.empty[Row]
     }
+  }
+
+  /**
+    * Convert LuceneRDDResponse to Spark DataFrame
+    * @param spark Spark Session
+    * @return DataFrame
+    */
+  def toDF()(implicit spark: SparkSession): DataFrame = {
+    val schema = this.first().schema
+    spark.createDataFrame(this, schema)
   }
 }

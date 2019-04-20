@@ -18,9 +18,7 @@ package org.zouzias.spark.lucenerdd.response
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{IntegerType, StringType}
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
 import org.zouzias.spark.lucenerdd._
@@ -62,15 +60,14 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
   }
 
   "LuceneRDDResponseSpec.toDF()" should "convert to DataFrame" in {
-    val sparkSession = SparkSession.builder().getOrCreate()
-    import sparkSession.implicits._
+    implicit val sparkSession: SparkSession = SparkSession.builder().getOrCreate()
     val elem = Array("fear", "death", "water", "fire", "house")
       .zipWithIndex.map{ case (str, index) =>
       FavoriteCaseClass(str, index, 10L, 10e-6F, s"${str}@gmail.com")}
     val rdd = sc.parallelize(elem)
     luceneRDD = LuceneRDD(rdd)
     val response = luceneRDD.query("*:*", 10)
-    val schema = sparkSession.createDataFrame[Row](response).schema
+    val schema = response.toDF().schema
 
     schema.nonEmpty should equal(true)
     schema.fieldNames.contains("name") should equal(true)
@@ -85,11 +82,16 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     schema.fieldNames.contains(SparkScoreDoc.ScoreField) should equal(true)
 
 
-    schema.fields(schema.fieldIndex("name")).dataType should equal(StringType)
-    schema.fields(schema.fieldIndex("age")).dataType should equal(IntegerType)
-    schema.fields(schema.fieldIndex("myLong")).dataType should equal(LongType)
-    schema.fields(schema.fieldIndex("myFloat")).dataType should equal(FloatType)
-    schema.fields(schema.fieldIndex("email")).dataType should equal(StringType)
+    schema.fields(schema.fieldIndex("name")).dataType should
+      equal(org.apache.spark.sql.types.StringType)
+    schema.fields(schema.fieldIndex("age")).dataType should
+      equal(org.apache.spark.sql.types.IntegerType)
+    schema.fields(schema.fieldIndex("myLong")).dataType should
+      equal(org.apache.spark.sql.types.LongType)
+    schema.fields(schema.fieldIndex("myFloat")).dataType should
+      equal(org.apache.spark.sql.types.FloatType)
+    schema.fields(schema.fieldIndex("email")).dataType should
+      equal(org.apache.spark.sql.types.StringType)
   }
 
 

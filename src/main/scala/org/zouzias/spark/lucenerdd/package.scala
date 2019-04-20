@@ -191,7 +191,8 @@ package object lucenerdd extends LuceneRDDConfigurable {
   }
 
   /**
-   * Implicit conversion for Spark Row: used for DataFrame
+   * Implicit conversion for Spark Row: used for instantiating LuceneRDD
+   * from a DataFrame
    * @param row A Spark Row of a Spark DataFrame
    * @return A Lucene Document
    */
@@ -202,16 +203,16 @@ package object lucenerdd extends LuceneRDDConfigurable {
       .foreach{ case (fieldName, dataType) =>
 
         // Field index
-      val index = row.fieldIndex(fieldName)
+        val index = row.fieldIndex(fieldName)
 
-      // TODO: Handle org.apache.spark.sql.types.MapType and more
-      if (dataType.isInstanceOf[ArrayType]) {
-       listPrimitiveToDocument(doc, fieldName, row.getList(index))
+        // TODO: Handle org.apache.spark.sql.types.MapType and more
+        if (dataType.isInstanceOf[ArrayType]) {
+         listPrimitiveToDocument(doc, fieldName, row.getList(index))
+        }
+        else {
+          typeToDocument(doc, fieldName, row.get(index))
+        }
       }
-      else {
-        typeToDocument(doc, fieldName, row.get(index))
-      }
-    }
 
     doc
   }

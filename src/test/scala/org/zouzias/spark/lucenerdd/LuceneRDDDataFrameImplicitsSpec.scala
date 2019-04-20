@@ -48,7 +48,8 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
   val multiValuesElems: Array[MultivalueFavoriteCaseClass] = Array("fear",
     "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) =>
-    MultivalueFavoriteCaseClass(Array(str, str.reverse), index, 10L, 12.3F, s"${str}@gmail.com")}
+    MultivalueFavoriteCaseClass(Array(str, str.reverse), index, List(index, index + 1, index + 2),
+      10L, 12.3F, s"${str}@gmail.com")}
 
   "LuceneRDD(MultivalueFavoriteCaseClass).count" should "return correct number of elements" in {
     val rdd = sc.parallelize(multiValuesElems)
@@ -90,9 +91,10 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     val df = rdd.toDF()
     luceneRDD = LuceneRDD(df)
 
-    luceneRDD.fields().size should equal(5)
+    luceneRDD.fields().size should equal(6)
     luceneRDD.fields().contains("names") should equal(true)
     luceneRDD.fields().contains("age") should equal(true)
+    luceneRDD.fields().contains("ages") should equal(true)
     luceneRDD.fields().contains("myLong") should equal(true)
     luceneRDD.fields().contains("myFloat") should equal(true)
     luceneRDD.fields().contains("email") should equal(true)
@@ -118,5 +120,50 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
 
     val results = luceneRDD.termQuery("names", "retaw")
     results.count should equal(1)
+  }
+
+  "LuceneRDD(MultivalueFavoriteCaseClass).termQuery" should
+    "correctly returns LuceneRDDResponse" in {
+    val rdd = sc.parallelize(multiValuesElems)
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
+
+    val results = luceneRDD.termQuery("names", "water")
+
+    results.count() should equal(1)
+
+    val lucenRDDResponseDF = results.toDF()(spark)
+
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("names") should equal(true)
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("age") should equal(true)
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("ages") should equal(true)
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("myLong") should equal(true)
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("myFloat") should equal(true)
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("email") should equal(true)
+  }
+
+  "LuceneRDD(MultivalueFavoriteCaseClass).termQuery" should
+    "correctly returns List[Int] fields" in {
+    val rdd = sc.parallelize(multiValuesElems)
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+    val df = rdd.toDF()
+    luceneRDD = LuceneRDD(df)
+
+    val results = luceneRDD.termQuery("names", "water")
+
+    val lucenRDDResponseDF = results.toDF()(spark)
+    lucenRDDResponseDF.count() should equal(1)
+
+    /*
+    lucenRDDResponseDF.schema.fields.map(_.name).contains("ages") should equal(true)
+    val ages = lucenRDDResponseDF.select($"ages")
+      .rdd
+      .map(x => x.getList[Int](x.fieldIndex("ages")))
+    */
+    // ages.collect().head.contains(List(3, 4, 5)) should equal(true)
+
   }
 }

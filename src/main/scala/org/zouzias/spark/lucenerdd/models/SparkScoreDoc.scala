@@ -18,7 +18,7 @@ package org.zouzias.spark.lucenerdd.models
 
 import org.apache.lucene.document.Document
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{ArrayType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.inferNumericType
@@ -36,7 +36,7 @@ object FloatType extends FieldType
 
 
 /**
- * A scored Lucene [[Document]]
+ * A Lucene [[Document]] extended with score, docId and shard index
  *
  * @param score Score of document
  * @param docId Document id
@@ -53,7 +53,12 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
   def toRow(): Row = {
 
     // Convert to Spark SQL DataFrame types
-    val typeWithValue = this.doc.getFields.asScala.map { field =>
+    val typeToValues = scala.collection.mutable.Map[StructField, List[Any]]().empty
+
+    this.doc.getFields
+      .asScala
+      .filter(_.fieldType().stored())
+      .foreach { field =>
       val fieldName = field.name()
 
       val tp = if (field.numericValue() != null) {
@@ -63,7 +68,7 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
         TextType
       }
 
-      tp match {
+      val item = tp match {
         case TextType => (StructField(fieldName, StringType), field.stringValue())
         case IntType => (StructField(fieldName, IntegerType), field.numericValue().intValue())
         case LongType => (StructField(fieldName,
@@ -74,6 +79,19 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
           org.apache.spark.sql.types.FloatType), field.numericValue().floatValue())
         case _ => (StructField(fieldName, StringType), field.stringValue())
       }
+
+        // Append or set value
+        val oldValue: List[Any] = typeToValues.getOrElse(item._1, List.empty)
+        typeToValues.+=((item._1, oldValue.::(item._2)))
+    }
+
+    val arrayedTypesToValues = typeToValues.map{ case (tp, values) =>
+      if (values.length == 1) {
+        (tp, values.head)
+      }
+      else {
+        (StructField(tp.name, ArrayType.apply(tp.dataType)), values)
+      }
     }
 
     // Additional fields of [[SparkScoreDoc]] with known types
@@ -81,9 +99,9 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
       (StructField(ScoreField, org.apache.spark.sql.types.DoubleType), this.score),
       (StructField(ShardField, IntegerType), this.shardIndex))
 
-    val allTogether = typeWithValue ++ extraSchemaWithValue
+    val allTogether = arrayedTypesToValues ++ extraSchemaWithValue
 
-    new GenericRowWithSchema(allTogether.map(_._2).toArray, StructType(allTogether.map(_._1)))
+    new GenericRowWithSchema(allTogether.values.toArray, StructType(allTogether.keys.toSeq))
   }
 
   override def toString: String = {

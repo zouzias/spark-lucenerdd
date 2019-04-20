@@ -38,12 +38,16 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
     // Add long field
     doc.add(new LongPoint("longField", 10))
+    doc.add(new StoredField("longField", 10))
 
     doc.add(new FloatPoint("floatField", float))
+    doc.add(new StoredField("floatField", float))
 
     doc.add(new IntPoint("intField", 9))
+    doc.add(new StoredField("intField", 9))
 
     doc.add(new DoublePoint("doubleField", double))
+    doc.add(new StoredField("doubleField", double))
 
     doc.add(new TextField("textField", "hello world", Field.Store.YES))
 

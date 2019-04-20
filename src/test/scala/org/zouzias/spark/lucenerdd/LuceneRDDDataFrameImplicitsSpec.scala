@@ -16,6 +16,8 @@
  */
 package org.zouzias.spark.lucenerdd
 
+import java.util
+
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -157,13 +159,13 @@ class LuceneRDDDataFrameImplicitsSpec extends FlatSpec
     val lucenRDDResponseDF = results.toDF()(spark)
     lucenRDDResponseDF.count() should equal(1)
 
-    /*
     lucenRDDResponseDF.schema.fields.map(_.name).contains("ages") should equal(true)
     val ages = lucenRDDResponseDF.select($"ages")
       .rdd
       .map(x => x.getList[Int](x.fieldIndex("ages")))
-    */
-    // ages.collect().head.contains(List(3, 4, 5)) should equal(true)
 
+    List(2, 3, 4).foreach{x =>
+      ages.collect().head should contain (x)
+    }
   }
 }

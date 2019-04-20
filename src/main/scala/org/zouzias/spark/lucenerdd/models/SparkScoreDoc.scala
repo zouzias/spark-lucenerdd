@@ -86,6 +86,8 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
     }
 
     val arrayedTypesToValues = typeToValues.map{ case (tp, values) =>
+
+      // If more than one values, wrap SQL type within ArrayType
       if (values.length == 1) {
         (tp, values.head)
       }
@@ -94,9 +96,12 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
       }
     }
 
-    // Additional fields of [[SparkScoreDoc]] with known types
+    // Additional fields of [[SparkScoreDoc]] with known types inlucding
+    // - document id
+    // - documenet search score
+    // - document shard index
     val extraSchemaWithValue = Seq((StructField(DocIdField, IntegerType), this.docId),
-      (StructField(ScoreField, org.apache.spark.sql.types.DoubleType), this.score),
+      (StructField(ScoreField, org.apache.spark.sql.types.FloatType), this.score),
       (StructField(ShardField, IntegerType), this.shardIndex))
 
     val allTogether = arrayedTypesToValues ++ extraSchemaWithValue

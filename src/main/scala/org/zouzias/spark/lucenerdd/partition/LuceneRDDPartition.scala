@@ -135,7 +135,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
    val results = LuceneQueryHelpers.multiTermQuery(indexSearcher, docMap, topK,
      booleanClause: BooleanClause.Occur)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def iterator: Iterator[T] = {
@@ -151,7 +151,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
                          topK: Int = 1): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.termQuery(indexSearcher, fieldName, fieldText, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def query(searchString: String,
@@ -166,7 +166,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
                      topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.searchQuery(indexSearcher, query, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def queries(searchStrings: Iterable[String],
@@ -180,7 +180,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
                            topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.prefixQuery(indexSearcher, fieldName, fieldText, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def fuzzyQuery(fieldName: String, fieldText: String,
@@ -188,7 +188,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
     val results = LuceneQueryHelpers
       .fuzzyQuery(indexSearcher, fieldName, fieldText, maxEdits, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def phraseQuery(fieldName: String, fieldText: String,
@@ -196,7 +196,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
     val results = LuceneQueryHelpers
       .phraseQuery(indexSearcher, fieldName, fieldText, topK, QueryAnalyzer)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def facetQuery(searchString: String,
@@ -213,7 +213,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
   : LuceneRDDResponsePartition = {
     val docs = LuceneQueryHelpers.moreLikeThis(indexSearcher, fieldName,
       query, minTermFreq, minDocFreq, topK, QueryAnalyzer)
-    LuceneRDDResponsePartition(docs)
+    LuceneRDDResponsePartition(docs.toIterable)
   }
 
   override def termVectors(fieldName: String, idFieldName: Option[String])

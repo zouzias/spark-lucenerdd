@@ -173,7 +173,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    LuceneRDDResponsePartition(result.toIterator)
+    LuceneRDDResponsePartition(result)
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
@@ -190,7 +190,6 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val docs = indexSearcher.search(query, k)
     LuceneRDDResponsePartition(docs.scoreDocs
       .map(SparkScoreDoc(indexSearcher, _))
-      .toIterator
     )
   }
 

@@ -26,7 +26,7 @@ case class LuceneRDDResponsePartition(results: Iterator[Row])
 
 object LuceneRDDResponsePartition {
 
-  def apply(sparkScoreDocs: Iterator[SparkScoreDoc]): LuceneRDDResponsePartition = {
-    apply(sparkScoreDocs.map(_.toRow()))
+  def apply(sparkScoreDocs: Iterable[SparkScoreDoc]): LuceneRDDResponsePartition = {
+    apply(sparkScoreDocs.map(_.toRow()).toIterator)
   }
 }

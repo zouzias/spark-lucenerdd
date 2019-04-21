@@ -76,12 +76,6 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     schema.fieldNames.contains("myFloat") should equal(true)
     schema.fieldNames.contains("email") should equal(true)
 
-    // Extra auxiliary fields that must exist on the DataFrame
-    schema.fieldNames.contains(SparkScoreDoc.DocIdField) should equal(true)
-    schema.fieldNames.contains(SparkScoreDoc.ShardField) should equal(true)
-    schema.fieldNames.contains(SparkScoreDoc.ScoreField) should equal(true)
-
-
     schema.fields(schema.fieldIndex("name")).dataType should
       equal(org.apache.spark.sql.types.StringType)
     schema.fields(schema.fieldIndex("age")).dataType should
@@ -92,6 +86,33 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
       equal(org.apache.spark.sql.types.FloatType)
     schema.fields(schema.fieldIndex("email")).dataType should
       equal(org.apache.spark.sql.types.StringType)
+  }
+
+  "LuceneRDDResponseSpec.toDF()" should "return score,shardIndex,docId with correct types" in {
+    implicit val sparkSession: SparkSession = SparkSession.builder().getOrCreate()
+    val elem = Array("fear", "death", "water", "fire", "house")
+      .zipWithIndex.map { case (str, index) =>
+      FavoriteCaseClass(str, index, 10L, 10e-6F, s"${str}@gmail.com")
+    }
+    val rdd = sc.parallelize(elem)
+    luceneRDD = LuceneRDD(rdd)
+    val response = luceneRDD.query("*:*", 10)
+    val schema = response.toDF().schema
+
+    schema.nonEmpty should equal(true)
+
+    // Extra auxiliary fields that must exist on the DataFrame
+    schema.fieldNames.contains(SparkScoreDoc.DocIdField) should equal(true)
+    schema.fieldNames.contains(SparkScoreDoc.ShardField) should equal(true)
+    schema.fieldNames.contains(SparkScoreDoc.ScoreField) should equal(true)
+
+
+    schema.fields(schema.fieldIndex(SparkScoreDoc.DocIdField)).dataType should
+      equal(org.apache.spark.sql.types.IntegerType)
+    schema.fields(schema.fieldIndex(SparkScoreDoc.ShardField)).dataType should
+      equal(org.apache.spark.sql.types.IntegerType)
+    schema.fields(schema.fieldIndex(SparkScoreDoc.ScoreField)).dataType should
+      equal(org.apache.spark.sql.types.DoubleType)
   }
 
 

@@ -119,7 +119,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
     fieldType.setStoreTermVectorPositions(StringFieldsStoreTermPositions)
     fieldType.setOmitNorms(StringFieldsOmitNorms)
     fieldType.setTokenized(tobeAnalyzed)
-    fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
+    fieldType.setStored(false) // All text fields must be stored (LuceneRDDResponse requirement)
     fieldType.setIndexOptions(StringFieldsIndexOptions)
     fieldType.freeze()
     fieldType

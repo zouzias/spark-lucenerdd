@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.models
 
 import org.apache.lucene.document.Document
+import org.apache.lucene.index.IndexableField
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc}
 import org.apache.spark.sql.types.{ArrayType, IntegerType, StringType, StructField, StructType}
 import org.apache.spark.sql.Row
@@ -25,7 +26,6 @@ import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.inferNumericType
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{DocIdField, ScoreField, ShardField}
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 
 sealed trait FieldType extends Serializable
 object TextType extends FieldType
@@ -57,7 +57,7 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
 
     this.doc.getFields
       .asScala
-      .filter(_.fieldType().stored())
+      .filter(isOnlyStoredField)
       .foreach { field =>
       val fieldName = field.name()
 
@@ -107,6 +107,15 @@ case class SparkScoreDoc(score: Float, docId: Int, shardIndex: Int, doc: Documen
     val allTogether = arrayedTypesToValues ++ extraSchemaWithValue
 
     new GenericRowWithSchema(allTogether.values.toArray, StructType(allTogether.keys.toSeq))
+  }
+
+  /**
+    * Return fields that are stored only
+    * @param field A field of a Lucene Document
+    * @return
+    */
+  private def isOnlyStoredField(field: IndexableField): Boolean = {
+    field.fieldType().stored()
   }
 
   override def toString: String = {

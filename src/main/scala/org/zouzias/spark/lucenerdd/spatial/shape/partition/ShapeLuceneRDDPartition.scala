@@ -173,12 +173,12 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    LuceneRDDResponsePartition(result.toIterator.map(_.toRow()))
+    LuceneRDDResponsePartition(result.toIterator)
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
+    logInfo(s"spatialSearch [shape:$shapeAsString and operation:$operationName]")
     val shape = stringToShape(shapeAsString)
     spatialSearch(shape, k, operationName)
   }
@@ -189,7 +189,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
     LuceneRDDResponsePartition(docs.scoreDocs
-      .map(SparkScoreDoc(indexSearcher, _).toRow())
+      .map(SparkScoreDoc(indexSearcher, _))
       .toIterator
     )
   }
@@ -202,7 +202,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"bboxSearch [center:${center}, radius: ${radius} and operation:${operationName}]")
+    logInfo(s"bboxSearch [center:$center, radius: $radius and operation:$operationName]")
     val x = center._1
     val y = center._2
     val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)

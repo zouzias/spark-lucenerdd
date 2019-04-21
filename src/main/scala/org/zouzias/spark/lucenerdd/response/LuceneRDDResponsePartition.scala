@@ -17,8 +17,16 @@
 package org.zouzias.spark.lucenerdd.response
 
 import org.apache.spark.sql.Row
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 case class LuceneRDDResponsePartition(results: Iterator[Row])
   extends Iterable[Row] {
   override def iterator(): Iterator[Row] = results
+}
+
+object LuceneRDDResponsePartition {
+
+  def apply(sparkScoreDocs: Iterator[SparkScoreDoc]): LuceneRDDResponsePartition = {
+    apply(sparkScoreDocs.map(_.toRow()))
+  }
 }

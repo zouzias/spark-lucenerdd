@@ -98,6 +98,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
     if (s != null) {
       doc.add(new Field(DefaultFieldName, s, analyzedField(StringFieldsDefaultAnalyzed)))
+      doc.add(new Field(DefaultFieldName, s))
     }
     doc
   }

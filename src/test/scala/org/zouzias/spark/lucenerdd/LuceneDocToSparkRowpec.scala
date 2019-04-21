@@ -49,7 +49,8 @@ class LuceneDocToSparkRowpec extends FlatSpec
     doc.add(new DoublePoint("doubleField", double))
     doc.add(new StoredField("doubleField", double))
 
-    doc.add(new TextField("textField", "hello world", Field.Store.YES))
+    doc.add(new TextField("textField", "hello world", Field.Store.NO))
+    doc.add(new StoredField("textField", "hello world"))
 
     doc
   }
@@ -76,7 +77,7 @@ class LuceneDocToSparkRowpec extends FlatSpec
 
   "SparkScoreDoc.toRow" should "return correct number of fields" in {
     val row = sparkScoreDoc.toRow()
-    row.getFields().asScala.filter(_.fieldType().stored()).length should equal(9)
+    row.getFields().asScala.count(_.fieldType().stored()) should equal(8)
   }
 
   "SparkScoreDoc.toRow" should "set correctly DoublePoint" in {

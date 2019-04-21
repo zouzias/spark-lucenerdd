@@ -112,7 +112,7 @@ class LuceneRDDResponseSpec extends FlatSpec with Matchers
     schema.fields(schema.fieldIndex(SparkScoreDoc.ShardField)).dataType should
       equal(org.apache.spark.sql.types.IntegerType)
     schema.fields(schema.fieldIndex(SparkScoreDoc.ScoreField)).dataType should
-      equal(org.apache.spark.sql.types.DoubleType)
+      equal(org.apache.spark.sql.types.FloatType)
   }
 
 

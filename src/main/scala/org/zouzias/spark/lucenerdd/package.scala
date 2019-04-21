@@ -98,7 +98,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
     if (s != null) {
       doc.add(new Field(DefaultFieldName, s, analyzedField(StringFieldsDefaultAnalyzed)))
-      doc.add(new Field(DefaultFieldName, s))
+      doc.add(new StoredField(DefaultFieldName, s))
     }
     doc
   }
@@ -207,6 +207,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
         val index = row.fieldIndex(fieldName)
 
         // TODO: Handle org.apache.spark.sql.types.MapType and more
+        // See https://github.com/zouzias/spark-lucenerdd/issues/179
         if (dataType.isInstanceOf[ArrayType]) {
          listPrimitiveToDocument(doc, fieldName, row.getList(index))
         }

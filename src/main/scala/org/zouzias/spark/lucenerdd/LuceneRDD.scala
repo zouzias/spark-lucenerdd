@@ -148,7 +148,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def dedup[T1: ClassTag](searchQueryGen: T1 => String,
                           topK: Int = DefaultTopK,
                           linkerMethod: String = getLinkerMethod)
-  : RDD[(T1, Array[SparkScoreDoc])] = {
+  : RDD[(T1, Array[Row])] = {
     // FIXME: is this asInstanceOf necessary?
     link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK, linkerMethod)
   }
@@ -166,7 +166,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                     searchQueryGen: Row => String,
                     topK: Int = DefaultTopK,
                     linkerMethod: String = getLinkerMethod)
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+  : RDD[(Row, Array[Row])] = {
     logInfo("LinkDataFrame requested")
     link[Row](other.rdd, searchQueryGen, topK, linkerMethod)
   }
@@ -185,7 +185,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                                 searchQueryGen: T1 => Query,
                                 topK: Int = DefaultTopK,
                                 linkerMethod: String = getLinkerMethod)
-  : RDD[(T1, Array[SparkScoreDoc])] = {
+  : RDD[(T1, Array[Row])] = {
     logInfo("LinkByQuery requested")
     def typeToQueryString = (input: T1) => {
       searchQueryGen(input).toString
@@ -210,10 +210,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                          searchQueryGen: T1 => String,
                          topK: Int = DefaultTopK,
                          linkerMethod: String = getLinkerMethod)
-    : RDD[(T1, Array[SparkScoreDoc])] = {
+    : RDD[(T1, Array[Row])] = {
     logInfo("Linkage requested")
 
-    val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
+    val topKMonoid = new TopKMonoid[Row](topK)(SparkScoreDoc.descending)
     val queriesWithIndex = other.zipWithIndex().map(_.swap)
 
     logInfo(s"Linker method is ${linkerMethod}")
@@ -230,7 +230,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
         val collectedQueries = queriesWithIndex.mapValues(searchQueryGen).collect()
         val queriesB = partitionsRDD.context.broadcast(collectedQueries)
 
-        val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] =
+        val resultsByPart: RDD[(Long, TopK[Row])] =
           partitionsRDD.mapPartitions(partitions =>
           partitions.flatMap { partition =>
             queriesB.value.map { case (index, qr) =>
@@ -517,7 +517,7 @@ object LuceneRDD extends Versionable
                          entityPartColumns: Array[String],
                          topK : Int = 3,
                          luceneRDDParams: LuceneRDDParams = LuceneRDDParams())
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+  : RDD[(Row, Array[Row])] = {
 
     assert(entityPartColumns.nonEmpty,
       "Entity Partition columns must be non-empty for block linkage")
@@ -576,7 +576,7 @@ object LuceneRDD extends Versionable
                  blockingColumns: Array[String],
                  topK : Int = 3,
                  luceneRDDParams: LuceneRDDParams = LuceneRDDParams())
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+  : RDD[(Row, Array[Row])] = {
 
     // Check that there is at least one partition column
     assert(blockingColumns.nonEmpty, "Partition columns must be non-empty for block deduplication")

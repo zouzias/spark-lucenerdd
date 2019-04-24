@@ -98,6 +98,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
     if (s != null) {
       doc.add(new Field(DefaultFieldName, s, analyzedField(StringFieldsDefaultAnalyzed)))
+      doc.add(new StoredField(DefaultFieldName, s))
     }
     doc
   }
@@ -119,7 +120,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
     fieldType.setStoreTermVectorPositions(StringFieldsStoreTermPositions)
     fieldType.setOmitNorms(StringFieldsOmitNorms)
     fieldType.setTokenized(tobeAnalyzed)
-    fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
+    fieldType.setStored(false) // All text fields must be stored (LuceneRDDResponse requirement)
     fieldType.setIndexOptions(StringFieldsIndexOptions)
     fieldType.freeze()
     fieldType
@@ -147,7 +148,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case null => Unit
       case _ =>
         throw new RuntimeException(s"Type ${s.getClass.getName} " +
-          s"on field ${fieldName} is not supported")
+          s"on field $fieldName is not supported")
     }
     doc
   }
@@ -191,25 +192,29 @@ package object lucenerdd extends LuceneRDDConfigurable {
   }
 
   /**
-   * Implicit conversion for Spark Row: used for DataFrame
-   * @param row
-   * @return
+   * Implicit conversion for Spark Row: used for instantiating LuceneRDD
+   * from a DataFrame
+   * @param row A Spark Row of a Spark DataFrame
+   * @return A Lucene Document
    */
   implicit def sparkRowToDocument(row: Row): Document = {
     val doc = new Document
 
     row.schema.map(field => (field.name, field.dataType))
       .foreach{ case (fieldName, dataType) =>
-      val index = row.fieldIndex(fieldName)
 
-      // TODO: Handle org.apache.spark.sql.types.MapType and more
-      if (dataType.isInstanceOf[ArrayType]) {
-       listPrimitiveToDocument(doc, fieldName, row.getList(index))
+        // Field index
+        val index = row.fieldIndex(fieldName)
+
+        // TODO: Handle org.apache.spark.sql.types.MapType and more
+        // See https://github.com/zouzias/spark-lucenerdd/issues/179
+        if (dataType.isInstanceOf[ArrayType]) {
+         listPrimitiveToDocument(doc, fieldName, row.getList(index))
+        }
+        else {
+          typeToDocument(doc, fieldName, row.get(index))
+        }
       }
-      else {
-        typeToDocument(doc, fieldName, row.get(index))
-      }
-    }
 
     doc
   }

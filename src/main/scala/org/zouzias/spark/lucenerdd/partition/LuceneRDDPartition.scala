@@ -30,8 +30,8 @@ import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigur
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import org.zouzias.spark.lucenerdd.LuceneRDD
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.reflect.{ClassTag, _}
 import scala.collection.mutable.ArrayBuffer
 
@@ -135,7 +135,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
    val results = LuceneQueryHelpers.multiTermQuery(indexSearcher, docMap, topK,
      booleanClause: BooleanClause.Occur)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def iterator: Iterator[T] = {
@@ -151,13 +151,13 @@ private[lucenerdd] class LuceneRDDPartition[T]
                          topK: Int = 1): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.termQuery(indexSearcher, fieldName, fieldText, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def query(searchString: String,
                      topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.searchParser(indexSearcher, searchString, topK,
-      PerFieldQueryAnalyzer)
+      PerFieldQueryAnalyzer())
 
     LuceneRDDResponsePartition(results.toIterator)
   }
@@ -166,7 +166,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
                      topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.searchQuery(indexSearcher, query, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def queries(searchStrings: Iterable[String],
@@ -180,7 +180,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
                            topK: Int): LuceneRDDResponsePartition = {
     val results = LuceneQueryHelpers.prefixQuery(indexSearcher, fieldName, fieldText, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def fuzzyQuery(fieldName: String, fieldText: String,
@@ -188,7 +188,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
     val results = LuceneQueryHelpers
       .fuzzyQuery(indexSearcher, fieldName, fieldText, maxEdits, topK)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def phraseQuery(fieldName: String, fieldText: String,
@@ -196,7 +196,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
     val results = LuceneQueryHelpers
       .phraseQuery(indexSearcher, fieldName, fieldText, topK, QueryAnalyzer)
 
-    LuceneRDDResponsePartition(results.toIterator)
+    LuceneRDDResponsePartition(results)
   }
 
   override def facetQuery(searchString: String,
@@ -213,7 +213,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
   : LuceneRDDResponsePartition = {
     val docs = LuceneQueryHelpers.moreLikeThis(indexSearcher, fieldName,
       query, minTermFreq, minDocFreq, topK, QueryAnalyzer)
-    LuceneRDDResponsePartition(docs)
+    LuceneRDDResponsePartition(docs.toIterable)
   }
 
   override def termVectors(fieldName: String, idFieldName: Option[String])
@@ -274,7 +274,6 @@ object LuceneRDDPartition {
     * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time), default empty
     * @param queryAnalyzerPerField Lucene Analyzer per field (query time), default empty
     * @param docConversion Convertion from T to a Lucene document
-    * @param kTag Class tag of type T
     * @tparam T the type associated with each entry in the set.
     * @return A partition of [[LuceneRDD]], type [[LuceneRDDPartition]]
     */

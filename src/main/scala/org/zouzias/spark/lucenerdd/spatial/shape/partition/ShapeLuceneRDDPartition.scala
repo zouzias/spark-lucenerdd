@@ -31,8 +31,8 @@ import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.reflect._
 
 private[shape] class ShapeLuceneRDDPartition[K, V]
@@ -134,7 +134,10 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs
+      .map(x => SparkScoreDoc(indexSearcher, x).toRow())
+      .toIterator
+    )
   }
 
   override def knnSearch(point: PointType, k: Int, searchString: String)
@@ -170,12 +173,12 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    LuceneRDDResponsePartition(result.toIterator)
+    LuceneRDDResponsePartition(result)
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
+    logInfo(s"spatialSearch [shape:$shapeAsString and operation:$operationName]")
     val shape = stringToShape(shapeAsString)
     spatialSearch(shape, k, operationName)
   }
@@ -185,7 +188,9 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs
+      .map(SparkScoreDoc(indexSearcher, _))
+    )
   }
 
   override def spatialSearch(point: PointType, k: Int, operationName: String)
@@ -196,7 +201,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"bboxSearch [center:${center}, radius: ${radius} and operation:${operationName}]")
+    logInfo(s"bboxSearch [center:$center, radius: $radius and operation:$operationName]")
     val x = center._1
     val y = center._2
     val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)

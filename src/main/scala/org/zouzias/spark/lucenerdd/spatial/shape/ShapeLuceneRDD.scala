@@ -98,12 +98,12 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
   private def linker[T: ClassTag](that: RDD[T],
                                   pointFunctor: T => PointType,
                                   mapper: ( PointType, AbstractShapeLuceneRDDPartition[K, V]) =>
-                                    Iterable[SparkScoreDoc],
+                                    Iterable[Row],
                                   linkerMethod: String)
-  : RDD[(T, Array[SparkScoreDoc])] = {
+  : RDD[(T, Array[Row])] = {
     logInfo("Shape Linkage requested")
 
-    val topKMonoid = new TopKMonoid[SparkScoreDoc](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
+    val topKMonoid = new TopKMonoid[Row](MaxDefaultTopKValue)(SparkScoreDoc.ascending)
     val queries = that.zipWithIndex().map(_.swap)
 
     val resultsByPart = linkerMethod match {
@@ -156,7 +156,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                              pointFunctor: T => PointType,
                              topK: Int = DefaultTopK,
                              linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(T, Array[SparkScoreDoc])] = {
+  : RDD[(T, Array[Row])] = {
     logInfo("linkByKnn requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
       part.knnSearch(queryPoint, topK, LuceneQueryHelpers.MatchAllDocsString),
@@ -183,7 +183,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                                 topK: Int = DefaultTopK,
                                 spatialOp: String = SpatialOperation.Intersects.getName,
                                 linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(T, Array[SparkScoreDoc])] = {
+  : RDD[(T, Array[Row])] = {
     logInfo("linkByRadius requested")
     linker[T](that, pointFunctor, (queryPoint, part) =>
       part.circleSearch(queryPoint, radius, topK, spatialOp),
@@ -207,7 +207,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                          searchQueryGen: Row => PointType,
                          topK: Int = DefaultTopK,
                          linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+  : RDD[(Row, Array[Row])] = {
     logInfo("linkDataFrameByKnn requested")
     linkByKnn[Row](other.rdd, searchQueryGen, topK, linkerMethod)
   }
@@ -231,7 +231,7 @@ class ShapeLuceneRDD[K: ClassTag, V: ClassTag]
                             topK: Int = DefaultTopK,
                             spatialOp: String = SpatialOperation.Intersects.getName,
                             linkerMethod: String = getShapeLinkerMethod)
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+  : RDD[(Row, Array[Row])] = {
     logInfo("linkDataFrameByRadius requested")
     linkByRadius[Row](other.rdd, pointFunctor, radius, topK, spatialOp, linkerMethod)
   }

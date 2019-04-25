@@ -23,6 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.ScoreField
 
 class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
   with Matchers
@@ -37,7 +38,7 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
 
   var pointLuceneRDD: ShapeLuceneRDD[_, _] = _
 
-  override val conf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
+  override val conf: SparkConf = ShapeLuceneRDDKryoRegistrator.registerKryoClasses(new SparkConf().
     setMaster("local[*]").
     setAppName("test").
     set("spark.ui.enabled", "false").
@@ -54,15 +55,15 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
 
     val results = pointLuceneRDD.knnSearch(Bern._1, k, "*:*").collect()
 
-    results.size should equal(k)
-    results.size should be > 0
+    results.length should equal(k)
+    results.length should be > 0
 
     // Closest is Bern and fartherst is Toronto
-    docTextFieldEq(results.head.doc, "_1", Bern._2) should equal(true)
-    docTextFieldEq(results.last.doc, "_1", Toronto._2) should equal(true)
+    docTextFieldEq(results.head, "_1", Bern._2) should equal(true)
+    docTextFieldEq(results.last, "_1", Toronto._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(_.score).toList.reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -73,14 +74,14 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
 
     val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Mil*").collect()
 
-    results.size should be <= k
-    results.size should be > 0
+    results.length should be <= k
+    results.length should be > 0
 
     // Closest is Bern and farthest is Toronto
-    docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
+    docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(_.score).toList.reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -91,14 +92,14 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
 
     val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Miln~1").collect()
 
-    results.size should be <= k
-    results.size should be > 0
+    results.length should be <= k
+    results.length should be > 0
 
     // Closest is Bern and farthest is Toronto
-    docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
+    docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(_.score).toList.reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 
@@ -109,14 +110,14 @@ class ShapeLuceneRDDKnnSearchSpec extends FlatSpec
 
     val results = pointLuceneRDD.knnSearch(Bern._1, k, "_1:Milan").collect()
 
-    results.size should be <= k
-    results.size should be > 0
+    results.length should be <= k
+    results.length should be > 0
 
     // Closest is Milan (due to filtering)
-    docTextFieldEq(results.head.doc, "_1", Milan._2) should equal(true)
+    docTextFieldEq(results.head, "_1", Milan._2) should equal(true)
 
     // Distances must be sorted
-    val revertedDists = results.map(_.score).toList.reverse
+    val revertedDists = results.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
     sortedDesc(revertedDists) should equal(true)
   }
 }

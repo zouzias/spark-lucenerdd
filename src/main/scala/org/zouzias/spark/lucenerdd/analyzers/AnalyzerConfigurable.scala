@@ -49,28 +49,25 @@ import org.apache.lucene.analysis.ru.RussianAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tr.TurkishAnalyzer
 import org.zouzias.spark.lucenerdd.config.Configurable
+import org.zouzias.spark.lucenerdd.logging.Logging
 
 /**
- * Lucene Analyzer loader via configuration
+ * Lucene Analyzer loader via configuration or via class name
+  *
+  * An analyzer can be loaded by using all the short country codes, i.e.,
+  * en,el,de, etc or using a class name present in the classpath, i.e.,
+  * 'org.apache.lucene.analysis.el.GreekAnalyzer'
+  *
+  * Custom Analyzers can be loaded provided that are present during runtime.
  */
-trait AnalyzerConfigurable extends Configurable {
+trait AnalyzerConfigurable extends Configurable
+  with Logging {
 
   private val IndexAnalyzerConfigKey = "lucenerdd.index.analyzer.name"
   private val QueryAnalyzerConfigKey = "lucenerdd.query.analyzer.name"
-  private val NgramMinGramConfigKey = "lucenerdd.index.analyzer.ngram.mingram"
-  private val NgramMaxGramConfigKey = "lucenerdd.index.analyzer.ngram.maxgram"
-
 
   /** Get the configured analyzers or fallback to English */
   protected def getOrElseEn(analyzerName: Option[String]): String = analyzerName.getOrElse("en")
-
-  private val NgramMinGram = if (Config.hasPath(NgramMinGramConfigKey)) {
-    Config.getInt(NgramMinGramConfigKey)
-  } else 2
-
-  private val NgramMaxGram = if (Config.hasPath(NgramMaxGramConfigKey)) {
-    Config.getInt(NgramMaxGramConfigKey)
-  } else NgramMinGram + 2 // Default is + 2
 
   protected val IndexAnalyzerConfigName: Option[String] =
     if (Config.hasPath(IndexAnalyzerConfigKey)) {
@@ -113,12 +110,44 @@ trait AnalyzerConfigurable extends Configurable {
         case "pt" => new PortugueseAnalyzer()
         case "ru" => new RussianAnalyzer()
         case "tr" => new TurkishAnalyzer()
-        case "ngram" => new NgramAnalyzer(NgramMinGram, NgramMaxGram) // Example of custom analyzer
-        case _ => new StandardAnalyzer()
+        case otherwise: String =>
+          try {
+            val clazz = loadConstructor[Analyzer](otherwise)
+            clazz
+          }
+          catch {
+            case e: ClassNotFoundException =>
+              logError(s"Class ${otherwise} was not found in classpath. Does the class exist?", e)
+              null
+            case e: ClassCastException =>
+              logError(s"Class ${otherwise} could not be " +
+                s"cast to superclass org.apache.lucene.analysis.Analyzer.", e)
+              null
+            case e: Throwable =>
+              logError(s"Class ${otherwise} could not be used as Analyzer.", e)
+              null
+          }
       }
     }
     else {
+      logInfo("Analyzer name is not defined. Default analyzer is StandardAnalyzer().")
       new StandardAnalyzer()
     }
   }
+
+  /**
+    * Load a Lucene [[Analyzer]] using class name
+    *
+    * @param className The class name of the analyzer to load
+    * @tparam T
+    * @return Returns a Lucene Analyzer
+    */
+  private def loadConstructor[T <: Analyzer](className: String): T = {
+    val loader = getClass.getClassLoader
+    logInfo(s"Loading class ${className} using loader ${loader}")
+    val loadedClass: Class[T] = loader.loadClass(className).asInstanceOf[Class[T]]
+    val constructor = loadedClass.getConstructor()
+    constructor.newInstance()
+  }
+
 }

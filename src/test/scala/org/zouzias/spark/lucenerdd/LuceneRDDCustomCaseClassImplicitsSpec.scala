@@ -38,7 +38,7 @@ class LuceneRDDCustomCaseClassImplicitsSpec extends FlatSpec
     set("spark.ui.enabled", "false").
     set("spark.app.id", appID))
 
-  val elem = Array("fear", "death", "water", "fire", "house")
+  val elem: Array[Person] = Array("fear", "death", "water", "fire", "house")
     .zipWithIndex.map{ case (str, index) => Person(str, index, s"${str}@gmail.com")}
 
   "LuceneRDD(case class).count" should "handle nulls properly" in {

@@ -22,6 +22,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
+import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.ScoreField
 
 // Required for implicit Document conversion
 import org.zouzias.spark.lucenerdd._
@@ -66,13 +67,14 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
     linkage.collect().foreach{ case (city, knnResults) =>
 
       // top result should be linked with its query result
-      city._2 should equal(knnResults.head.doc.textField("_1").head)
+      val doc = knnResults.head
+      city._2 should equal(doc.getString(doc.fieldIndex("_1")))
 
       // Must return only at most k results
       knnResults.length should be <= k
 
       // Distances must be sorted
-      val revertedDists = knnResults.map(_.score).reverse
+      val revertedDists = knnResults.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
       sortedDesc(revertedDists) should equal(true)
     }
   }
@@ -133,7 +135,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
 
     val linkage = pointLuceneRDD.linkDataFrameByKnn(citiesDF, linker, k)
 
-    linkage.count() should equal(cities.size)
+    linkage.count() should equal(cities.length)
 
     linkage.collect().foreach { case (city, knnResults) =>
 
@@ -144,7 +146,7 @@ class ShapeLuceneRDDLinkageSpec extends FlatSpec
       knnResults.length should be <= k
 
       // Distances must be sorted
-      val revertedDists = knnResults.map(_.score).reverse
+      val revertedDists = knnResults.map(x => x.getFloat(x.fieldIndex(ScoreField))).reverse
       sortedDesc(revertedDists) should equal(true)
     }
 

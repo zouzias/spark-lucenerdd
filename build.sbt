@@ -77,10 +77,12 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "7.7.1"
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+
+val luceneV = "8.0.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.4.0"
+sparkVersion := "2.4.1"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true
@@ -94,8 +96,8 @@ testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.va
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.6"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.6" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.7"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.7" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.5"

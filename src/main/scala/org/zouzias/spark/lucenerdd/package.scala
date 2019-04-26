@@ -18,8 +18,10 @@ package org.zouzias.spark
 
 import org.apache.lucene.document._
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.ArrayType
 import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
 
+import collection.JavaConverters._
 import scala.reflect.ClassTag
 
 package object lucenerdd extends LuceneRDDConfigurable {
@@ -45,6 +47,14 @@ package object lucenerdd extends LuceneRDDConfigurable {
       // Return the default string field analysis option
       StringFieldsDefaultAnalyzed
     }
+  }
+
+  private def listPrimitiveToDocument[T: ClassTag](doc: Document,
+                                                   fieldName: String,
+                                                   iter: java.util.List[T])
+  : Document = {
+    iter.asScala.foreach( item => typeToDocument(doc, fieldName, item))
+    doc
   }
 
   implicit def intToDocument(v: Int): Document = {
@@ -88,6 +98,7 @@ package object lucenerdd extends LuceneRDDConfigurable {
 
     if (s != null) {
       doc.add(new Field(DefaultFieldName, s, analyzedField(StringFieldsDefaultAnalyzed)))
+      doc.add(new StoredField(DefaultFieldName, s))
     }
     doc
   }
@@ -109,14 +120,13 @@ package object lucenerdd extends LuceneRDDConfigurable {
     fieldType.setStoreTermVectorPositions(StringFieldsStoreTermPositions)
     fieldType.setOmitNorms(StringFieldsOmitNorms)
     fieldType.setTokenized(tobeAnalyzed)
-    fieldType.setStored(true) // All text fields must be stored (LuceneRDDResponse requirement)
+    fieldType.setStored(false) // All text fields must be stored (LuceneRDDResponse requirement)
     fieldType.setIndexOptions(StringFieldsIndexOptions)
     fieldType.freeze()
     fieldType
   }
 
   def typeToDocument[T: ClassTag](doc: Document, fieldName: String, s: T): Document = {
-
     s match {
       case x: String if x != null =>
         doc.add(new Field(fieldName, x,
@@ -135,12 +145,21 @@ package object lucenerdd extends LuceneRDDConfigurable {
       case x: Double if x != null =>
         doc.add(new DoublePoint(fieldName, x))
         doc.add(new StoredField(fieldName, x))
-      case _ => Unit
+      case null => Unit
+      case _ =>
+        throw new RuntimeException(s"Type ${s.getClass.getName} " +
+          s"on field $fieldName is not supported")
     }
     doc
   }
 
   implicit def iterablePrimitiveToDocument[T: ClassTag](iter: Iterable[T]): Document = {
+    val doc = new Document
+    iter.foreach( item => tupleTypeToDocument(doc, 1, item))
+    doc
+  }
+
+  implicit def arrayPrimitiveToDocument[T: ClassTag](iter: Array[T]): Document = {
     val doc = new Document
     iter.foreach( item => tupleTypeToDocument(doc, 1, item))
     doc
@@ -173,18 +192,29 @@ package object lucenerdd extends LuceneRDDConfigurable {
   }
 
   /**
-   * Implicit conversion for Spark Row: used for DataFrame
-   * @param row
-   * @return
+   * Implicit conversion for Spark Row: used for instantiating LuceneRDD
+   * from a DataFrame
+   * @param row A Spark Row of a Spark DataFrame
+   * @return A Lucene Document
    */
   implicit def sparkRowToDocument(row: Row): Document = {
     val doc = new Document
 
-    val fieldNames = row.schema.fieldNames
-    fieldNames.foreach{ case fieldName =>
-      val index = row.fieldIndex(fieldName)
-      typeToDocument(doc, fieldName, row.get(index))
-    }
+    row.schema.map(field => (field.name, field.dataType))
+      .foreach{ case (fieldName, dataType) =>
+
+        // Field index
+        val index = row.fieldIndex(fieldName)
+
+        // TODO: Handle org.apache.spark.sql.types.MapType and more
+        // See https://github.com/zouzias/spark-lucenerdd/issues/179
+        if (dataType.isInstanceOf[ArrayType]) {
+         listPrimitiveToDocument(doc, fieldName, row.getList(index))
+        }
+        else {
+          typeToDocument(doc, fieldName, row.get(index))
+        }
+      }
 
     doc
   }

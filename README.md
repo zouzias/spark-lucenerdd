@@ -79,14 +79,12 @@ Artifact                  | Release Date    | Spark compatibility | Notes | Stat
 0.3.8-SNAPSHOT            |                 | >= 2.4.0, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
 Released         |  2019-04-26     | >= 2.4.2, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.7)  | Released
 0.3.6                     |  2019-03-11     | >= 2.4.0, JVM 8  | [tag v0.3.6](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.6) | Released
-0.3.5                     |  2019-02-7      | >= 2.4.0, JVM 8  | [tag v0.3.5](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.5) | Released
-0.3.4                     |  2018-11-27     | >= 2.4.0, JVM 8  | [tag v0.3.4](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.4) | Released
 0.2.8                     | 2017-05-30      |  2.1.x, JVM 7      | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released
 0.1.0                     | 2016-09-26      | 1.4.x, 1.5.x, 1.6.x| [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 
 ### Project Status and Limitations
 
-Implicit conversions for the primitive types (Int, Float, Double, Long, String) are supported. Moreover, implicit conversions for all product types (i.e., tuples and case classes) of the above primitives are supported. Implicits for tuples default the field names to "_1", "_2", "_3, ... following Scala's naming conventions for tuples.
+Implicit conversions for the primitive types (Int, Float, Double, Long, String) are supported. Moreover, implicit conversions for all product types (i.e., tuples and case classes) of the above primitives are supported. Implicits for tuples default the field names to "_1", "_2", "_3, ... following Scala's naming conventions for tuples. In addition, implicits for most Spark DataFrame types are supported (MapType and boolean are missing).
 
 ### Custom Case Classes
 

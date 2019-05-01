@@ -20,25 +20,24 @@ import com.twitter.algebird.TopKMonoid
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.{OneToOneDependency, Partition, TaskContext}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types._
 import org.apache.spark.storage.StorageLevel
-import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 
 /**
  * LuceneRDD response
  */
 private[lucenerdd] class LuceneRDDResponse
   (protected val partitionsRDD: RDD[LuceneRDDResponsePartition],
-   protected val ordering: Ordering[SparkScoreDoc])
-  extends RDD[SparkScoreDoc](partitionsRDD.context,
+   protected val ordering: Ordering[Row])
+  extends RDD[Row](partitionsRDD.context,
     List(new OneToOneDependency(partitionsRDD))) {
 
   setName("LuceneRDDResponse")
 
   @DeveloperApi
   override def compute(split: Partition, context: TaskContext)
-  : Iterator[SparkScoreDoc] = {
+  : Iterator[Row] = {
     firstParent[LuceneRDDResponsePartition].iterator(split, context).next().iterator()
   }
 
@@ -64,109 +63,36 @@ private[lucenerdd] class LuceneRDDResponse
   }
 
   /**
-   * Use [[TopKMonoid]] to take
-   * @param num
-   * @return
+   * Return the top-k result in terms of Lucene score
+    *
+    * It uses a [[TopKMonoid]] to compute topK
+   * @param k Number of result to return
+   * @return Array of result, size k
    */
-  override def take(num: Int): Array[SparkScoreDoc] = {
-    val monoid = new TopKMonoid[SparkScoreDoc](num)(ordering)
+  override def take(k: Int): Array[Row] = {
+    val monoid = new TopKMonoid[Row](k)(ordering)
     partitionsRDD.map(monoid.build(_))
       .reduce(monoid.plus).items.toArray
   }
 
-  override def collect(): Array[SparkScoreDoc] = {
+  override def collect(): Array[Row] = {
     val sz = partitionsRDD.map(_.size).sum().toInt
-    val monoid = new TopKMonoid[SparkScoreDoc](sz)(ordering)
-    partitionsRDD.map(monoid.build(_))
-      .reduce(monoid.plus).items.toArray
-  }
-
-  /**
-    * Converts [[LuceneRDDResponse]] to [[DataFrame]]
-    *
-    * Infers the type of each field using the most frequently appeared type per field
-    *
-    * @param sampleRatio Sample percentage to inspect for deciding on infered types.
-    * @param sqlContext [[SQLContext]]
-    * @return
-    */
-  def toDF(sampleRatio: Double = 0.01)(implicit sqlContext: SQLContext): DataFrame = {
-
-    val total = this.asInstanceOf[RDD[SparkScoreDoc]].count()
-    val sample = this.asInstanceOf[RDD[SparkScoreDoc]].sample(false, sampleRatio)
-    val types = if (total <= 10) inferTypes(this.asInstanceOf[RDD[SparkScoreDoc]])
-    else inferTypes(sample)
-
-    // Convert to Spark SQL DataFrame types
-    val schema = types.map{ case (fieldName, tp) =>
-      tp match {
-        case TextType => StructField(fieldName, StringType)
-        case IntType => StructField(fieldName, IntegerType)
-        case LongType => StructField(fieldName, org.apache.spark.sql.types.LongType)
-        case DoubleType => StructField(fieldName, org.apache.spark.sql.types.DoubleType)
-        case FloatType => StructField(fieldName, org.apache.spark.sql.types.FloatType)
-      }
-    }.toSeq
-
-    // Additional fields of [[SparkScoreDoc]] with known types
-    val schemaWithExtraFields = schema ++ Seq(StructField("__docid__", IntegerType),
-      StructField("__score__", org.apache.spark.sql.types.DoubleType),
-      StructField("__shardIndex__", IntegerType))
-
-    // Convert values to Spark SQL Row
-    val rows: RDD[Row] = this.map { elem =>
-      Row.fromSeq(schema.map(x => elem.doc.field(x.name))
-        ++ Seq(elem.docId, elem.score, elem.shardIndex))
+    if (sz > 0) {
+      val monoid = new TopKMonoid[Row](sz)(ordering)
+      partitionsRDD.map(monoid.build(_))
+        .reduce(monoid.plus).items.toArray
+    } else {
+      Array.empty[Row]
     }
-
-    sqlContext.createDataFrame(rows, StructType(schemaWithExtraFields))
-  }
-
-
-  /**
-    * Infer the types of each field of a [[SparkScoreDoc]]
-    *
-    * @param d
-    * @return
-    */
-  private def inferTypes(d: SparkScoreDoc): Iterable[(String, FieldType)] = {
-    val textFieldTypes = d.doc.getTextFields.map(x => x -> TextType)
-    val numFieldTypes = d.doc.getNumericFields
-      .map(fieldName => fieldName -> inferNumericType(d.doc.numericField(fieldName)))
-
-    textFieldTypes ++ numFieldTypes
   }
 
   /**
-    * Infers types of scored documents, i.e., [[SparkScoreDoc]]
-    *
-    * @param docs RDD of [[SparkScoreDoc]]
-    * @return Map of field name to its inferred type
+    * Convert LuceneRDDResponse to Spark DataFrame
+    * @param spark Spark Session
+    * @return DataFrame
     */
-  def inferTypes(docs: RDD[SparkScoreDoc]): Map[String, FieldType] = {
-    val types = docs
-      .flatMap(inferTypes).map(x => x -> 1L)
-      .reduceByKey(_ + _)
-      .map{ case (key, value) => (key._1, (value, key._2))}
-
-    val mostFreqTypes = types.reduceByKey((x, y) => if (x._1 >= y._1) x else y)
-    mostFreqTypes.map(x => x._1 -> x._2._2).collect().toMap[String, FieldType]
-  }
-
-  /**
-    * Checks the subclass of [[Number]]
-    * @param num
-    * @return
-    */
-  private def inferNumericType(num: Option[Number]): FieldType = {
-    num match {
-      case None => TextType
-      case Some(n) =>
-        if (n.isInstanceOf[Integer]) { IntType }
-        else if (n.isInstanceOf[Long]) { LongType }
-        else if (n.isInstanceOf[Double]) { DoubleType }
-        else if (n.isInstanceOf[Float]) { FloatType }
-        else { TextType }
-    }
+  def toDF()(implicit spark: SparkSession): DataFrame = {
+    val schema = this.first().schema
+    spark.createDataFrame(this, schema)
   }
 }

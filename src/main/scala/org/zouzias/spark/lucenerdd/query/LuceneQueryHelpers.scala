@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.query
 import java.io.StringReader
 
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
 import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
@@ -28,6 +29,7 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.queries.mlt.MoreLikeThis
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
+import org.apache.spark.sql.Row
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
@@ -82,11 +84,12 @@ object LuceneQueryHelpers extends Serializable {
    * Parse a Query string
    *
    * @param searchString
-   * @param analyzer
+   * @param queryAnalyzerPerField Lucene query Analyzers per field
    * @return
    */
-  def parseQueryString(searchString: String, analyzer: Analyzer): Query = {
-    val queryParser = new QueryParser(QueryParserDefaultField, analyzer)
+  def parseQueryString(searchString: String, queryAnalyzerPerField: PerFieldAnalyzerWrapper)
+  : Query = {
+    val queryParser = new QueryParser(QueryParserDefaultField, queryAnalyzerPerField)
     queryParser.parse(searchString)
   }
 
@@ -95,16 +98,33 @@ object LuceneQueryHelpers extends Serializable {
    *
    * @param indexSearcher Index searcher
    * @param searchString Lucene search query string
-   * @param topK Number of returned documents
-   * @param analyzer Lucene Analyzer
+   * @param topK Number of documents to return
+   * @param queryAnalyzerPerField Lucene Analyzer per field
    * @return
    */
   def searchParser(indexSearcher: IndexSearcher,
                    searchString: String,
-                   topK: Int, analyzer: Analyzer)
+                   topK: Int,
+                   queryAnalyzerPerField: PerFieldAnalyzerWrapper)
+  : Seq[Row] = {
+    val q = parseQueryString(searchString, queryAnalyzerPerField)
+    indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _).toRow())
+  }
+
+  /**
+    * Lucene search using a Lucene [[Query]]
+    *
+    * Important: Query analysis is done during the definition of query
+    * @param indexSearcher Lucene index searcher
+    * @param query Lucene query
+    * @param topK Number of documents to return
+    * @return
+    */
+  def searchQuery(indexSearcher: IndexSearcher,
+                  query: Query,
+                  topK: Int)
   : Seq[SparkScoreDoc] = {
-    val q = parseQueryString(searchString, analyzer)
-    indexSearcher.search(q, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
+    indexSearcher.search(query, topK).scoreDocs.map(SparkScoreDoc(indexSearcher, _))
   }
 
   /**

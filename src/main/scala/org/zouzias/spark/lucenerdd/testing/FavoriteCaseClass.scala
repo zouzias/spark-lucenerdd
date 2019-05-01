@@ -17,3 +17,10 @@
 package org.zouzias.spark.lucenerdd.testing
 
 case class FavoriteCaseClass(name: String, age: Int, myLong: Long, myFloat: Float, email: String)
+
+case class MultivalueFavoriteCaseClass(names: Array[String],
+                                       age: Int,
+                                       ages: List[Int],
+                                       myLong: Long,
+                                       myFloat: Float,
+                                       email: String)

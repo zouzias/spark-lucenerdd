@@ -80,19 +80,7 @@ pomExtra := <scm>
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 val luceneV = "8.0.0"
-
-spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.4.2"
-spShortDescription := "Spark RDD with Lucene's query capabilities"
-sparkComponents ++= Seq("core", "sql", "mllib")
-spAppendScalaVersion := true
-// This is necessary because of how we explicitly specify Spark dependencies
-// for tests rather than using the sbt-spark-package plugin to provide them.
-spIgnoreProvided := true
-
-val testSparkVersion = settingKey[String]("The version of Spark to test against.")
-
-testSparkVersion := sys.props.get("spark.testVersion").getOrElse(sparkVersion.value)
+val sparkVersion = "2.4.2"
 
 
 // scalastyle:off
@@ -135,8 +123,9 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
-  "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
+  "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+  "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
+  "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
   "com.holdenkarau"  %% "spark-testing-base" % s"2.4.0_0.11.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )

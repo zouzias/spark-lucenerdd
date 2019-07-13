@@ -87,7 +87,7 @@ val sparkVersion = "2.4.3"
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.8"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.8" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.2"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.3"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.5"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"

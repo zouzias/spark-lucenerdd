@@ -87,12 +87,12 @@ val sparkVersion = "2.4.4"
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.0.8"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.0.8" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.4"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.5"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.5"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
-val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.4"
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.4.0"
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV

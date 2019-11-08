@@ -79,7 +79,7 @@ pomExtra := <scm>
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
-val luceneV = "8.2.0"
+val luceneV = "8.3.0"
 val sparkVersion = "2.4.4"
 
 
@@ -92,7 +92,7 @@ val algebird                  = "com.twitter"                    %% "algebird-co
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
-val typesafe_config           = "com.typesafe"                   % "config"                    % "1.4.0"
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.4"
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV

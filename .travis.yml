@@ -1,6 +1,6 @@
 language: scala
 scala:
-  - 2.11.12
+  - 2.12.10
 sudo: false
 dist: trusty
 cache:

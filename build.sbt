@@ -104,7 +104,7 @@ val algebird                  = "com.twitter"                    %% "algebird-co
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.0"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
 
-val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.3"
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.4"
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV

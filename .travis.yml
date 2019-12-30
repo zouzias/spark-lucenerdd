@@ -17,13 +17,13 @@ before_cache:
 matrix:
   include:
     - jdk: oraclejdk8
-      env: TEST_SPARK_VERSION="2.4.2" LUCENERDD_ANALYZER_NAME="en" LUCENERDD_LINKER_METHOD="cartesian"
+      env: TEST_SPARK_VERSION="2.4.4" LUCENERDD_ANALYZER_NAME="en" LUCENERDD_LINKER_METHOD="cartesian"
     - jdk: openjdk8
-      env: TEST_SPARK_VERSION="2.4.2" LUCENERDD_ANALYZER_NAME="en" LUCENERDD_LINKER_METHOD="collectbroadcast"
+      env: TEST_SPARK_VERSION="2.4.4" LUCENERDD_ANALYZER_NAME="en" LUCENERDD_LINKER_METHOD="collectbroadcast"
     - jdk: openjdk8
-      env: TEST_SPARK_VERSION="2.4.2" LUCENERDD_ANALYZER_NAME="whitespace" LUCENERDD_LINKER_METHOD="cartesian"
+      env: TEST_SPARK_VERSION="2.4.4" LUCENERDD_ANALYZER_NAME="whitespace" LUCENERDD_LINKER_METHOD="cartesian"
     - jdk: oraclejdk8
-      env: TEST_SPARK_VERSION="2.4.2" LUCENERDD_ANALYZER_NAME="whitespace" LUCENERDD_LINKER_METHOD="collectbroadcast"
+      env: TEST_SPARK_VERSION="2.4.4" LUCENERDD_ANALYZER_NAME="whitespace" LUCENERDD_LINKER_METHOD="collectbroadcast"
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean update
       -Dlucenerdd.spatial.linker.method=${LUCENE_SPATIAL_LINKER_METHOD} -test

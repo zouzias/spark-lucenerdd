@@ -82,7 +82,7 @@ credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 val luceneV = "8.0.0"
 
 spName := "zouzias/spark-lucenerdd"
-sparkVersion := "2.4.2"
+sparkVersion := "2.4.4"
 spShortDescription := "Spark RDD with Lucene's query capabilities"
 sparkComponents ++= Seq("core", "sql", "mllib")
 spAppendScalaVersion := true

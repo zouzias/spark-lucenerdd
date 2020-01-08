@@ -39,8 +39,11 @@ class FacetedLuceneRDD[T: ClassTag]
   (override protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
    override val indexAnalyzer: String,
    override val queryAnalyzer: String,
+   override val indexAnalyzerPerField: Map[String, String],
+   override val queryAnalyzerPerField: Map[String, String],
    override val similarity: String)
-  extends LuceneRDD[T](partitionsRDD, indexAnalyzer, queryAnalyzer, similarity) {
+  extends LuceneRDD[T](partitionsRDD, indexAnalyzer, queryAnalyzer,
+    indexAnalyzerPerField, queryAnalyzerPerField, similarity) {
 
   setName("FacetedLuceneRDD")
 
@@ -128,20 +131,27 @@ object FacetedLuceneRDD extends Versionable
    * @tparam T Generic type
    * @return
    */
-  def apply[T : ClassTag](elems: RDD[T], indexAnalyzer: String, queryAnalyzer: String,
-                          similarity: String)
+  def apply[T : ClassTag](elems: RDD[T],
+                          indexAnalyzer: String,
+                          queryAnalyzer: String,
+                          similarity: String,
+                          indexAnalyzerPerField: Map[String, String],
+                          queryAnalyzerPerField: Map[String, String])
                          (implicit conv: T => Document): FacetedLuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
       (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer,
         similarity)),
       preservesPartitioning = true)
-    new FacetedLuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer, similarity)
+    new FacetedLuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer,
+      indexAnalyzerPerField, queryAnalyzerPerField, similarity)
   }
 
   def apply[T : ClassTag](elems: RDD[T])(implicit conv: T => Document)
   : FacetedLuceneRDD[T] = {
     apply[T](elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
-      getOrElseClassic())
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
   }
 
   /**
@@ -156,10 +166,13 @@ object FacetedLuceneRDD extends Versionable
    * @return
    */
   def apply[T : ClassTag]
-  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String, similarity: String)
+  (elems: Iterable[T], indexAnalyzer: String, queryAnalyzer: String, similarity: String,
+   indexAnalyzerPerField: Map[String, String],
+   queryAnalyzerPerField: Map[String, String])
   (implicit sc: SparkContext, conv: T => Document)
   : FacetedLuceneRDD[T] = {
-    apply(sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity)
+    apply(sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity,
+      indexAnalyzerPerField, queryAnalyzerPerField)
   }
 
   def apply[T : ClassTag]
@@ -180,12 +193,13 @@ object FacetedLuceneRDD extends Versionable
    */
   def apply(dataFrame: DataFrame, indexAnalyzer: String, queryAnalyzer: String, similarity: String)
   : FacetedLuceneRDD[Row] = {
-    apply(dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity: String)
+    apply(dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity: String,
+      Map.empty[String, String], Map.empty[String, String])
   }
 
   def apply(dataFrame: DataFrame)
   : FacetedLuceneRDD[Row] = {
     apply(dataFrame.rdd, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
-      getOrElseClassic())
+      getOrElseClassic(), Map.empty[String, String], Map.empty[String, String])
   }
 }

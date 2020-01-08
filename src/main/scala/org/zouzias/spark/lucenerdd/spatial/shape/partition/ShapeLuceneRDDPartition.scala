@@ -17,6 +17,7 @@
 package org.zouzias.spark.lucenerdd.spatial.shape.partition
 
 import org.apache.lucene.analysis.Analyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.document.{Document, StoredField}
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.{IndexSearcher, ScoreDoc, Sort}
@@ -31,12 +32,15 @@ import org.zouzias.spark.lucenerdd.spatial.shape.ShapeLuceneRDD.PointType
 import org.zouzias.spark.lucenerdd.spatial.shape.strategies.SpatialStrategy
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 
+import scala.collection.JavaConverters._
 import scala.reflect._
 
 private[shape] class ShapeLuceneRDDPartition[K, V]
   (private val iter: Iterator[(K, V)],
    private val indexAnalyzerName: String,
-   private val queryAnalyzerName: String)
+   private val queryAnalyzerName: String,
+   private val indexAnalyzerPerField: Map[String, String],
+   private val queryAnalyzerPerField: Map[String, String])
   (override implicit val kTag: ClassTag[K],
    override implicit val vTag: ClassTag[V])
   (implicit shapeConversion: K => Shape,
@@ -46,6 +50,12 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     with SpatialStrategy {
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
+
+  override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
+    val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField.mapValues(x =>
+      getAnalyzer(Some(x)))
+    new PerFieldAnalyzerWrapper(indexAnalyzer(), analyzerPerField.asJava)
+  }
 
   private val QueryAnalyzer: Analyzer = getAnalyzer(Some(queryAnalyzerName))
 
@@ -124,7 +134,10 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs
+      .map(x => SparkScoreDoc(indexSearcher, x).toRow())
+      .toIterator
+    )
   }
 
   override def knnSearch(point: PointType, k: Int, searchString: String)
@@ -140,7 +153,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     // false = ascending dist
     val distSort = new Sort(valueSource.getSortField(false)).rewrite(indexSearcher)
 
-    val query = LuceneQueryHelpers.parseQueryString(searchString, QueryAnalyzer)
+    val query = LuceneQueryHelpers.parseQueryString(searchString, indexPerFieldAnalyzer())
     val docs = indexSearcher.search(query, k, distSort)
 
     // Here we sorted on it, and the distance will get
@@ -160,12 +173,12 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
       }
     }
 
-    LuceneRDDResponsePartition(result.toIterator)
+    LuceneRDDResponsePartition(result)
   }
 
   override def spatialSearch(shapeAsString: String, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"spatialSearch [shape:${shapeAsString} and operation:${operationName}]")
+    logInfo(s"spatialSearch [shape:$shapeAsString and operation:$operationName]")
     val shape = stringToShape(shapeAsString)
     spatialSearch(shape, k, operationName)
   }
@@ -175,7 +188,9 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
     val args = new SpatialArgs(SpatialOperation.get(operationName), shape)
     val query = strategy.makeQuery(args)
     val docs = indexSearcher.search(query, k)
-    LuceneRDDResponsePartition(docs.scoreDocs.map(SparkScoreDoc(indexSearcher, _)).toIterator)
+    LuceneRDDResponsePartition(docs.scoreDocs
+      .map(SparkScoreDoc(indexSearcher, _))
+    )
   }
 
   override def spatialSearch(point: PointType, k: Int, operationName: String)
@@ -186,7 +201,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def bboxSearch(center: PointType, radius: Double, k: Int, operationName: String)
   : LuceneRDDResponsePartition = {
-    logInfo(s"bboxSearch [center:${center}, radius: ${radius} and operation:${operationName}]")
+    logInfo(s"bboxSearch [center:$center, radius: $radius and operation:$operationName]")
     val x = center._1
     val y = center._2
     val radiusKM = DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)
@@ -219,10 +234,13 @@ object ShapeLuceneRDDPartition {
     */
   def apply[K: ClassTag, V: ClassTag](iter: Iterator[(K, V)],
                                       indexAnalyzer: String,
-                                      queryAnalyzer: String)
+                                      queryAnalyzer: String,
+                                      indexAnalyzerPerField: Map[String, String] = Map.empty,
+                                      queryAnalyzerPerField: Map[String, String] = Map.empty)
   (implicit shapeConv: K => Shape, docConv: V => Document)
   : ShapeLuceneRDDPartition[K, V] = {
     new ShapeLuceneRDDPartition[K, V](iter,
-      indexAnalyzer, queryAnalyzer)(classTag[K], classTag[V]) (shapeConv, docConv)
+      indexAnalyzer, queryAnalyzer,
+      indexAnalyzerPerField, queryAnalyzerPerField)(classTag[K], classTag[V]) (shapeConv, docConv)
   }
 }

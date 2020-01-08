@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd
 
 import com.twitter.algebird.{TopK, TopKMonoid}
 import org.apache.lucene.document.Document
-import org.zouzias.spark.lucenerdd.config.LuceneRDDConfigurable
+import org.zouzias.spark.lucenerdd.config.{LuceneRDDConfigurable, LuceneRDDParams}
 import org.zouzias.spark.lucenerdd.response.{LuceneRDDResponse, LuceneRDDResponsePartition}
 import org.apache.spark.rdd.RDD
 import org.apache.lucene.search.Query
@@ -48,6 +48,8 @@ import scala.reflect.ClassTag
 class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
                              protected val indexAnalyzer: String,
                              protected val queryAnalyzer: String,
+                             protected val indexAnalyzerPerField: Map[String, String],
+                             protected val queryAnalyzerPerField: Map[String, String],
                              protected val similarity: String)
   extends RDD[T](partitionsRDD.context, List(new OneToOneDependency(partitionsRDD)))
   with LuceneRDDConfigurable {
@@ -146,7 +148,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def dedup[T1: ClassTag](searchQueryGen: T1 => Query,
                           topK: Int = DefaultTopK,
                           linkerMethod: String = getLinkerMethod)
-  : RDD[(T1, Array[SparkScoreDoc])] = {
+  : RDD[(T1, Array[Row])] = {
     // FIXME: is this asInstanceOf necessary?
     link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK, linkerMethod)
   }
@@ -164,7 +166,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                     searchQueryGen: Row => Query,
                     topK: Int = DefaultTopK,
                     linkerMethod: String = getLinkerMethod)
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+  : RDD[(Row, Array[Row])] = {
     logInfo("LinkDataFrame requested")
     link[Row](other.rdd, searchQueryGen, topK, linkerMethod)
   }
@@ -183,7 +185,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                                 searchQueryGen: T1 => Query,
                                 topK: Int = DefaultTopK,
                                 linkerMethod: String = getLinkerMethod)
-  : RDD[(T1, Array[SparkScoreDoc])] = {
+  : RDD[(T1, Array[Row])] = {
     logInfo("LinkByQuery requested")
 
     link[T1](other, searchQueryGen, topK, linkerMethod)
@@ -205,10 +207,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                          searchQueryGen: T1 => Query,
                          topK: Int = DefaultTopK,
                          linkerMethod: String = getLinkerMethod)
-    : RDD[(T1, Array[SparkScoreDoc])] = {
+    : RDD[(T1, Array[Row])] = {
     logInfo("Linkage requested")
 
-    val topKMonoid = new TopKMonoid[SparkScoreDoc](topK)(SparkScoreDoc.descending)
+    val topKMonoid = new TopKMonoid[Row](topK)(SparkScoreDoc.descending)
     val queriesWithIndex = other.zipWithIndex().map(_.swap)
 
     logInfo(s"Linker method is ${linkerMethod}")
@@ -225,7 +227,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
         val collectedQueries = queriesWithIndex.mapValues(searchQueryGen).collect()
         val queriesB = partitionsRDD.context.broadcast(collectedQueries)
 
-        val resultsByPart: RDD[(Long, TopK[SparkScoreDoc])] =
+        val resultsByPart: RDD[(Long, TopK[Row])] =
           partitionsRDD.mapPartitions(partitions =>
           partitions.flatMap { partition =>
             queriesB.value.map { case (index, qr) =>
@@ -353,7 +355,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     val newPartitionRDD = partitionsRDD.mapPartitions(partition =>
       partition.map(_.filter(pred)), preservesPartitioning = true
     )
-    new LuceneRDD(newPartitionRDD, indexAnalyzer, queryAnalyzer, similarity)
+    new LuceneRDD(newPartitionRDD, indexAnalyzer, queryAnalyzer,
+      indexAnalyzerPerField, queryAnalyzerPerField, similarity)
   }
 
   def exists(elem: T): Boolean = {
@@ -374,37 +377,38 @@ object LuceneRDD extends Versionable
    * Instantiate a LuceneRDD given an RDD[T]
    *
    * @param elems RDD of type T
-   * @param indexAnalyzer Index Analyzer name
-   * @param queryAnalyzer Query Analyzer name
+   * @param indexAnalyzer Index analyzer name
+   * @param queryAnalyzer Query analyzer name
    * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
+   * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time), default empty
+   * @param queryAnalyzerPerField Lucene Analyzer per field (query time), default empty
    * @tparam T Generic type
    * @return
    */
   def apply[T : ClassTag](elems: RDD[T],
                           indexAnalyzer: String,
                           queryAnalyzer: String,
-                          similarity: String)
+                          similarity: String,
+                          indexAnalyzerPerField: Map[String, String],
+                          queryAnalyzerPerField: Map[String, String])
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
       (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer,
         similarity)),
       preservesPartitioning = true)
-    new LuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer, similarity)
-  }
-
-  def apply[T : ClassTag](elems: RDD[T])
-                         (implicit conv: T => Document): LuceneRDD[T] = {
-   apply(elems, getOrElseEn(IndexAnalyzerConfigName), getOrElseEn(QueryAnalyzerConfigName),
-     getOrElseClassic())
+    new LuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer,
+      indexAnalyzerPerField, queryAnalyzerPerField, similarity)
   }
 
   /**
    * Instantiate a LuceneRDD with an iterable
    *
    * @param elems Elements to index
-   * @param indexAnalyzer Index Analyzer name
-   * @param queryAnalyzer Query Analyzer name
+   * @param indexAnalyzer Index analyzer name
+   * @param queryAnalyzer Query analyzer name
    * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
+   * @param indexAnalyzerPerField Lucene Analyzer per field (indexing time), default empty
+   * @param queryAnalyzerPerField Lucene Analyzer per field (query time), default empty
    * @param sc Spark Context
    * @tparam T Input type
    * @return
@@ -413,11 +417,27 @@ object LuceneRDD extends Versionable
   (elems: Iterable[T],
    indexAnalyzer: String,
    queryAnalyzer: String,
-   similarity: String)
+   similarity: String,
+   indexAnalyzerPerField: Map[String, String],
+   queryAnalyzerPerField: Map[String, String])
   (implicit sc: SparkContext, conv: T => Document)
   : LuceneRDD[T] = {
-    apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity)
+    apply[T](sc.parallelize[T](elems.toSeq), indexAnalyzer, queryAnalyzer, similarity,
+      indexAnalyzerPerField, queryAnalyzerPerField)
   }
+
+  def apply[T : ClassTag]
+  (elems: RDD[T])
+  (implicit conv: T => Document)
+  : LuceneRDD[T] = {
+    apply[T](elems,
+      getOrElseEn(IndexAnalyzerConfigName),
+      getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
+  }
+
 
   def apply[T : ClassTag]
   (elems: Iterable[T])
@@ -426,24 +446,35 @@ object LuceneRDD extends Versionable
     apply[T](elems,
       getOrElseEn(IndexAnalyzerConfigName),
       getOrElseEn(QueryAnalyzerConfigName),
-      getOrElseClassic())
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
   }
 
   /**
-   * Instantiate a LuceneRDD with DataFrame
+   * Instantiate a LuceneRDD from a  [[DataFrame]]
    *
-   * @param dataFrame Spark DataFrame
-   * @param indexAnalyzer Index Analyzer name
-   * @param queryAnalyzer Query Analyzer name
-   * @param similarity Lucene scoring similarity, i.e., BM25 or TF-IDF
-    * @return
+   * @param dataFrame Spark [[DataFrame]]
+   * @return
    */
+  def apply(dataFrame: DataFrame,
+            indexAnalyzer: String,
+            queryAnalyzer: String,
+            similarity: String,
+            indexAnalyzerPerField: Map[String, String],
+            queryAnalyzerPerField: Map[String, String])
+  : LuceneRDD[Row] = {
+    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity,
+      indexAnalyzerPerField, queryAnalyzerPerField)
+  }
+
   def apply(dataFrame: DataFrame,
             indexAnalyzer: String,
             queryAnalyzer: String,
             similarity: String)
   : LuceneRDD[Row] = {
-    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity)
+    apply[Row](dataFrame.rdd, indexAnalyzer, queryAnalyzer, similarity,
+      Map.empty[String, String], Map.empty[String, String])
   }
 
   /**
@@ -457,7 +488,9 @@ object LuceneRDD extends Versionable
     apply[Row](dataFrame.rdd,
       getOrElseEn(IndexAnalyzerConfigName),
       getOrElseEn(QueryAnalyzerConfigName),
-      getOrElseClassic())
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String])
   }
 
   /**
@@ -470,9 +503,7 @@ object LuceneRDD extends Versionable
     * @param queryPartColumns List of query columns for [[HashPartitioner]]
     * @param entityPartColumns List of entity columns for [[HashPartitioner]]
     * @param topK Number of linked results
-    * @param indexAnalyzer Lucene analyzer at index time
-    * @param queryAnalyzer Lucene analyzer at query time
-    * @param similarity Lucene Similarity metric (BM25, Tf/idf)
+    * @param luceneRDDParams Parameters for index and query time analysis
     * @return Returns top-k linked results as RDD of [[Tuple2]] where _1 is query and
     *         _2 is top-k linked results as [[SparkScoreDoc]].
     */
@@ -482,10 +513,8 @@ object LuceneRDD extends Versionable
                          queryPartColumns: Array[String],
                          entityPartColumns: Array[String],
                          topK : Int = 3,
-                         indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
-                         queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
-                         similarity: String = getOrElseClassic())
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+                         luceneRDDParams: LuceneRDDParams = LuceneRDDParams())
+  : RDD[(Row, Array[Row])] = {
 
     assert(entityPartColumns.nonEmpty,
       "Entity Partition columns must be non-empty for block linkage")
@@ -514,8 +543,12 @@ object LuceneRDD extends Versionable
         iterKeyedByHash.flatMap { case (_, (qs, ents)) =>
 
           // Instantiate a lucene index on partitioned entities
-          val lucenePart = LuceneRDDPartition(ents.toIterator, idx, indexAnalyzer,
-            queryAnalyzer, similarity)
+          val lucenePart = LuceneRDDPartition(ents.toIterator, idx,
+            luceneRDDParams.indexAnalyzer,
+            luceneRDDParams.queryAnalyzer,
+            luceneRDDParams.similarity,
+            luceneRDDParams.indexAnalyzerPerField,
+            luceneRDDParams.queryAnalyzerPerField)
 
           // Multi-query lucene index
           qs.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))
@@ -530,9 +563,7 @@ object LuceneRDD extends Versionable
     * @param rowToQuery Function that maps [[Row]] to Lucene [[Query]]
     * @param blockingColumns Columns on which exact match is required
     * @param topK Number of top-K query results
-    * @param indexAnalyzer Lucene analyzer at index time
-    * @param queryAnalyzer Lucene analyzer at query time
-    * @param similarity Lucene Similarity metric (BM25, Tf/idf)
+    * @param luceneRDDParams Parameters for index-time and query-time analysis
     * @return Returns top-k deduplicated results as [[RDD]] of [[Tuple2]] where _1 is query and
     *         _2 is top-k linked results as [[SparkScoreDoc]].
     * @return
@@ -541,10 +572,8 @@ object LuceneRDD extends Versionable
                  rowToQuery: Row => Query,
                  blockingColumns: Array[String],
                  topK : Int = 3,
-                 indexAnalyzer: String = getOrElseEn(IndexAnalyzerConfigName),
-                 queryAnalyzer: String = getOrElseEn(QueryAnalyzerConfigName),
-                 similarity: String = getOrElseClassic())
-  : RDD[(Row, Array[SparkScoreDoc])] = {
+                 luceneRDDParams: LuceneRDDParams = LuceneRDDParams())
+  : RDD[(Row, Array[Row])] = {
 
     // Check that there is at least one partition column
     assert(blockingColumns.nonEmpty, "Partition columns must be non-empty for block deduplication")
@@ -566,10 +595,12 @@ object LuceneRDD extends Versionable
       val (iterQueries, iterLucene) = iterKeyedByHash.map(_._2).duplicate
 
       // Instantiate a lucene index on partitioned entities
-      val lucenePart = LuceneRDDPartition(iterLucene,
-        idx,
-        indexAnalyzer,
-        queryAnalyzer, similarity)
+      val lucenePart = LuceneRDDPartition(iterLucene, idx,
+        luceneRDDParams.indexAnalyzer,
+        luceneRDDParams.queryAnalyzer,
+        luceneRDDParams.similarity,
+        luceneRDDParams.indexAnalyzerPerField,
+        luceneRDDParams.queryAnalyzerPerField)
 
       // Multi-query lucene index
       iterQueries.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))

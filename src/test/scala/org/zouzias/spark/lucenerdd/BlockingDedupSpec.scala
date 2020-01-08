@@ -64,7 +64,7 @@ class BlockingDedupSpec extends FlatSpec
     // Age is a unique index
     linked.collect().foreach { case (row, results) =>
       val leftAge, rightAge = (row.getInt(row.fieldIndex("age")),
-        results.headOption.map(_.doc.numericField("age")))
+        results.headOption.map(x => x.getInt(x.fieldIndex("age"))))
 
       leftAge should equal(rightAge)
 

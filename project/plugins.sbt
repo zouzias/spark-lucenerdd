@@ -23,7 +23,7 @@ addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.5.0")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
 
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.12")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.13")
 
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 

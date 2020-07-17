@@ -32,6 +32,7 @@ import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.query.SimilarityConfigurable
+import org.zouzias.spark.lucenerdd.spark.util.SerializableConfiguration
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
@@ -369,6 +370,13 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def close(): Unit = {
     logInfo("Closing LuceneRDD...")
     partitionsRDD.foreach(_.close())
+  }
+
+  def saveToHDFS(path: String): Unit = {
+    val hdfsConf = new SerializableConfiguration(this.sparkContext.hadoopConfiguration)
+    partitionsRDD.foreach{ partition =>
+      partition.saveToHDFS(path, hdfsConf.value)
+    }
   }
 }
 

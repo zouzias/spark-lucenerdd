@@ -51,6 +51,8 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
 
   override def indexAnalyzer(): Analyzer = getAnalyzer(Some(indexAnalyzerName))
 
+  override def partId(): Int = 1
+
   override def indexPerFieldAnalyzer(): PerFieldAnalyzerWrapper = {
     val analyzerPerField: Map[String, Analyzer] = indexAnalyzerPerField.mapValues(x =>
       getAnalyzer(Some(x)))
@@ -87,7 +89,7 @@ private[shape] class ShapeLuceneRDDPartition[K, V]
   }
   private val endTime = new DateTime(System.currentTimeMillis())
   logInfo(s"Indexing process completed at ${endTime}...")
-  logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000} seconds...")
+  logInfo(s"Indexing process took ${(endTime.getMillis - startTime.getMillis) / 1000f} seconds...")
 
   // Close the indexWriter and taxonomyWriter (for faceted search)
   closeAllWriters()

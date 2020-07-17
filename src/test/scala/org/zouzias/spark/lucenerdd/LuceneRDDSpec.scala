@@ -118,6 +118,16 @@ class LuceneRDDSpec extends FlatSpec
     luceneRDD.fields() should equal(Set("a", "b", "c"))
   }
 
+  "LuceneRDD.saveIndexToHDFS" should "return save index to HDFS" in {
+    val maps = List(Map( "a" -> "hello"), Map("b" -> "world"), Map("c" -> "how are you"))
+    val rdd = sc.parallelize(maps)
+    luceneRDD = LuceneRDD(rdd)
+    luceneRDD.cache()
+    luceneRDD.count()
+    luceneRDD.saveToHDFS("/test_location")
+    true shouldBe true
+  }
+
   "LuceneRDD.version" should "return project sbt build information" in {
     val map = LuceneRDD.version()
     map.contains("name") should equal(true)

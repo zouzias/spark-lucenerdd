@@ -35,25 +35,27 @@ trait IndexStorable extends Configurable
   with AutoCloseable
   with Logging {
 
+  protected def partId(): Int
+
   protected lazy val FacetsConfig = new FacetsConfig()
 
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
-  private val tmpJavaDir = System.getProperty("java.io.tmpdir")
+  protected val tmpJavaDir = System.getProperty("java.io.tmpdir")
 
-  private val indexDirName =
-    s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
+  protected lazy val indexDirName =
+    s"indexDirectory.${System.currentTimeMillis()}.${partId()}"
 
   private val indexDir = Files.createTempDirectory(indexDirName)
 
-  private val taxonomyDirName =
-    s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
+  private lazy val taxonomyDirName =
+    s"taxonomyDirectory-${System.currentTimeMillis()}.${partId()}"
 
   private val taxonomyDir = Files.createTempDirectory(taxonomyDirName)
 
-  protected val IndexDir = storageMode(indexDir)
+  protected val IndexDir: Directory = storageMode(indexDir)
 
-  protected val TaxonomyDir = storageMode(taxonomyDir)
+  protected val TaxonomyDir: Directory = storageMode(taxonomyDir)
 
   /**
    * Select Lucene index storage implementation based on config

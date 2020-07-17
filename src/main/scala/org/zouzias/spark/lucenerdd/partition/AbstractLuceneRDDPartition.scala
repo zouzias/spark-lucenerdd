@@ -16,6 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.partition
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.lucene.search.{BooleanClause, Query}
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
@@ -42,12 +43,12 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def fields(): Set[String]
 
   /**
-   * Multi term query
-   *
-   * @param docMap Map of field names to terms
-   * @param topK Number of documents to return
-   * @return
-   */
+    * Multi term query
+    *
+    * @param docMap Map of field names to terms
+    * @param topK   Number of documents to return
+    * @return
+    */
   def multiTermQuery(docMap: Map[String, String],
                      topK: Int,
                      boolClause: BooleanClause.Occur = BooleanClause.Occur.MUST)
@@ -55,87 +56,96 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
 
   /**
-   * Generic Lucene Query using QueryParser
-   * @param searchString Lucene query string, i.e., textField:hello*
-   * @param topK Number of documents to return
-   * @return
-   */
+    * Generic Lucene Query using QueryParser
+    *
+    * @param searchString Lucene query string, i.e., textField:hello*
+    * @param topK         Number of documents to return
+    * @return
+    */
   def query(searchString: String, topK: Int): LuceneRDDResponsePartition
 
 
   /**
     * Lucene search using Lucene [[Query]]
+    *
     * @param query Lucene query, i.e., [[org.apache.lucene.search.BooleanQuery]] or
     *              [[org.apache.lucene.search.PhraseQuery]]
-    * @param topK Number of documents to return
+    * @param topK  Number of documents to return
     * @return
     */
   def query(query: Query, topK: Int): LuceneRDDResponsePartition
 
   /**
-   * Multiple generic Lucene Queries using QueryParser
-   * @param searchString  Lucene query string
-   * @param topK Number of results to return
-   * @return
-   */
+    * Multiple generic Lucene Queries using QueryParser
+    *
+    * @param searchString Lucene query string
+    * @param topK         Number of results to return
+    * @return
+    */
   def queries(searchString: Iterable[String], topK: Int)
   : Iterable[(String, LuceneRDDResponsePartition)]
 
   /**
-   * Generic Lucene faceted Query using QueryParser
-   * @param searchString Lucene query string, i.e., textField:hello*
-   * @param topK Number of facets to return
-   * @return
-   */
+    * Generic Lucene faceted Query using QueryParser
+    *
+    * @param searchString Lucene query string, i.e., textField:hello*
+    * @param topK         Number of facets to return
+    * @return
+    */
   def facetQuery(searchString: String, facetField: String, topK: Int)
   : SparkFacetResult
 
   /**
-   * Term Query
-   * @param fieldName Name of field
-   * @param query Query text
-   * @param topK Number of documents to return
-   * @return
-   */
+    * Term Query
+    *
+    * @param fieldName Name of field
+    * @param query     Query text
+    * @param topK      Number of documents to return
+    * @return
+    */
   def termQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
   /**
-   * Prefix Query
-   * @param fieldName Name of field
-   * @param query Prefix query
-   * @param topK Number of documents to return
-   * @return
-   */
+    * Prefix Query
+    *
+    * @param fieldName Name of field
+    * @param query     Prefix query
+    * @param topK      Number of documents to return
+    * @return
+    */
   def prefixQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
   /**
-   * Fuzzy Query
-   * @param fieldName Name of field
-   * @param query Query text
-   * @param maxEdits Fuzziness, edit distance
-   * @param topK Number of documents to return
-   * @return
-   */
+    * Fuzzy Query
+    *
+    * @param fieldName Name of field
+    * @param query     Query text
+    * @param maxEdits  Fuzziness, edit distance
+    * @param topK      Number of documents to return
+    * @return
+    */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int): LuceneRDDResponsePartition
 
   /**
-   * PhraseQuery
-   * @param fieldName Name of field
-   * @param query Phrase query, i.e., "hello world"
-   * @param topK Number of documents to return
-   * @return
-   */
+    * PhraseQuery
+    *
+    * @param fieldName Name of field
+    * @param query     Phrase query, i.e., "hello world"
+    * @param topK      Number of documents to return
+    * @return
+    */
   def phraseQuery(fieldName: String, query: String, topK: Int): LuceneRDDResponsePartition
 
 
   /**
     * Lucene's More Like This (MLT) functionality
-    * @param fieldName Field name
-    * @param query Query text
+    *
+    * @param fieldName   Field name
+    * @param query       Query text
     * @param minTermFreq Minimum term frequency
-    * @param minDocFreq Minimum document frequency
-    * @param topK Number of returned documents
+    * @param minDocFreq  Minimum document frequency
+    * @param topK        Number of returned documents
     * @return
     */
   def moreLikeThis(fieldName: String, query: String,
@@ -149,7 +159,7 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
     * The partitionIndex is used to compute "global" document id from all documents
     * over all partitions
     *
-    * @param fieldName Field on which to compute term vectors
+    * @param fieldName   Field on which to compute term vectors
     * @param idFieldName Field name which contains unique id
     * @return Array of term vector entries
     */
@@ -164,9 +174,18 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
   def indexStats(fields: Set[String]): IndexStatistics
 
   /**
-   * Restricts the entries to those satisfying a predicate
-   * @param pred Predicate to filter on
-   * @return
-   */
+    * Restricts the entries to those satisfying a predicate
+    *
+    * @param pred Predicate to filter on
+    * @return
+    */
   def filter(pred: T => Boolean): AbstractLuceneRDDPartition[T]
+
+  /**
+    * Save the distributed index to HDFS
+    *
+    * @param destPath     Path in HDFS to store the index
+    * @param hadoopConfig Haddop configuration, read from SparkContext
+    */
+  def saveToHDFS(destPath: String, hadoopConfig: Configuration): Unit
 }

@@ -84,8 +84,8 @@ val sparkVersion = "2.4.6"
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.1.2"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.1.2" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.0"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.0" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.6"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.7"
@@ -126,7 +126,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.4.3_0.14.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"2.4.5_0.14.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

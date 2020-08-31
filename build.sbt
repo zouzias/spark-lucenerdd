@@ -85,7 +85,7 @@ val sparkVersion = "2.4.4"
 
 // scalastyle:off
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.1.0"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.1.0" % "test"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.1.4" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.5"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.6"

@@ -19,13 +19,17 @@ package org.zouzias.spark.lucenerdd.response
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.testing.FavoriteCaseClass
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
 
-class LuceneRDDResponseSpec extends FlatSpec with Matchers
+
+class LuceneRDDResponseSpec extends AnyFlatSpec with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {
 

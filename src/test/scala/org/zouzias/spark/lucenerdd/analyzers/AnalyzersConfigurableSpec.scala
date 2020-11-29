@@ -19,9 +19,13 @@ package org.zouzias.spark.lucenerdd.analyzers
 import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.analysis.el.GreekAnalyzer
 import org.apache.lucene.analysis.de.GermanAnalyzer
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
 
-class AnalyzersConfigurableSpec extends FlatSpec with Matchers
+
+class AnalyzersConfigurableSpec extends AnyFlatSpec with Matchers
   with BeforeAndAfterEach
   with AnalyzerConfigurable {
 

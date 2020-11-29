@@ -87,7 +87,7 @@ val sparkVersion = "2.4.7"
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.3"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.3" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.6"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.8"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.7"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
@@ -101,7 +101,7 @@ val lucene_expressions        = "org.apache.lucene"              % "lucene-expre
 val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.17.0"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.17.1"
 // scalastyle:on
 
 

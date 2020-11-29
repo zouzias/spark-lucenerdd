@@ -19,13 +19,18 @@ package org.zouzias.spark.lucenerdd
 import java.io.{Reader, StringReader}
 
 import org.apache.lucene.document.{Document, DoublePoint, Field, FloatPoint, IntPoint, LongPoint, StoredField, TextField}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{DocIdField, ScoreField, ShardField}
 
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
+
+
 import scala.collection.JavaConverters._
 
-class LuceneDocToSparkRowpec extends FlatSpec
+class LuceneDocToSparkRowpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach {
 

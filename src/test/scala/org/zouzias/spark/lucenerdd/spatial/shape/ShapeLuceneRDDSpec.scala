@@ -22,12 +22,16 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.locationtech.spatial4j.distance.DistanceUtils
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
 
-class ShapeLuceneRDDSpec extends FlatSpec
+
+class ShapeLuceneRDDSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext

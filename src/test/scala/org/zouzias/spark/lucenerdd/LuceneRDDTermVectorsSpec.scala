@@ -18,10 +18,14 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
+
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 
-class LuceneRDDTermVectorsSpec extends FlatSpec
+class LuceneRDDTermVectorsSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach
   with LuceneRDDTestUtils

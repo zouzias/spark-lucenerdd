@@ -18,9 +18,13 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
 
-class LuceneRDDTuplesSpec extends FlatSpec with Matchers with SharedSparkContext {
+
+class LuceneRDDTuplesSpec extends AnyFlatSpec with Matchers with SharedSparkContext {
 
   val First = "_1"
   val Second = "_2"

@@ -21,10 +21,13 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.search.{Query, TermQuery}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Row, SparkSession}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
 import org.zouzias.spark.lucenerdd.testing.Person
 
-class BlockingLinkageSpec extends FlatSpec
+class BlockingLinkageSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {

@@ -18,10 +18,14 @@ package org.zouzias.spark.lucenerdd.facets
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.{LuceneRDD, LuceneRDDKryoRegistrator}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
 
-class FacetedLuceneRDDFacetSpec extends FlatSpec
+
+class FacetedLuceneRDDFacetSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {

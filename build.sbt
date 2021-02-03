@@ -79,7 +79,7 @@ pomExtra := <scm>
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
-val luceneV = "8.4.1"
+val luceneV = "8.8.0"
 val sparkVersion = "2.4.7"
 
 
@@ -87,21 +87,20 @@ val sparkVersion = "2.4.7"
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.3"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.3" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.8"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.9"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.7"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
-val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
+val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"
 
-val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.4"
+val typesafe_config           = "com.typesafe"                   % "config"                    % "1.4.1"
 
 val lucene_facet              = "org.apache.lucene"              % "lucene-facet"              % luceneV
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
 val lucene_query_parsers      = "org.apache.lucene"              % "lucene-queryparser"        % luceneV
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
-val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.17.1"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.18.0"
 // scalastyle:on
 
 
@@ -112,12 +111,10 @@ libraryDependencies ++= Seq(
   lucene_expressions,
   lucene_query_parsers,
   typesafe_config,
-  lucene_spatial,
   lucene_spatial_extras,
   spatial4j,
   jts,
   joda_time,
-  joda_convert, // To avoid warning: Class org.joda.convert.ToString not found
   scalactic,  // scalactic is recommended, see http://www.scalatest.org/install
   scalatest
 )

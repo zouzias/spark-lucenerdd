@@ -84,7 +84,7 @@ val sparkVersion = "2.4.7"
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.7"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.8"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.8" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.10"

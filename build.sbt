@@ -79,13 +79,13 @@ pomExtra := <scm>
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
-val luceneV = "8.8.2"
-val sparkVersion = "2.4.7"
+val luceneV = "8.4.1"
+val sparkVersion = "2.4.8"
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.7"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.7" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.9"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.9" % "test"
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.10"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.7"

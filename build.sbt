@@ -80,15 +80,15 @@ pomExtra := <scm>
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 val luceneV = "8.8.0"
-val sparkVersion = "2.4.7"
+val sparkVersion = "2.4.8"
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.3"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.3" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.9"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.9" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.9"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.7"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.10"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.8"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"
 
@@ -100,7 +100,7 @@ val lucene_query_parsers      = "org.apache.lucene"              % "lucene-query
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.18.0"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.18.1"
 // scalastyle:on
 
 

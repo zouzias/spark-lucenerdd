@@ -61,7 +61,7 @@ publishTo := {
   }
 }
 
-publishArtifact in Test := false
+Test / publishArtifact := false
 
 pomIncludeRepository := { _ => false }
 
@@ -98,7 +98,6 @@ val lucene_facet              = "org.apache.lucene"              % "lucene-facet
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
 val lucene_query_parsers      = "org.apache.lucene"              % "lucene-queryparser"        % luceneV
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
-val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
 val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.18.1"
@@ -112,7 +111,6 @@ libraryDependencies ++= Seq(
   lucene_expressions,
   lucene_query_parsers,
   typesafe_config,
-  lucene_spatial,
   lucene_spatial_extras,
   spatial4j,
   jts,
@@ -146,7 +144,7 @@ lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 compileScalastyle := scalastyle.in(Compile).toTask("").value
 (compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
-parallelExecution in Test := false
+Test / parallelExecution := false
 
 // Skip tests during assembly
-test in assembly := {}
+assembly / test := {}

@@ -151,6 +151,9 @@ assembly / test := {}
 
 // To avoid merge issues
 assembly / assemblyMergeStrategy := {
- case PathList("META-INF", xs @ _*) => MergeStrategy.discard
- case _ => MergeStrategy.first
- }
+    case PathList("module-info.class", xs @ _*) => MergeStrategy.first
+    case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+    case x =>
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
+    oldStrategy(x)
+}

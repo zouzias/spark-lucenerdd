@@ -148,3 +148,9 @@ Test / parallelExecution := false
 
 // Skip tests during assembly
 assembly / test := {}
+
+// To avoid merge issues
+assembly / assemblyMergeStrategy := {
+ case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+ case _ => MergeStrategy.first
+ }

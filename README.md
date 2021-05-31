@@ -48,7 +48,7 @@ You can link against this library (for Spark 1.4+) in your program at the follow
 Using SBT:
 
 ```
-libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.3.7"
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.3.9"
 ```
 
 Using Maven:
@@ -57,7 +57,7 @@ Using Maven:
 <dependency>
     <groupId>org.zouzias</groupId>
     <artifactId>spark-lucenerdd_2.11</artifactId>
-    <version>0.3.7</version>
+    <version>0.3.9</version>
 </dependency>
 ```
 
@@ -65,7 +65,7 @@ This library can also be added to Spark jobs launched through `spark-shell` or `
 For example, to include it when starting the spark shell:
 
 ```
-$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.3.7
+$ bin/spark-shell --packages org.zouzias:spark-lucenerdd_2.11:0.3.9
 ```
 
 Unlike using `--jars`, using `--packages` ensures that this library and its dependencies will be added to the classpath.
@@ -76,9 +76,9 @@ The project has the following compatibility with Apache Spark:
 
 Artifact                  | Release Date    | Spark compatibility | Notes | Status
 ------------------------- | --------------- | -------------------------- | ----- | ----
-0.3.8-SNAPSHOT            |                 | >= 2.4.2, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
+0.3.10-SNAPSHOT            |                 | >= 3.x, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
+0.3.9         |  2020-11-30     | >= 2.4.7, JVM 8  | [tag v.0.3.9](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.9)  | Released
 0.3.7         |  2019-04-26     | >= 2.4.2, JVM 8  | [tag v.0.3.7](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.7)  | Released
-0.3.6                     |  2019-03-11     | >= 2.4.0, JVM 8  | [tag v0.3.6](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.6) | Released
 0.2.8                     | 2017-05-30      |  2.1.x, JVM 7      | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released
 0.1.0                     | 2016-09-26      | 1.4.x, 1.5.x, 1.6.x| [tag v0.1.0](https://github.com/zouzias/spark-lucenerdd/tree/v0.1.0) | Cross-released with 2.10/2.11
 

@@ -19,17 +19,21 @@ package org.zouzias.spark.lucenerdd.spatial.shape
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Row, SparkSession}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
 import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.ScoreField
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
+
 
 // Required for implicit Document conversion
 import org.zouzias.spark.lucenerdd._
 
 case class City(name: String, x: Double, y: Double)
 
-class ShapeLuceneRDDLinkageSpec extends FlatSpec
+class ShapeLuceneRDDLinkageSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext

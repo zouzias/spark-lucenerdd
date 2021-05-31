@@ -24,14 +24,18 @@ import org.apache.lucene.facet.FacetField
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.facets.FacetedLuceneRDD
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
 import scala.collection.JavaConverters._
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
+
 
 import scala.io.Source
 
-class LuceneQueryHelpersSpec extends FlatSpec
+class LuceneQueryHelpersSpec extends AnyFlatSpec
   with IndexWithTaxonomyWriter
   with Matchers
   with BeforeAndAfterEach {

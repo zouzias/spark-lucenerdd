@@ -20,13 +20,17 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.{FuzzyQuery, PrefixQuery}
 import org.apache.spark.sql.{Row, SparkSession}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import matchers.should._
+
 
 import scala.io.Source
 
 case class Country(name: String)
 
-class LuceneRDDRecordLinkageSpec extends FlatSpec
+class LuceneRDDRecordLinkageSpec extends AnyFlatSpec
   with Matchers
   with BeforeAndAfterEach
   with SharedSparkContext {

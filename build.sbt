@@ -80,6 +80,8 @@ pomExtra := <scm>
 val luceneV = "8.8.2"
 val sparkVersion = "3.1.2"
 
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+
 
 // scalastyle:off
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.9"

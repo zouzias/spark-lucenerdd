@@ -21,7 +21,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.10.0")
 
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.5.3")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.0.0")
 
 addSbtPlugin("com.github.sbt" % "sbt-release" % "1.0.15")
 

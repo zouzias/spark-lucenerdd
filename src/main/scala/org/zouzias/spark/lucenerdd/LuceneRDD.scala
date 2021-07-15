@@ -145,7 +145,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     *
     * @return
     */
-  def dedup[T1: ClassTag](searchQueryGen: T1 => String,
+  def dedup[T1: ClassTag](searchQueryGen: T1 => Query,
                           topK: Int = DefaultTopK,
                           linkerMethod: String = getLinkerMethod)
   : RDD[(T1, Array[Row])] = {
@@ -163,7 +163,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    */
   def linkDataFrame(other: DataFrame,
-                    searchQueryGen: Row => String,
+                    searchQueryGen: Row => Query,
                     topK: Int = DefaultTopK,
                     linkerMethod: String = getLinkerMethod)
   : RDD[(Row, Array[Row])] = {
@@ -187,11 +187,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                                 linkerMethod: String = getLinkerMethod)
   : RDD[(T1, Array[Row])] = {
     logInfo("LinkByQuery requested")
-    def typeToQueryString = (input: T1) => {
-      searchQueryGen(input).toString
-    }
 
-    link[T1](other, typeToQueryString, topK, linkerMethod)
+    link[T1](other, searchQueryGen, topK, linkerMethod)
   }
 
   /**
@@ -207,7 +204,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * broadcast to the workers.
    */
   def link[T1: ClassTag](other: RDD[T1],
-                         searchQueryGen: T1 => String,
+                         searchQueryGen: T1 => Query,
                          topK: Int = DefaultTopK,
                          linkerMethod: String = getLinkerMethod)
     : RDD[(T1, Array[Row])] = {

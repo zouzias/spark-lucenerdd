@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.12.11"
-crossScalaVersions := Seq("2.11.12", "2.12.11")
+scalaVersion := "2.12.14"
+crossScalaVersions := Seq("2.12.14")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -61,7 +61,7 @@ publishTo := {
   }
 }
 
-publishArtifact in Test := false
+Test / publishArtifact := false
 
 pomIncludeRepository := { _ => false }
 
@@ -77,20 +77,21 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+val luceneV = "8.9.0"
+val sparkVersion = "3.1.2"
 
-val luceneV = "8.4.1"
-val sparkVersion = "2.4.6"
+
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.1.2"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.1.2" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.9"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.9" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.6"
-val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.7"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.10"
+val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.8"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.1"
-val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.7"
+val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.4"
 
@@ -98,10 +99,9 @@ val lucene_facet              = "org.apache.lucene"              % "lucene-facet
 val lucene_analyzers          = "org.apache.lucene"              % "lucene-analyzers-common"   % luceneV
 val lucene_query_parsers      = "org.apache.lucene"              % "lucene-queryparser"        % luceneV
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
-val lucene_spatial            = "org.apache.lucene"              % "lucene-spatial"            % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.16.1"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.18.1"
 // scalastyle:on
 
 
@@ -112,7 +112,6 @@ libraryDependencies ++= Seq(
   lucene_expressions,
   lucene_query_parsers,
   typesafe_config,
-  lucene_spatial,
   lucene_spatial_extras,
   spatial4j,
   jts,
@@ -126,7 +125,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"2.4.5_0.14.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"3.1.2_1.1.0" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 
@@ -146,7 +145,16 @@ lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 compileScalastyle := scalastyle.in(Compile).toTask("").value
 (compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
-parallelExecution in Test := false
+Test / parallelExecution := false
 
 // Skip tests during assembly
-test in assembly := {}
+assembly / test := {}
+
+// To avoid merge issues
+assembly / assemblyMergeStrategy := {
+    case PathList("module-info.class", xs @ _*) => MergeStrategy.first
+    case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+    case x =>
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
+    oldStrategy(x)
+}

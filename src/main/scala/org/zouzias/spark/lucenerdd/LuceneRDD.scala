@@ -397,7 +397,7 @@ object LuceneRDD extends Versionable
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
       (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer,
-        similarity)),
+        similarity, indexAnalyzerPerField, queryAnalyzerPerField)),
       preservesPartitioning = true)
     new LuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer,
       indexAnalyzerPerField, queryAnalyzerPerField, similarity)

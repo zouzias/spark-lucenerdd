@@ -124,7 +124,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"3.1.2_1.1.0" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"3.1.2_1.1.1" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.12.15"
-crossScalaVersions := Seq("2.12.15")
+scalaVersion := "2.12.5"
+crossScalaVersions := Seq("2.12.5")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -77,7 +77,7 @@ pomExtra := <scm>
     </developer>
   </developers>
 
-val luceneV = "8.10.1"
+val luceneV = "8.11.0"
 val sparkVersion = "3.2.0"
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")

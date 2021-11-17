@@ -6,7 +6,7 @@ CURRENT_DIR=`pwd`
 SPARK_LUCENERDD_VERSION=`cat version.sbt | awk '{print $5}' | xargs`
 
 # You should have downloaded this spark version under your ${HOME}
-SPARK_VERSION="3.1.2"
+SPARK_VERSION="3.2.0"
 
 echo "==============================================="
 echo "Loading LuceneRDD with version ${SPARK_LUCENERDD_VERSION}"
@@ -19,7 +19,7 @@ echo "==============================================="
 # Assumes that spark is installed under home directory
 HOME_DIR=`echo ~`
 #export SPARK_LOCAL_IP=localhost
-SPARK_HOME=${HOME_DIR}/spark-${SPARK_VERSION}-bin-hadoop2.7
+SPARK_HOME=${HOME_DIR}/spark-${SPARK_VERSION}-bin-hadoop3.2
 
 # spark-lucenerdd assembly JAR
 MAIN_JAR=${CURRENT_DIR}/target/scala-2.12/spark-lucenerdd-assembly-${SPARK_LUCENERDD_VERSION}.jar

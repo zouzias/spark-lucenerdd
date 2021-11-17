@@ -76,7 +76,7 @@ The project has the following compatibility with Apache Spark:
 
 Artifact                  | Release Date    | Spark compatibility | Notes | Status
 ------------------------- | --------------- | -------------------------- | ----- | ----
-0.4.0-SNAPSHOT            |                 | >= 3.1.2, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
+0.4.0-SNAPSHOT            |                 | >= 3.2.0, JVM 8  | [develop](https://github.com/zouzias/spark-lucenerdd/tree/develop) | Under Development
 0.3.10            |      2021-06-02         | >= 2.4.8, JVM 8  | [tag v0.3.10](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.10) | Released
 0.3.9         |  2020-11-30     | >= 2.4.7, JVM 8  | [tag v.0.3.9](https://github.com/zouzias/spark-lucenerdd/tree/v0.3.9)  | Released
 0.2.8                     | 2017-05-30      |  2.1.x, JVM 7      | [tag v0.2.8](https://github.com/zouzias/spark-lucenerdd/tree/v0.2.8) | Released

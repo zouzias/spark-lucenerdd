@@ -117,15 +117,18 @@ package object builders {
    * @param fieldName Field name
    * @param fieldText Query
    * @param analyzer Analyzer class name
+   * @param slop Terms slop
    */
   case class PhraseQueryBuilder(
     fieldName: String,
     fieldText: String,
-    analyzer: String
+    analyzer: String,
+    slop: Integer = 0
   ) extends TermBasedQueryBuilder {
 
     override def buildQuery(): Query = {
       val builder = new PhraseQuery.Builder()
+      builder.setSlop(slop)
       val luceneAnalyzer : Analyzer = loadConstructor(analyzer)
       val terms = analyzeTerms(fieldText, luceneAnalyzer)
       terms.foreach( token => builder.add(new Term(fieldName, token)))

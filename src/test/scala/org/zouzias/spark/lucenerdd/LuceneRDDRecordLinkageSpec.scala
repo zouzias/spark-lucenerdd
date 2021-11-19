@@ -18,9 +18,12 @@ package org.zouzias.spark.lucenerdd
 
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.lucene.index.Term
-import org.apache.lucene.search.{FuzzyQuery, PrefixQuery}
+import org.apache.lucene.search.{BooleanClause, FuzzyQuery, PrefixQuery}
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.zouzias.spark.lucenerdd.builders.{PrefixQueryBuilder, TermQueryBuilder}
+import org.zouzias.spark.lucenerdd.query.LuceneRDDBooleanQueryBuilder
 
 import scala.io.Source
 
@@ -33,7 +36,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
   var luceneRDD: LuceneRDD[_] = _
 
-  override def afterEach() {
+  override def afterEach(): Unit = {
     luceneRDD.close()
   }
 
@@ -42,7 +45,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
   "LuceneRDD.linkByQuery" should "correctly link with prefix query" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
@@ -64,9 +67,34 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     linked.collect().exists(link => link._1 == "ita" && link._2.length == 1) should equal(true)
   }
 
+  "LuceneRDD.linkByBooleanQuery" should "correctly link with boolean query" in {
+    val leftCountries = Array("gree", "germa", "spa", "ita", "austria")
+    implicit val mySC: SparkContext = sc
+    val leftCountriesRDD = sc.parallelize(leftCountries)
+
+    val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
+      .map(_.toLowerCase()).toSeq)
+
+    luceneRDD = LuceneRDD(countries)
+
+    val linker = (country: String) => {
+      val luceneRDDBooleanQuery = new LuceneRDDBooleanQueryBuilder()
+      luceneRDDBooleanQuery.add(PrefixQueryBuilder("_1", country), BooleanClause.Occur.MUST)
+      luceneRDDBooleanQuery.add(TermQueryBuilder("_1", country), BooleanClause.Occur.MUST)
+      luceneRDDBooleanQuery
+    }
+
+    val linked = luceneRDD.linkByBooleanQuery(leftCountriesRDD, linker, 10)
+
+    linked.count() should equal(leftCountries.length)
+    // Only Austria should appear
+    linked.collect().exists(link => link._1 == "gree" && link._2.length == 0) should equal(true)
+    linked.collect().exists(link => link._1 == "austria" && link._2.length == 1) should equal(true)
+  }
+
   "LuceneRDD.linkByQuery" should "correctly link with prefix query (query / )" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
@@ -90,7 +118,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
   "LuceneRDD.linkByQuery" should "correctly link with query parser (fuzzy)" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
@@ -105,7 +133,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     }
 
     val linked = luceneRDD.linkByQuery(leftCountriesRDD, fuzzyLinker, 10)
-    linked.count() should equal(leftCountries.size)
+    linked.count() should equal(leftCountries.length)
     // Greece should appear only
     linked.collect().exists(link => link._1 == "gree" && link._2.length == 1) should equal(true)
     // Italy, Iraq and Iran should appear
@@ -115,7 +143,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
   "LuceneRDD.link" should "correctly link with query parser (prefix)" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
@@ -123,8 +151,8 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
     luceneRDD = LuceneRDD(countries)
 
-    def linker(country: String): String = {
-      s"_1:${country}*"
+    def linker(country: String): Left[String, LuceneRDDBooleanQueryBuilder] = {
+      Left(s"_1:$country*")
     }
 
     val linked = luceneRDD.link(leftCountriesRDD, linker, 10)
@@ -136,14 +164,14 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
   }
 
   "LuceneRDD.dedup" should "correctly deduplication top result" in {
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
       .map(_.toLowerCase()).toSeq)
 
     luceneRDD = LuceneRDD(countries)
 
     def linker(country: String): String = {
-      s"_1:${country}*"
+      s"_1:$country*"
     }
 
     val linked = luceneRDD.dedup(linker, 5)
@@ -153,10 +181,10 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
   "LuceneRDD.linkDataFrame" should "correctly link with query parser (prefix)" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
-    implicit val spark = SparkSession.builder().getOrCreate()
+    implicit val spark: SparkSession = SparkSession.builder().getOrCreate()
     import spark.implicits._
     val countriesDF = leftCountriesRDD.map(Country).toDF()
 
@@ -168,7 +196,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
     def linker(row: Row): String = {
       val country = Option(row.get("name"))
       country match {
-        case Some(c) => s"_1:${c}*"
+        case Some(c) => s"_1:$c*"
         case None => s"_1:*"
       }
     }
@@ -185,7 +213,7 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
   "LuceneRDD.link" should "correctly link with query parser (fuzzy)" in {
     val leftCountries = Array("gree", "germa", "spa", "ita")
-    implicit val mySC = sc
+    implicit val mySC: SparkContext = sc
     val leftCountriesRDD = sc.parallelize(leftCountries)
 
     val countries = sc.parallelize(Source.fromFile("src/test/resources/countries.txt").getLines()
@@ -193,9 +221,9 @@ class LuceneRDDRecordLinkageSpec extends FlatSpec
 
     luceneRDD = LuceneRDD(countries)
 
-    def fuzzyLinker(country: String): String = {
+    def fuzzyLinker(country: String): Left[String, LuceneRDDBooleanQueryBuilder] = {
       val Fuzziness = 2
-      s"_1:${country}~${Fuzziness}"
+      Left(s"_1:$country~$Fuzziness")
     }
 
     val linked = luceneRDD.link(leftCountriesRDD, fuzzyLinker, 10)

@@ -16,9 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd
 
-import java.io.{Reader, StringReader}
-
-import org.apache.lucene.document.{Document, DoublePoint, Field, FloatPoint, IntPoint, LongPoint, StoredField, TextField}
+import org.apache.lucene.document._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc
 import org.zouzias.spark.lucenerdd.models.SparkScoreDoc.{DocIdField, ScoreField, ShardField}

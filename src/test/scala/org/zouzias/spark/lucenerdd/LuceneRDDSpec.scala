@@ -34,7 +34,7 @@ class LuceneRDDSpec extends FlatSpec
     set("spark.ui.enabled", "false").
     set("spark.app.id", appID))
 
-  override def afterEach() {
+  override def afterEach(): Unit = {
     luceneRDD.close()
   }
 

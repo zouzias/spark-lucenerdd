@@ -16,8 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd
 
-import java.util
-
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession

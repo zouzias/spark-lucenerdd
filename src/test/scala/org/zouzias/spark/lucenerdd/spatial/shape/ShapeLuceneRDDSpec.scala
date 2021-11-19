@@ -16,16 +16,16 @@
  */
 package org.zouzias.spark.lucenerdd.spatial.shape
 
-import java.io.StringWriter
-
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.locationtech.spatial4j.distance.DistanceUtils
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
-import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
 import org.zouzias.spark.lucenerdd._
 import org.zouzias.spark.lucenerdd.spatial.shape.context.ContextLoader
+import org.zouzias.spark.lucenerdd.testing.LuceneRDDTestUtils
+
+import java.io.StringWriter
 
 class ShapeLuceneRDDSpec extends FlatSpec
   with Matchers
@@ -143,7 +143,6 @@ class ShapeLuceneRDDSpec extends FlatSpec
   "ShapeLuceneRDD.apply(DF, shapeField)" should
     "instantiate ShapeLuceneRDD from DataFrame and shape field name" in {
     val sparkSession = SparkSession.builder.getOrCreate()
-    import sparkSession.implicits._
     val capitals = sparkSession.read.parquet("data/capitals.parquet")
     pointLuceneRDD = ShapeLuceneRDD(capitals, "shape")
 

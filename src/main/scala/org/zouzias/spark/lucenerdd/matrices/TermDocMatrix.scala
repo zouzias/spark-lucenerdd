@@ -62,10 +62,10 @@ class TermDocMatrix(triplets: RDD[TermVectorEntry]) extends Serializable {
     val termToIndexB = triplets.sparkContext.broadcast(termToIndex)
     val docIdsPerShardMapB = triplets.sparkContext.broadcast(docIdsPerShardMap)
 
-    val entries = triplets.map { case t =>
+    val entries = triplets.map { t =>
       val i = termToIndexB.value(t.term)
       val j = docIdsPerShardMapB.value(t.docIdPerShard)
-      MatrixEntry(i, j, t.count)
+      MatrixEntry(i, j, value = t.count)
     }
 
     new CoordinateMatrix(entries)

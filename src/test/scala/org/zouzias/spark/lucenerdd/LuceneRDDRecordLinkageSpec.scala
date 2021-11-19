@@ -21,10 +21,11 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.search.{BooleanClause, FuzzyQuery, PrefixQuery}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Row, SparkSession}
-import org.scalatest.{BeforeAndAfterEach, Matchers}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.zouzias.spark.lucenerdd.builders.{PrefixQueryBuilder, TermQueryBuilder}
 import org.zouzias.spark.lucenerdd.query.LuceneRDDBooleanQueryBuilder
+import org.scalatest._
+import matchers.should._
 
 import scala.io.Source
 

@@ -17,11 +17,12 @@
 package org.zouzias.spark.lucenerdd.query
 
 import org.apache.lucene.search.{BooleanClause, BooleanQuery}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.zouzias.spark.lucenerdd.builders.{FuzzyQueryBuilder, TermQueryBuilder}
 
-class LuceneRDDBooleanQueryBuilderSpec extends FlatSpec with Matchers with BeforeAndAfterEach {
+class LuceneRDDBooleanQueryBuilderSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   val luceneRDDBooleanQuery = new LuceneRDDBooleanQueryBuilder()
   val termQueryBuilder: TermQueryBuilder = TermQueryBuilder("foo", "bar")

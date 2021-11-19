@@ -19,7 +19,8 @@ package org.zouzias.spark.lucenerdd
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.index.Term
-import org.apache.lucene.search.{BooleanClause, BooleanQuery, FuzzyQuery, PhraseQuery, PrefixQuery, Query, TermQuery}
+import org.apache.lucene.queryparser.classic.QueryParser
+import org.apache.lucene.search.{BooleanClause, BooleanQuery, BoostQuery, FuzzyQuery, PhraseQuery, PrefixQuery, Query, TermQuery}
 import org.zouzias.spark.lucenerdd.LuceneRDD.loadConstructor
 
 import java.io.StringReader
@@ -112,7 +113,7 @@ package object builders {
 
 
   /**
-   * PhraseQuery type
+   * PhraseQuery builder
    * @param fieldName Field name
    * @param fieldText Query
    * @param analyzer Analyzer class name
@@ -129,6 +130,25 @@ package object builders {
       val terms = analyzeTerms(fieldText, luceneAnalyzer)
       terms.foreach( token => builder.add(new Term(fieldName, token)))
       builder.build()
+    }
+  }
+
+  /**
+   * Field Analyzer based query builder
+   * @param fieldName Field name
+   * @param fieldText Query
+   * @param analyzer Analyzer class name
+   */
+  case class FieldQueryBuilder(
+                                 fieldName: String,
+                                 fieldText: String,
+                                 analyzer: String
+                               ) extends TermBasedQueryBuilder {
+
+    override def buildQuery(): Query = {
+      val luceneAnalyzer : Analyzer = loadConstructor(analyzer)
+      val queryParser = new QueryParser(fieldName, luceneAnalyzer)
+      queryParser.parse(fieldText)
     }
   }
 
@@ -153,6 +173,21 @@ package object builders {
         builder.add(termQuery, booleanClause))
 
       builder.build()
+    }
+  }
+
+  /**
+   * BoostQuery Builder
+   *
+   * @param queryBuilder Lucene RDD Query Builder
+   * @param boost boosting weight
+   */
+  case class BoostQueryBuilder(
+    queryBuilder: QueryBuilder,
+    boost: Float
+  ) extends QueryBuilder {
+    override def buildQuery(): BoostQuery = {
+      new BoostQuery(queryBuilder.buildQuery(), boost)
     }
   }
 

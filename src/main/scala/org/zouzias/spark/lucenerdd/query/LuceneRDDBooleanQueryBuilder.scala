@@ -19,7 +19,7 @@ package org.zouzias.spark.lucenerdd.query
 import org.apache.lucene.search.{BooleanClause, BooleanQuery}
 import org.zouzias.spark.lucenerdd.builders.QueryBuilder
 
-class LuceneRDDBooleanQueryBuilder extends Serializable {
+class LuceneRDDBooleanQueryBuilder extends Serializable with QueryBuilder {
 
   var clauses: Seq[(QueryBuilder, BooleanClause.Occur)] = Seq.empty
 
@@ -27,7 +27,7 @@ class LuceneRDDBooleanQueryBuilder extends Serializable {
     clauses :+= ((queryBuilder, clause))
   }
 
-  def buildBooleanQuery() : BooleanQuery = {
+  override def buildQuery(): BooleanQuery = {
     val booleanQueryBuilder = new BooleanQuery.Builder()
     clauses.foreach(c => booleanQueryBuilder.add(c._1.buildQuery(), c._2))
     booleanQueryBuilder.build()

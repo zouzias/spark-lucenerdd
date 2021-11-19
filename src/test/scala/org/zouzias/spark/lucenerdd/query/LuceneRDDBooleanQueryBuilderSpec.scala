@@ -30,7 +30,7 @@ class LuceneRDDBooleanQueryBuilderSpec extends FlatSpec with Matchers with Befor
   luceneRDDBooleanQuery.add(fuzzyQueryBuilder, BooleanClause.Occur.MUST)
 
   "LuceneRDDBooleanQuery.buildBooleanQuery" should "return a Lucene Boolean Query" in {
-    val booleanQuery : BooleanQuery = luceneRDDBooleanQuery.buildBooleanQuery()
+    val booleanQuery : BooleanQuery = luceneRDDBooleanQuery.buildQuery()
     booleanQuery.clauses().size() should equal(2)
     booleanQuery.clauses().get(0).getQuery.toString() should equal("foo:bar")
     booleanQuery.clauses().get(1).getQuery.toString() should equal("foo:bar~2")

@@ -171,7 +171,7 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   override def query(query: LuceneRDDBooleanQueryBuilder,
                      topK: Int): LuceneRDDResponsePartition = {
-    val results = LuceneQueryHelpers.searchQuery(indexSearcher, query.buildBooleanQuery(), topK)
+    val results = LuceneQueryHelpers.searchQuery(indexSearcher, query.buildQuery(), topK)
 
     LuceneRDDResponsePartition(results)
   }

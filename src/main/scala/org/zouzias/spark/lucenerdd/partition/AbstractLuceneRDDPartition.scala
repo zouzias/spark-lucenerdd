@@ -19,6 +19,7 @@ package org.zouzias.spark.lucenerdd.partition
 import org.apache.lucene.search.{BooleanClause, Query}
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
+import org.zouzias.spark.lucenerdd.query.LuceneRDDBooleanQueryBuilder
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 
 import scala.reflect.ClassTag
@@ -64,12 +65,21 @@ private[lucenerdd] abstract class AbstractLuceneRDDPartition[T] extends Serializ
 
 
   /**
-    * Lucene search using Lucene [[Query]]
-    * @param query Lucene query, i.e., [[org.apache.lucene.search.BooleanQuery]] or
-    *              [[org.apache.lucene.search.PhraseQuery]]
+    * Lucene search using LuceneRDD [[LuceneRDDBooleanQueryBuilder]]
+   *
+    * @param query LuceneRDD custom Boolean Query
     * @param topK Number of documents to return
     * @return
     */
+  def query(query: LuceneRDDBooleanQueryBuilder, topK: Int): LuceneRDDResponsePartition
+
+  /**
+   * Lucene search using Lucene [[Query]]
+   * @param query Lucene query, i.e., [[org.apache.lucene.search.BooleanQuery]] or
+   *              [[org.apache.lucene.search.PhraseQuery]]
+   * @param topK Number of documents to return
+   * @return
+   */
   def query(query: Query, topK: Int): LuceneRDDResponsePartition
 
   /**

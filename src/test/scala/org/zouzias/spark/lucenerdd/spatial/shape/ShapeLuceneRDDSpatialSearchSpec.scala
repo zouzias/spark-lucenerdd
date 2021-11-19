@@ -154,8 +154,6 @@ class ShapeLuceneRDDSpatialSearchSpec extends AnyFlatSpec
     val rdd = sc.parallelize(cities)
     pointLuceneRDD = ShapeLuceneRDD(rdd)
 
-    val x = Bern._1._1
-    val y = Bern._1._2
     val eps = DistanceUtils.dist2Degrees(150, DistanceUtils.EARTH_MEAN_RADIUS_KM)
 
     val polygon = arrayPolygonToShape(convertToPolygon(Bern, eps)._1)

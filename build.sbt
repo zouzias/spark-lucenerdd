@@ -87,7 +87,7 @@ credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.12"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.12" % "test"
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.14"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.11.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.9"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.2"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"

@@ -84,8 +84,10 @@ credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 
 // scalastyle:off
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.12"
+
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.14"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.14" % "test"
+
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.10.14"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.9"

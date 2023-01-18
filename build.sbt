@@ -91,7 +91,7 @@ val scalatest                 = "org.scalatest"                  %% "scalatest" 
 
 val joda_time                 = "joda-time"                      % "joda-time"                 % "2.12.1"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.9"
-val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.2"
+val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.3"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"
 
 val typesafe_config           = "com.typesafe"                   % "config"                    % "1.3.4"

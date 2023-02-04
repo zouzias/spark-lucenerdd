@@ -29,7 +29,7 @@ addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.3")
 
-addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.3.5")
+addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.3.6")
 
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.17")
 

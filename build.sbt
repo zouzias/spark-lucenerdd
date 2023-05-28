@@ -85,7 +85,7 @@ credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 // scalastyle:off
 
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.15"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.16"
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.15" % "test"
 
 

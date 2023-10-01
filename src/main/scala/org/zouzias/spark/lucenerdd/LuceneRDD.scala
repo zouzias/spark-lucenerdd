@@ -31,7 +31,7 @@ import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.models.indexstats.IndexStatistics
 import org.zouzias.spark.lucenerdd.partition.{AbstractLuceneRDDPartition, LuceneRDDPartition}
 import org.zouzias.spark.lucenerdd.models.{SparkScoreDoc, TermVectorEntry}
-import org.zouzias.spark.lucenerdd.query.SimilarityConfigurable
+import org.zouzias.spark.lucenerdd.query.{LuceneRDDBooleanQueryBuilder, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.versioning.Versionable
 
 import scala.reflect.ClassTag
@@ -43,7 +43,7 @@ import scala.reflect.ClassTag
   * @param indexAnalyzer Analyzer during indexing time
   * @param queryAnalyzer Analyzer during query time
   * @param similarity Query similarity (TF-IDF / BM25)
-  * @tparam T
+  * @param T type
   */
 class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDPartition[T]],
                              protected val indexAnalyzer: String,
@@ -116,7 +116,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   /**
    * Lucene generic query
    *
-   * @param doc
+   * @param doc Lucene Document
    * @return
    */
   def exists(doc: Map[String, String]): Boolean = {
@@ -127,7 +127,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * Generic query using Lucene's query parser
    *
    * @param searchString  Query String
-   * @param topK
+   * @param topK top k results
    * @return
    */
   def query(searchString: String,
@@ -150,7 +150,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                           linkerMethod: String = getLinkerMethod)
   : RDD[(T1, Array[Row])] = {
     // FIXME: is this asInstanceOf necessary?
-    link[T1](this.asInstanceOf[RDD[T1]], searchQueryGen, topK, linkerMethod)
+    def typeToQueryString = (input: T1) => {
+      Left(searchQueryGen(input))
+    }
+    link[T1](this.asInstanceOf[RDD[T1]], typeToQueryString, topK, linkerMethod)
   }
 
   /**
@@ -158,7 +161,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    *
    * @param other DataFrame to be linked
    * @param searchQueryGen Function that generates a search query for each element of other
-   * @param topK
+   * @param topK top k results
    * @param linkerMethod Method to perform linkage
    * @return an RDD of Tuple2 that contains the linked search Lucene documents in the second
    */
@@ -168,7 +171,10 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
                     linkerMethod: String = getLinkerMethod)
   : RDD[(Row, Array[Row])] = {
     logInfo("LinkDataFrame requested")
-    link[Row](other.rdd, searchQueryGen, topK, linkerMethod)
+    def rowToQueryString = (input: Row) => {
+      Left(searchQueryGen(input))
+    }
+    link[Row](other.rdd, rowToQueryString, topK, linkerMethod)
   }
 
   /**
@@ -188,7 +194,31 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   : RDD[(T1, Array[Row])] = {
     logInfo("LinkByQuery requested")
     def typeToQueryString = (input: T1) => {
-      searchQueryGen(input).toString
+      Left(searchQueryGen(input).toString)
+    }
+
+    link[T1](other, typeToQueryString, topK, linkerMethod)
+  }
+
+  /**
+   * Entity linkage via LuceneRDD Boolean query over all elements of an RDD.
+   *
+   * @param other RDD to be linked
+   * @param searchQueryGen Function that generates a LuceneRDD Boolean
+   *                       Query object for each element of other
+   * @param linkerMethod Method to perform linkage
+   * @tparam T1 A type
+   * @return an RDD of Tuple2 that contains the linked search Lucene Document
+   *         in the second position
+   */
+  def linkByBooleanQuery[T1: ClassTag](other: RDD[T1],
+                                       searchQueryGen: T1 => LuceneRDDBooleanQueryBuilder,
+                                       topK: Int = DefaultTopK,
+                                       linkerMethod: String = getLinkerMethod)
+  : RDD[(T1, Array[Row])] = {
+    logInfo("LinkByBooleanQuery requested")
+    def typeToQueryString = (input: T1) => {
+      Right(searchQueryGen(input))
     }
 
     link[T1](other, typeToQueryString, topK, linkerMethod)
@@ -207,7 +237,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    * broadcast to the workers.
    */
   def link[T1: ClassTag](other: RDD[T1],
-                         searchQueryGen: T1 => String,
+                         searchQueryGen: T1 => Either[String, LuceneRDDBooleanQueryBuilder],
                          topK: Int = DefaultTopK,
                          linkerMethod: String = getLinkerMethod)
     : RDD[(T1, Array[Row])] = {
@@ -216,14 +246,21 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
     val topKMonoid = new TopKMonoid[Row](topK)(SparkScoreDoc.descending)
     val queriesWithIndex = other.zipWithIndex().map(_.swap)
 
-    logInfo(s"Linker method is ${linkerMethod}")
+    logInfo(s"Linker method is $linkerMethod")
     val resultsByPart = linkerMethod match {
       case "cartesian" =>
         val concatenated = queriesWithIndex.mapValues(searchQueryGen).glom()
 
         concatenated.cartesian(partitionsRDD)
           .flatMap { case (qs, part) =>
-            qs.map(q => (q._1, topKMonoid.build(part.query(q._2, topK))))
+            qs.map(q => {
+                  q._2 match {
+                    case Left(queryString) =>
+                      (q._1, topKMonoid.build(part.query(queryString, topK)))
+                    case Right(booleanQuery) =>
+                      (q._1, topKMonoid.build(part.query(booleanQuery, topK)))
+                  }
+            })
           }
       case _ =>
         logInfo("Collecting query points to driver")
@@ -234,7 +271,12 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
           partitionsRDD.mapPartitions(partitions =>
           partitions.flatMap { partition =>
             queriesB.value.map { case (index, qr) =>
-              (index, topKMonoid.build(partition.query(qr, topK)))
+              qr match {
+                case Left(queryString) =>
+                  (index, topKMonoid.build(partition.query(queryString, topK)))
+                case Right(booleanQuery) =>
+                  (index, topKMonoid.build(partition.query(booleanQuery, topK)))
+              }
             }
           })
 
@@ -258,7 +300,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def termQuery(fieldName: String, query: String,
                 topK: Int = DefaultTopK): LuceneRDDResponse = {
-    logInfo(s"Term search on field ${fieldName} with query ${query}")
+    logInfo(s"Term search on field $fieldName with query $query")
     partitionMapper(_.termQuery(fieldName, query, topK))
   }
 
@@ -272,7 +314,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def prefixQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): LuceneRDDResponse = {
-    logInfo(s"Prefix search on field ${fieldName} with query ${query}")
+    logInfo(s"Prefix search on field $fieldName with query $query")
     partitionMapper(_.prefixQuery(fieldName, query, topK))
   }
 
@@ -287,7 +329,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def fuzzyQuery(fieldName: String, query: String,
                  maxEdits: Int, topK: Int = DefaultTopK): LuceneRDDResponse = {
-    logInfo(s"Fuzzy search on field ${fieldName} with query ${query}")
+    logInfo(s"Fuzzy search on field $fieldName with query $query")
     partitionMapper(_.fuzzyQuery(fieldName, query, maxEdits, topK))
   }
 
@@ -301,7 +343,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
    */
   def phraseQuery(fieldName: String, query: String,
                   topK: Int = DefaultTopK): LuceneRDDResponse = {
-    logInfo(s"Phrase search on field ${fieldName} with query ${query}")
+    logInfo(s"Phrase search on field $fieldName with query $query")
     partitionMapper(_.phraseQuery(fieldName, query, topK))
   }
 
@@ -323,7 +365,7 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def moreLikeThis(fieldName: String, query: String,
                    minTermFreq: Int, minDocFreq: Int, topK: Int = DefaultTopK)
   : LuceneRDDResponse = {
-    logInfo(s"MoreLikeThis field: ${fieldName}, query: ${query}")
+    logInfo(s"MoreLikeThis field: $fieldName, query: $query")
     partitionMapper(_.moreLikeThis(fieldName, query, minTermFreq, minDocFreq, topK))
   }
 
@@ -339,9 +381,8 @@ class LuceneRDD[T: ClassTag](protected val partitionsRDD: RDD[AbstractLuceneRDDP
   def termVectors(fieldName: String, idFieldName: Option[String] = None): RDD[TermVectorEntry] = {
     require(StringFieldsStoreTermVector,
       "Store term vectors is not configured. Set lucenerdd.index.stringfields.terms.vectors=true")
-    partitionsRDD.flatMap { case part =>
-      part.termVectors(fieldName, idFieldName)
-    }
+    partitionsRDD.flatMap(part =>
+      part.termVectors(fieldName, idFieldName))
   }
 
   def indexStats(): RDD[IndexStatistics] = {

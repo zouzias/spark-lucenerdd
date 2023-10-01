@@ -16,25 +16,22 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
-import java.io.StringReader
-
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
-import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
 import org.apache.lucene.facet.taxonomy.{FastTaxonomyFacetCounts, TaxonomyReader}
-import org.apache.lucene.index.Term
+import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
 import org.apache.lucene.queries.mlt.MoreLikeThis
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search._
 import org.apache.spark.sql.Row
 import org.zouzias.spark.lucenerdd.aggregate.SparkFacetResultMonoid
+import org.zouzias.spark.lucenerdd.builders.{FuzzyQueryBuilder, MultitermQueryBuilder, PhraseQueryBuilder, PrefixQueryBuilder, TermQueryBuilder}
 import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, SparkScoreDoc}
 
+import java.io.StringReader
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 
 /**
  * Helper methods for Lucene queries, i.e., term, fuzzy, prefix query
@@ -46,26 +43,6 @@ object LuceneQueryHelpers extends Serializable {
   private val QueryParserDefaultField = "text"
 
   /**
-   * Extract list of terms for a given analyzer
-   *
-   * @param text Text to analyze
-   * @param analyzer Analyzer to utilize
-   * @return
-   */
-  private def analyzeTerms(text: String, analyzer: Analyzer): List[String] = {
-    val stream = analyzer.tokenStream(null, new StringReader(text))
-    val cattr = stream.addAttribute(classOf[CharTermAttribute])
-    stream.reset()
-    val buffer = ListBuffer.empty[String]
-    while (stream.incrementToken()) {
-      buffer.append(cattr.toString)
-    }
-    stream.end()
-    stream.close()
-    buffer.toList
-  }
-
-  /**
    * Return all field names
    *
    * @param indexSearcher Index searcher
@@ -75,15 +52,14 @@ object LuceneQueryHelpers extends Serializable {
     indexSearcher.search(MatchAllDocs, 10).scoreDocs.flatMap(x =>
       indexSearcher.getIndexReader.document(x.doc)
       .iterator().asScala
-    ).map{ case doc =>
-      doc.name()
-    }.toSet[String]
+    ).map(doc =>
+      doc.name()).toSet[String]
   }
 
   /**
    * Parse a Query string
    *
-   * @param searchString
+   * @param searchString query
    * @param queryAnalyzerPerField Lucene query Analyzers per field
    * @return
    */
@@ -207,9 +183,8 @@ object LuceneQueryHelpers extends Serializable {
                 fieldName: String,
                 fieldText: String,
                 topK: Int): Seq[SparkScoreDoc] = {
-    val term = new Term(fieldName, fieldText)
-    val qr = new TermQuery(term)
-    LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher,
+      TermQueryBuilder(fieldName, fieldText).buildQuery(), topK)
   }
 
   /**
@@ -225,9 +200,8 @@ object LuceneQueryHelpers extends Serializable {
                   fieldName: String,
                   fieldText: String,
                   topK: Int): Seq[SparkScoreDoc] = {
-    val term = new Term(fieldName, fieldText)
-    val qr = new PrefixQuery(term)
-    LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher,
+      PrefixQueryBuilder(fieldName, fieldText).buildQuery(), topK)
   }
 
   /**
@@ -245,9 +219,8 @@ object LuceneQueryHelpers extends Serializable {
                  fieldText: String,
                  maxEdits: Int,
                  topK: Int): Seq[SparkScoreDoc] = {
-    val term = new Term(fieldName, fieldText)
-    val qr = new FuzzyQuery(term, maxEdits)
-    LuceneQueryHelpers.searchTopK(indexSearcher, qr, topK)
+    LuceneQueryHelpers.searchTopK(indexSearcher,
+      FuzzyQueryBuilder(fieldName, fieldText, maxEdits).buildQuery(), topK)
   }
 
   /**
@@ -257,17 +230,16 @@ object LuceneQueryHelpers extends Serializable {
    * @param fieldName Field name
    * @param fieldText Query
    * @param topK Number of returned documents
+   * @param analyzer Analyzer class name
    * @return
    */
   def phraseQuery(indexSearcher: IndexSearcher,
                   fieldName: String,
                   fieldText: String,
                   topK: Int,
-                  analyzer: Analyzer): Seq[SparkScoreDoc] = {
-    val builder = new PhraseQuery.Builder()
-    val terms = analyzeTerms(fieldText, analyzer)
-    terms.foreach( token => builder.add(new Term(fieldName, token)))
-    LuceneQueryHelpers.searchTopK(indexSearcher, builder.build(), topK)
+                  analyzer: String): Seq[SparkScoreDoc] = {
+    LuceneQueryHelpers.searchTopK(indexSearcher,
+      PhraseQueryBuilder(fieldName, fieldText, analyzer).buildQuery(), topK)
   }
 
   /**
@@ -283,17 +255,8 @@ object LuceneQueryHelpers extends Serializable {
                      topK : Int,
                      booleanClause: BooleanClause.Occur = BooleanClause.Occur.MUST)
   : Seq[SparkScoreDoc] = {
-
-    val builder = new BooleanQuery.Builder()
-    val terms = docMap.map{ case (field, fieldValue) =>
-      new TermQuery(new Term(field, fieldValue))
-    }
-
-    terms.foreach{ case termQuery =>
-      builder.add(termQuery, booleanClause)
-    }
-
-    searchTopK(indexSearcher, builder.build(), topK)
+    searchTopK(indexSearcher,
+      MultitermQueryBuilder(docMap, booleanClause).buildQuery(), topK)
   }
 
   /**

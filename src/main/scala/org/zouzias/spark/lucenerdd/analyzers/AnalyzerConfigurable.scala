@@ -49,7 +49,7 @@ import org.apache.lucene.analysis.ru.RussianAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.tr.TurkishAnalyzer
 import org.zouzias.spark.lucenerdd.config.Configurable
-import org.zouzias.spark.lucenerdd.logging.Logging
+import org.apache.spark.internal.Logging
 
 /**
  * Lucene Analyzer loader via configuration or via class name

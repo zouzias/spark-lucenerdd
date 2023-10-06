@@ -78,7 +78,7 @@ pomExtra := <scm>
   </developers>
 
 val luceneV = "8.11.2"
-val sparkVersion = "3.3.3"
+val sparkVersion = "3.5.0"
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
@@ -89,7 +89,7 @@ val scalactic                 = "org.scalactic"                  %% "scalactic" 
 val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.17" % "test"
 
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.12.2"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.12.5"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.10"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.3"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"
@@ -126,7 +126,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"3.2.0_1.1.2" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"3.2.4_1.4.4" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

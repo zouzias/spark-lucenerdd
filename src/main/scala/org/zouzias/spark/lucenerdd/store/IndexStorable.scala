@@ -21,7 +21,7 @@ import java.nio.file.{Files, Path}
 import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store._
 import org.zouzias.spark.lucenerdd.config.Configurable
-import org.zouzias.spark.lucenerdd.logging.Logging
+import org.apache.spark.internal.Logging
 
 /**
  * Storage of a Lucene index Directory

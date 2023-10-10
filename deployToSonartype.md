@@ -1,23 +1,23 @@
 ## Setup
 
-# Add `sonatype.sbt` file under `~/.sbt/1.0/` folder with contents
+# Add `.credentials` file under `~/.sbt/` folder with contents
 
 ```
-credentials += Credentials("Sonatype Nexus Repository Manager",
-                           "oss.sonatype.org",
-                           "zouzias",
-                           "PASSWORD_HERE")
+realm=Sonatype Nexus Repository Manager
+host=oss.sonatype.org
+user=(USERNAME)
+password=(PASSWORD_HERE)
 ```
 
 ## Run sbt release to release signed both 2.10 and 2.11
 
-```
+```bash
 sbt release
 ```
 
 ## Then, git checkout v0.X.X to the release tag first, and then type
 
-```
+```bash
 sbt sonatypeRelease
 ```
 

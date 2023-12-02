@@ -102,7 +102,7 @@ val lucene_query_parsers      = "org.apache.lucene"              % "lucene-query
 val lucene_expressions        = "org.apache.lucene"              % "lucene-expressions"        % luceneV
 val lucene_spatial_extras     = "org.apache.lucene"              % "lucene-spatial-extras"     % luceneV
 
-val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.18.2"
+val jts                       = "org.locationtech.jts"           % "jts-core"                  % "1.19.0"
 // scalastyle:on
 
 

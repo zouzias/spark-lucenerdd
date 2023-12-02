@@ -29,7 +29,6 @@ import org.zouzias.spark.lucenerdd.models.{SparkFacetResult, TermVectorEntry}
 import org.zouzias.spark.lucenerdd.query.{LuceneQueryHelpers, SimilarityConfigurable}
 import org.zouzias.spark.lucenerdd.response.LuceneRDDResponsePartition
 import org.zouzias.spark.lucenerdd.store.IndexWithTaxonomyWriter
-import org.zouzias.spark.lucenerdd.LuceneRDD
 
 import scala.collection.JavaConverters._
 import scala.reflect.{ClassTag, _}

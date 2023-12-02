@@ -16,7 +16,6 @@
  */
 package org.zouzias.spark.lucenerdd.config
 
-import org.apache.lucene.analysis.Analyzer
 import org.zouzias.spark.lucenerdd.analyzers.AnalyzerConfigurable
 import org.zouzias.spark.lucenerdd.query.SimilarityConfigurable
 

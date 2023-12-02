@@ -23,7 +23,6 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.Document
 import org.apache.lucene.facet.{FacetsCollector, FacetsConfig}
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts
 import org.apache.lucene.facet.taxonomy.{FastTaxonomyFacetCounts, TaxonomyReader}
 import org.apache.lucene.index.Term
 import org.apache.lucene.queries.mlt.MoreLikeThis

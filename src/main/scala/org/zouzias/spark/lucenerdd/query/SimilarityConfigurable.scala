@@ -16,7 +16,7 @@
  */
 package org.zouzias.spark.lucenerdd.query
 
-import org.apache.lucene.search.similarities.{BM25Similarity, ClassicSimilarity, Similarity, TFIDFSimilarity}
+import org.apache.lucene.search.similarities.{BM25Similarity, ClassicSimilarity, Similarity}
 import org.zouzias.spark.lucenerdd.config.Configurable
 
 

@@ -78,7 +78,7 @@ pomExtra := <scm>
   </developers>
 
 val luceneV = "8.11.2"
-val sparkVersion = "3.5.0"
+val sparkVersion = "3.5.1"
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
@@ -126,7 +126,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"3.5.0_1.4.7" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"3.5.1_1.4.7" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

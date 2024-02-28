@@ -2,8 +2,8 @@
 
 [![Master](https://travis-ci.org/zouzias/spark-lucenerdd.svg?branch=master)](https://travis-ci.org/zouzias/spark-lucenerdd)
 [![codecov](https://codecov.io/gh/zouzias/spark-lucenerdd/branch/master/graph/badge.svg)](https://codecov.io/gh/zouzias/spark-lucenerdd)
-[![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.11/)
-[![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.11.svg)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.11/)
+[![Maven](https://img.shields.io/maven-central/v/org.zouzias/spark-lucenerdd_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.zouzias/spark-lucenerdd_2.12/)
+[![Javadocs](http://javadoc.io/badge/org.zouzias/spark-lucenerdd_2.12.svg)](http://javadoc.io/doc/org.zouzias/spark-lucenerdd_2.12/)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spark-lucenerdd/Lobby)
 
 

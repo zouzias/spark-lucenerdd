@@ -17,8 +17,8 @@
 
 name := "spark-lucenerdd"
 organization := "org.zouzias"
-scalaVersion := "2.12.18"
-crossScalaVersions := Seq("2.12.18")
+scalaVersion := "2.12.19"
+crossScalaVersions := Seq("2.12.19")
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 homepage := Some(url("https://github.com/zouzias/spark-lucenerdd"))
 
@@ -78,18 +78,18 @@ pomExtra := <scm>
   </developers>
 
 val luceneV = "9.9.2"
-val sparkVersion = "3.5.0"
+val sparkVersion = "3.5.1"
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 
 // scalastyle:off
 
-val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.17"
-val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.17" % "test"
+val scalactic                 = "org.scalactic"                  %% "scalactic"                % "3.2.19"
+val scalatest                 = "org.scalatest"                  %% "scalatest"                % "3.2.19" % "test"
 
 
-val joda_time                 = "joda-time"                      % "joda-time"                 % "2.12.5"
+val joda_time                 = "joda-time"                      % "joda-time"                 % "2.12.7"
 val algebird                  = "com.twitter"                    %% "algebird-core"            % "0.13.10"
 val joda_convert              = "org.joda"                       % "joda-convert"              % "2.2.3"
 val spatial4j                 = "org.locationtech.spatial4j"     % "spatial4j"                 % "0.8"
@@ -126,7 +126,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
   "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"3.5.0_1.4.7" % "test" intransitive(),
+  "com.holdenkarau"  %% "spark-testing-base" % s"3.5.0_1.5.3" % "test" intransitive(),
   "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
 )
 

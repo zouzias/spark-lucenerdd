@@ -78,7 +78,7 @@ pomExtra := <scm>
   </developers>
 
 val luceneV = "8.11.3"
-val sparkVersion = "3.5.5"
+val sparkVersion = "3.5.6"
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 

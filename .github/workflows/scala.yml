@@ -13,5 +13,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 11
+    - uses: sbt/setup-sbt@v1
     - name: Run tests
-      run: sbt test
+      run: sbt -v test

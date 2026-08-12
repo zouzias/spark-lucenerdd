@@ -27,6 +27,7 @@ trait Versionable {
     */
   def version(): Map[String, Any] = {
     // BuildInfo is automatically generated using sbt plugin `sbt-buildinfo`
-    org.zouzias.spark.lucenerdd.BuildInfo.toMap
+//    org.zouzias.spark.lucenerdd.BuildInfo.toMap
+    Map("version" -> "0.0.1")
   }
 }

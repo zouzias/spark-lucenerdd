@@ -59,7 +59,8 @@ private[lucenerdd] class LuceneRDDPartition[T]
  private val queryAnalyzerName: String,
  private val similarityName: String,
  private val indexAnalyzerPerField: Map[String, String],
- private val queryAnalyzerPerField: Map[String, String])
+ private val queryAnalyzerPerField: Map[String, String],
+ private val isReadOnly: Boolean = false)
 (implicit docConversion: T => Document,
  override implicit val kTag: ClassTag[T])
   extends AbstractLuceneRDDPartition[T]
@@ -86,21 +87,23 @@ private[lucenerdd] class LuceneRDDPartition[T]
 
   private val (iterOriginal, iterIndex) = iter.duplicate
 
-  private val startTime = new DateTime(System.currentTimeMillis())
-  logInfo(s"[partId=${partitionId}]Indexing process initiated at ${startTime}...")
-  iterIndex.foreach { case elem =>
-    // (implicitly) convert type T to Lucene document
-    val doc = docConversion(elem)
-    indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
-  }
-  private val endTime = new DateTime(System.currentTimeMillis())
-  logInfo(s"[partId=${partitionId}]Indexing process completed at ${endTime}...")
-  logInfo(s"[partId=${partitionId}]Indexing process took ${(endTime.getMillis
-    - startTime.getMillis) / 1000} seconds...")
+  if(!isReadOnly) {
+    val startTime = new DateTime(System.currentTimeMillis())
+    logInfo(s"[partId=${partitionId}]Indexing process initiated at ${startTime}...")
+    iterIndex.foreach { case elem =>
+      // (implicitly) convert type T to Lucene document
+      val doc = docConversion(elem)
+      indexWriter.addDocument(FacetsConfig.build(taxoWriter, doc))
+    }
+    val endTime = new DateTime(System.currentTimeMillis())
+    logInfo(s"[partId=${partitionId}]Indexing process completed at ${endTime}...")
+    logInfo(s"[partId=${partitionId}]Indexing process took ${(endTime.getMillis
+      - startTime.getMillis) / 1000} seconds...")
 
-  // Close the indexWriter and taxonomyWriter (for faceted search)
-  closeAllWriters()
-  logDebug(s"[partId=${partitionId}]Closing index writers...")
+    // Close the indexWriter and taxonomyWriter (for faceted search)
+    closeAllWriters()
+    logDebug(s"[partId=${partitionId}]Closing index writers...")
+  }
 
   logDebug(s"[partId=${partitionId}]Instantiating index/facet readers")
   private val indexReader = DirectoryReader.open(IndexDir)
@@ -282,11 +285,12 @@ object LuceneRDDPartition {
                          queryAnalyzerName: String,
                          similarityName: String,
                          indexAnalyzerPerField: Map[String, String] = Map.empty,
-                         queryAnalyzerPerField: Map[String, String] = Map.empty)
+                         queryAnalyzerPerField: Map[String, String] = Map.empty,
+                         isReadOnly: Boolean = false)
                         (implicit docConversion: T => Document)
   : LuceneRDDPartition[T] = {
     new LuceneRDDPartition[T](iter, partitionId,
       indexAnalyzerName, queryAnalyzerName, similarityName, indexAnalyzerPerField,
-      queryAnalyzerPerField)(docConversion, classTag[T])
+      queryAnalyzerPerField, isReadOnly)(docConversion, classTag[T])
   }
 }

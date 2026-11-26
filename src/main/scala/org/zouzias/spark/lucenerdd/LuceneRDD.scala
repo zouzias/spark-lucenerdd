@@ -393,11 +393,12 @@ object LuceneRDD extends Versionable
                           queryAnalyzer: String,
                           similarity: String,
                           indexAnalyzerPerField: Map[String, String],
-                          queryAnalyzerPerField: Map[String, String])
+                          queryAnalyzerPerField: Map[String, String],
+                          isReadOnly: Boolean = false)
     (implicit conv: T => Document): LuceneRDD[T] = {
     val partitions = elems.mapPartitionsWithIndex[AbstractLuceneRDDPartition[T]](
       (partId, iter) => Iterator(LuceneRDDPartition(iter, partId, indexAnalyzer, queryAnalyzer,
-        similarity, indexAnalyzerPerField, queryAnalyzerPerField)),
+        similarity, indexAnalyzerPerField, queryAnalyzerPerField, isReadOnly)),
       preservesPartitioning = true)
     new LuceneRDD[T](partitions, indexAnalyzer, queryAnalyzer,
       indexAnalyzerPerField, queryAnalyzerPerField, similarity)
@@ -497,6 +498,24 @@ object LuceneRDD extends Versionable
   }
 
   /**
+   * Constructor with default index, query analyzers and Lucene similarity and isReadOnly preference
+   *
+   * @param dataFrame Input DataFrame
+   * @return
+   */
+  def apply(dataFrame: DataFrame, isReadOnly: Boolean)
+  : LuceneRDD[Row] = {
+    apply[Row](dataFrame.rdd,
+      getOrElseEn(IndexAnalyzerConfigName),
+      getOrElseEn(QueryAnalyzerConfigName),
+      getOrElseClassic(),
+      Map.empty[String, String],
+      Map.empty[String, String],
+      isReadOnly
+    )
+  }
+
+  /**
     * Entity linkage between two [[DataFrame]] by blocking / filtering
     * on one or more columns.
     *
@@ -551,7 +570,8 @@ object LuceneRDD extends Versionable
             luceneRDDParams.queryAnalyzer,
             luceneRDDParams.similarity,
             luceneRDDParams.indexAnalyzerPerField,
-            luceneRDDParams.queryAnalyzerPerField)
+            luceneRDDParams.queryAnalyzerPerField,
+            luceneRDDParams.isReadOnly)
 
           // Multi-query lucene index
           qs.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))
@@ -603,7 +623,8 @@ object LuceneRDD extends Versionable
         luceneRDDParams.queryAnalyzer,
         luceneRDDParams.similarity,
         luceneRDDParams.indexAnalyzerPerField,
-        luceneRDDParams.queryAnalyzerPerField)
+        luceneRDDParams.queryAnalyzerPerField,
+        luceneRDDParams.isReadOnly)
 
       // Multi-query lucene index
       iterQueries.map(q => (q, lucenePart.query(rowToQuery(q), topK).results.toArray))

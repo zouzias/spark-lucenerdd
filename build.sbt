@@ -124,12 +124,37 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-  "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
-  "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided",
-  "com.holdenkarau"  %% "spark-testing-base" % s"3.5.1_1.5.3" % "test" intransitive(),
-  "org.scala-lang"    % "scala-library" % scalaVersion.value % "compile"
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+  "org.apache.spark" %% "spark-sql" % sparkVersion,
+  "org.apache.spark" %% "spark-mllib" % sparkVersion ,
+  "com.holdenkarau"  %% "spark-testing-base" % s"3.5.0_1.4.7" % "test" intransitive(),
+  "org.scala-lang"    % "scala-library" % scalaVersion.value
 )
+// https://mvnrepository.com/artifact/software.amazon.awssdk/s3
+libraryDependencies += "software.amazon.awssdk" % "s3" % "2.25.23"
+
+libraryDependencies += "com.upplication" % "s3fs" % "2.2.2"
+
+// https://mvnrepository.com/artifact/org.apache.spark/spark-sql-kafka-0-10
+libraryDependencies += "org.apache.spark" %% "spark-sql-kafka-0-10" % "3.5.1"
+
+
+// https://mvnrepository.com/artifact/org.apache.spark/spark-hive
+libraryDependencies += "org.apache.spark" %% "spark-hive" % "3.5.1"
+
+// https://mvnrepository.com/artifact/org.apache.spark/spark-streaming
+libraryDependencies += "org.apache.spark" %% "spark-streaming" % "3.5.1"
+
+// https://mvnrepository.com/artifact/org.scala-lang/scala-reflect
+libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.12.19"
+
+// https://mvnrepository.com/artifact/com.typesafe.scala-logging/scala-logging
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
+
+// https://mvnrepository.com/artifact/org.typelevel/cats-kernel
+libraryDependencies += "org.typelevel" %% "cats-kernel" % "2.10.0"
+
+libraryDependencies += "org.zouzias" %% "spark-lucenerdd" % "0.4.0"
 
 // Read version in code from build.sbt
 lazy val root = (project in file(".")).

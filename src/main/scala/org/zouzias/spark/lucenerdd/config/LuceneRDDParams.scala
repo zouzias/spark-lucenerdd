@@ -31,7 +31,8 @@ case class LuceneRDDParams(indexAnalyzer: String,
                            queryAnalyzer: String,
                            similarity: String,
                            indexAnalyzerPerField: Map[String, String],
-                           queryAnalyzerPerField: Map[String, String]) extends Serializable
+                           queryAnalyzerPerField: Map[String, String],
+                           isReadOnly: Boolean) extends Serializable
 
 
 object LuceneRDDParams extends AnalyzerConfigurable with SimilarityConfigurable {
@@ -40,6 +41,7 @@ object LuceneRDDParams extends AnalyzerConfigurable with SimilarityConfigurable 
       getOrElseEn(QueryAnalyzerConfigName),
       getOrElseClassic(),
       Map.empty[String, String],
-      Map.empty[String, String])
+      Map.empty[String, String],
+      false)
   }
 }

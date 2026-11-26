@@ -16,12 +16,17 @@
  */
 package org.zouzias.spark.lucenerdd.store
 
-import java.nio.file.{Files, Path}
+import com.erudika.lucene.store.s3.{S3Directory, S3FileSystemStore}
+import com.upplication.s3fs.S3FileSystem
 
+import java.nio.file.{FileSystems, Files, Path}
 import org.apache.lucene.facet.FacetsConfig
 import org.apache.lucene.store._
 import org.zouzias.spark.lucenerdd.config.Configurable
 import org.apache.spark.internal.Logging
+
+import java.net.URI
+import java.util
 
 /**
  * Storage of a Lucene index Directory
@@ -39,17 +44,59 @@ trait IndexStorable extends Configurable
 
   private val IndexStoreKey = "lucenerdd.index.store.mode"
 
-  private val tmpJavaDir = System.getProperty("java.io.tmpdir")
-
   private val indexDirName =
     s"indexDirectory.${System.currentTimeMillis()}.${Thread.currentThread().getId}"
 
-  private val indexDir = Files.createTempDirectory(indexDirName)
+
+  private var indexDir = Files.createTempDirectory(indexDirName)
+  if (Config.hasPath(IndexStoreKey)) {
+    val storageMode = Config.getString(IndexStoreKey)
+
+    storageMode match {
+      case "disk" => {
+        val tmpJavaDir = System.getProperty("java.io.tmpdir")
+        logInfo(s"Config parameter ${IndexStoreKey} is set to 'disk'")
+        logInfo("Lucene index will be storage in disk")
+        logInfo(s"Index disk location ${tmpJavaDir}")
+        indexDir = Files.createTempDirectory(indexDirName)
+      }
+
+      case "s3" => {
+        val indexS3FileSystem = S3FileSystemStore.getS3FileSystem
+        val bucketName = Config.getString("lucenerdd.index.store.s3.index.bucket")
+        logInfo(s"Config parameter ${IndexStoreKey} is set to 'S3'")
+        logInfo("Lucene index will be storage in S3")
+        logInfo(s"Index S3 Bucket location ${bucketName}")
+
+        indexDir = indexS3FileSystem.getPath(bucketName)
+      }
+    }
+  }
 
   private val taxonomyDirName =
-    s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
+  s"taxonomyDirectory-${System.currentTimeMillis()}.${Thread.currentThread().getId}"
+  private var taxonomyDir = Files.createTempDirectory(taxonomyDirName)
 
-  private val taxonomyDir = Files.createTempDirectory(taxonomyDirName)
+  if (Config.hasPath(IndexStoreKey)) {
+    val storageMode = Config.getString(IndexStoreKey)
+    storageMode match {
+      case "disk" => {
+        logInfo(s"Config parameter ${IndexStoreKey} is set to 'disk'")
+        logInfo("Lucene index will be storage in disk")
+        logInfo(s"Index disk location ${taxonomyDirName}")
+        taxonomyDir = Files.createTempDirectory(taxonomyDirName)
+      }
+
+      case "s3" => {
+        val taxonomyS3FileSystem = S3FileSystemStore.getTaxonomyS3FileSystem
+        val bucketName = Config.getString("lucenerdd.index.store.s3.taxonomy.bucket")
+        logInfo(s"Config parameter ${IndexStoreKey} is set to 'S3'")
+        logInfo("Lucene taxonomy will be storage in S3")
+        logInfo(s"Taxonomy S3 Bucket location ${bucketName}")
+        taxonomyDir = taxonomyS3FileSystem.getPath(bucketName)
+      }
+    }
+  }
 
   protected val IndexDir = storageMode(indexDir)
 
@@ -70,10 +117,15 @@ trait IndexStorable extends Configurable
         case "disk" => {
           logInfo(s"Config parameter ${IndexStoreKey} is set to 'disk'")
           logInfo("Lucene index will be storage in disk")
-          logInfo(s"Index disk location ${tmpJavaDir}")
           // directoryPath.toFile.deleteOnExit() // Delete on exit
           new MMapDirectory(directoryPath, new SingleInstanceLockFactory)
         }
+        case "s3" =>
+          logInfo(s"Config parameter ${IndexStoreKey} is set to 's3'")
+          logInfo(s"Bucket Name: ${directoryPath.toString}")
+          val bucket: String = directoryPath.getFileSystem.asInstanceOf[S3FileSystem].getKey
+          val path: String = directoryPath.toString
+          new S3Directory(bucket, path)
         case ow =>
           logInfo(s"Config parameter ${IndexStoreKey} is set to ${ow}")
           logInfo("Lucene index will be storage in memory (default)")
